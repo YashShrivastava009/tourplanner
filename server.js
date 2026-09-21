@@ -7,15 +7,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check route
+app.get('/', (req, res) => {
+    res.send('Million-Dollar AI Travel Planner API is online and secure.');
+});
+
 // Initialize Gemini API
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 app.post('/api/plan-trip', async (req, res) => {
     try {
-        const { destination, days, budget } = req.body;
+        const { origin, destination, days, budget } = req.body;
         
-        const prompt = `Act as a luxury travel architect. Plan a ${days}-day trip to ${destination} with a ${budget} budget. 
-        Provide a day-by-day itinerary including morning, afternoon, and evening activities, plus hotel and restaurant recommendations. 
+        const prompt = `Act as an expert travel architect. The user is traveling from ${origin} to ${destination} for ${days} days on a ${budget} budget.
+        Determine if this is a domestic or international trip and account for travel time.
+        Provide a detailed day-by-day itinerary including morning, afternoon, and evening activities, plus hotel and restaurant recommendations. 
         Format the response in strict JSON format.`;
 
         const response = await ai.models.generateContent({

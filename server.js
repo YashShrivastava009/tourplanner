@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 const { GoogleGenAI } = require('@google/genai');
 
@@ -7,15 +8,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health check route
-app.get('/', (req, res) => {
-    res.send('Million-Dollar AI Travel Planner API is online and secure.');
-});
-
 // Initialize Gemini API
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-app.post('/api/plan-trip', async (req, res) => {
+// --- PASSWORD PROTECTION START ---
+// We check for a password header. If it's missing or wrong, we send back a 401 Unauthorized status.
+const checkPassword = (req, res, next) => {
+    // You can change 'mysecretpassword' to anything you want
+    if (req.headers['x-site-password'] === 'mysecretpassword') {
+        next();
+    } else {
+        res.status(401).send('Unauthorized');
+    }
+};
+
+// Protect the API route
+app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {
         const { origin, destination, days, budget } = req.body;
         
@@ -37,6 +45,12 @@ app.post('/api/plan-trip', async (req, res) => {
         console.error("AI Generation Error:", error);
         res.status(500).json({ error: "Failed to generate itinerary" });
     }
+});
+// --- PASSWORD PROTECTION END ---
+
+// Serve the index.html file
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;

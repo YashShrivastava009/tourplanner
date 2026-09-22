@@ -12,8 +12,11 @@
             padding: 0;
             overflow: hidden;
             background-color: #050505;
-            /* The image file MUST be in your main GitHub folder and named exactly this */
-            background-image: url('./image_da1ff9.jpg');
+            
+            /* CRITICAL FIX: Changed path to absolute root to ensure Render finds it */
+            /* MAKE SURE YOUR IMAGE IN GITHUB IS NAMED EXACTLY THIS */
+            background-image: url('/image_da1ff9.jpg'); 
+            
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;

@@ -6,23 +6,27 @@
     <title>AI Travel Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. Set the uploaded image as the fixed background */
+        /* 1. Set the uploaded image as the fixed background using the RAW GitHub URL */
         body {
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            overflow: hidden;
             background-color: #050505;
-            background-image: url('image_da1ff9.jpg'); 
+            
+            /* BULLETPROOF FIX: Pulling directly from your GitHub repo */
+            background-image: url('https://raw.githubusercontent.com/YashShrivastava009/tourplanner/main/image_da1ff9.jpg'); 
+            
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            min-height: 100vh;
+            height: 100vh;
+            width: 100vw;
         }
         
         /* 2. Animate the Black Hole: Rotating light overlay */
         .blackhole-swirl {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             width: 200vw;
@@ -31,16 +35,16 @@
             background: conic-gradient(
                 from 0deg,
                 transparent 0%,
-                rgba(252, 211, 77, 0.08) 20%,
-                rgba(245, 158, 11, 0.12) 40%,
+                rgba(252, 211, 77, 0.1) 20%,
+                rgba(245, 158, 11, 0.15) 40%,
                 transparent 50%,
                 rgba(252, 211, 77, 0.05) 70%,
                 transparent 100%
             );
-            animation: spinHole 25s linear infinite;
+            animation: spinHole 20s linear infinite;
             mix-blend-mode: screen;
             pointer-events: none;
-            z-index: 0;
+            z-index: 1;
             border-radius: 50%;
         }
 
@@ -51,141 +55,44 @@
 
         /* 3. Gentle floating stardust */
         .stardust {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             pointer-events: none;
-            z-index: 1;
+            z-index: 2;
             background-image: 
-                radial-gradient(2px 2px at 15% 25%, #fcd34d, transparent),
-                radial-gradient(2px 2px at 35% 65%, #ffffff, transparent),
-                radial-gradient(2px 2px at 65% 85%, #f59e0b, transparent),
-                radial-gradient(2px 2px at 85% 35%, #ffffff, transparent),
-                radial-gradient(2px 2px at 45% 15%, #fcd34d, transparent),
-                radial-gradient(2px 2px at 95% 95%, #ffffff, transparent);
+                radial-gradient(2px 2px at 10% 20%, #fcd34d, transparent),
+                radial-gradient(2px 2px at 30% 60%, #ffffff, transparent),
+                radial-gradient(2px 2px at 60% 80%, #f59e0b, transparent),
+                radial-gradient(2px 2px at 80% 30%, #ffffff, transparent),
+                radial-gradient(2px 2px at 40% 10%, #fcd34d, transparent),
+                radial-gradient(2px 2px at 90% 90%, #ffffff, transparent);
             background-size: 150px 150px;
-            animation: pullStars 15s linear infinite;
-            opacity: 0.4;
+            animation: pullStars 12s linear infinite;
+            opacity: 0.5;
         }
 
         @keyframes pullStars {
             0% { transform: scale(1) rotate(0deg); opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { transform: scale(0.85) rotate(15deg); opacity: 0; }
-        }
-        
-        /* Custom scrollbar for output */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(245, 158, 11, 0.3);
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(245, 158, 11, 0.6);
+            50% { opacity: 0.6; }
+            100% { transform: scale(0.8) rotate(20deg); opacity: 0; }
         }
     </style>
 </head>
-<body class="text-white font-sans relative flex flex-col items-center pt-12 pb-24">
+<body class="text-white min-h-screen font-sans relative flex items-center justify-center">
     
     <!-- Background Animations over your image -->
     <div class="blackhole-swirl"></div>
     <div class="stardust"></div>
 
-    <!-- Main Container -->
-    <div class="relative z-10 w-full max-w-3xl px-6">
-        
-        <h1 class="text-5xl md:text-7xl font-extrabold text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.8)] tracking-widest text-center uppercase mb-12">
+    <!-- Clean UI: Just the title, everything else removed -->
+    <div class="relative z-10 p-10">
+        <h1 class="text-6xl md:text-8xl font-extrabold text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,1)] tracking-widest text-center uppercase">
             AI Travel
         </h1>
-        
-        <!-- Redesigned Premium Glass UI Form -->
-        <div class="bg-black/30 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.8)] mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                <input type="text" id="origin" placeholder="Departure (e.g. New York)" class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-amber-50 placeholder-white/40 focus:outline-none focus:border-amber-500 focus:bg-white/10 transition-all">
-                <input type="text" id="destination" placeholder="Destination (e.g. Tokyo)" class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-amber-50 placeholder-white/40 focus:outline-none focus:border-amber-500 focus:bg-white/10 transition-all">
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                <input type="number" id="days" placeholder="Duration (Days)" class="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-amber-50 placeholder-white/40 focus:outline-none focus:border-amber-500 focus:bg-white/10 transition-all">
-                
-                <select id="budget" class="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-5 py-4 text-amber-50 focus:outline-none focus:border-amber-500 transition-all cursor-pointer">
-                    <option value="Backpacker">Backpacker (Budget)</option>
-                    <option value="Moderate">Moderate (Standard)</option>
-                    <option value="Luxury">Luxury (Premium)</option>
-                </select>
-            </div>
-            
-            <button onclick="planTrip()" class="w-full bg-amber-500/20 border border-amber-500/50 hover:bg-amber-500/40 text-amber-400 uppercase tracking-[0.2em] font-bold py-4 rounded-xl transition-all duration-300 backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.15)] hover:shadow-[0_0_25px_rgba(245,158,11,0.4)]">
-                Initialize Sequence
-            </button>
-        </div>
-
-        <!-- Loading State -->
-        <div id="loading" class="hidden flex flex-col items-center justify-center py-10">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mb-4 shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
-            <p class="text-lg text-amber-300 tracking-widest uppercase text-sm drop-shadow-md">Calculating Trajectory...</p>
-        </div>
-
-        <!-- Results Area -->
-        <div id="itinerary" class="space-y-6"></div>
     </div>
 
-    <script>
-        async function planTrip() {
-            const origin = document.getElementById('origin').value;
-            const destination = document.getElementById('destination').value;
-            const days = document.getElementById('days').value;
-            const budget = document.getElementById('budget').value;
-            const resultDiv = document.getElementById('itinerary');
-            const loadingDiv = document.getElementById('loading');
-
-            if(!origin || !destination || !days) {
-                alert("Coordinates incomplete. Please provide departure, destination, and duration.");
-                return;
-            }
-
-            resultDiv.innerHTML = '';
-            loadingDiv.classList.remove('hidden');
-
-            try {
-                // Secure API Call
-                const response = await fetch('/api/plan-trip', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-site-password': 'mysecretpassword'
-                    },
-                    body: JSON.stringify({ origin, destination, days, budget })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Unauthorized or network issue');
-                }
-
-                const data = await response.json();
-                loadingDiv.classList.add('hidden');
-                
-                // Render the output in a glowing glass panel
-                resultDiv.innerHTML = `
-                    <div class="bg-black/50 backdrop-blur-2xl p-8 rounded-3xl border border-amber-500/30 shadow-[0_0_30px_rgba(0,0,0,0.9)]">
-                        <h2 class="text-2xl tracking-widest uppercase font-bold text-amber-400 mb-6 drop-shadow-md border-b border-amber-500/30 pb-4">Mission Itinerary:</h2>
-                        <pre class="bg-black/40 p-6 rounded-2xl overflow-x-auto text-amber-50/80 text-sm whitespace-pre-wrap border border-white/5 font-mono">${JSON.stringify(data, null, 2)}</pre>
-                    </div>`;
-                
-            } catch (error) {
-                loadingDiv.classList.add('hidden');
-                resultDiv.innerHTML = `<div class="bg-red-950/80 border border-red-500/50 p-6 rounded-2xl text-red-200 backdrop-blur-md shadow-xl text-center font-medium tracking-wide uppercase text-sm">Connection Severed. Backend systems offline.</div>`;
-            }
-        }
-    </script>
 </body>
 </html>

@@ -8,36 +8,41 @@
     <style>
         /* 1. Set the uploaded image as the fixed background */
         body {
-            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             background-color: #050505;
-            background-image: url('image_da1ff9.jpg');
+            /* The image file MUST be in your main GitHub folder and named exactly this */
+            background-image: url('./image_da1ff9.jpg');
             background-size: cover;
-            background-position: center;
+            background-position: center center;
+            background-repeat: no-repeat;
             background-attachment: fixed;
+            height: 100vh;
+            width: 100vw;
         }
         
         /* 2. Animate the Black Hole: Rotating light overlay */
-        /* This blends a rotating golden gradient over the static image to simulate swirling movement */
         .blackhole-swirl {
-            position: fixed;
-            top: 40%;
+            position: absolute;
+            top: 50%;
             left: 50%;
-            width: 150vw;
-            height: 150vw;
+            width: 200vw;
+            height: 200vw;
             transform: translate(-50%, -50%);
             background: conic-gradient(
                 from 0deg,
                 transparent 0%,
-                rgba(252, 211, 77, 0.15) 20%,
-                rgba(245, 158, 11, 0.25) 40%,
+                rgba(252, 211, 77, 0.1) 20%,
+                rgba(245, 158, 11, 0.15) 40%,
                 transparent 50%,
-                rgba(252, 211, 77, 0.1) 70%,
+                rgba(252, 211, 77, 0.05) 70%,
                 transparent 100%
             );
-            animation: spinHole 15s linear infinite;
-            mix-blend-mode: color-dodge;
+            animation: spinHole 20s linear infinite;
+            mix-blend-mode: screen;
             pointer-events: none;
-            z-index: 0;
+            z-index: 1;
             border-radius: 50%;
         }
 
@@ -46,119 +51,46 @@
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* 3. Stardust particles being pulled into the gravity well */
+        /* 3. Gentle floating stardust */
         .stardust {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             pointer-events: none;
-            z-index: 1;
+            z-index: 2;
             background-image: 
-                radial-gradient(2px 2px at 20px 30px, #fcd34d, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 50px 160px, #f59e0b, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 130px 80px, #fcd34d, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 160px 120px, #fff, rgba(0,0,0,0));
-            background-size: 200px 200px;
-            animation: pullStars 8s linear infinite;
-            opacity: 0.4;
+                radial-gradient(2px 2px at 10% 20%, #fcd34d, transparent),
+                radial-gradient(2px 2px at 30% 60%, #ffffff, transparent),
+                radial-gradient(2px 2px at 60% 80%, #f59e0b, transparent),
+                radial-gradient(2px 2px at 80% 30%, #ffffff, transparent),
+                radial-gradient(2px 2px at 40% 10%, #fcd34d, transparent),
+                radial-gradient(2px 2px at 90% 90%, #ffffff, transparent);
+            background-size: 150px 150px;
+            animation: pullStars 12s linear infinite;
+            opacity: 0.5;
         }
 
         @keyframes pullStars {
             0% { transform: scale(1) rotate(0deg); opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { transform: scale(0.5) rotate(45deg); opacity: 0; }
+            50% { opacity: 0.6; }
+            100% { transform: scale(0.8) rotate(20deg); opacity: 0; }
         }
     </style>
 </head>
-<body class="text-white min-h-screen p-8 font-sans relative">
+<body class="text-white min-h-screen font-sans relative flex items-center justify-center">
     
-    <!-- Background Animations -->
+    <!-- Background Animations over your image -->
     <div class="blackhole-swirl"></div>
     <div class="stardust"></div>
 
-    <!-- Main UI Container (Amber/Gold Glassmorphism Theme) -->
-    <div class="max-w-4xl mx-auto relative z-10 pt-10">
-        <h1 class="text-6xl font-extrabold mb-10 text-center text-amber-400 drop-shadow-[0_0_15px_rgba(245,158,11,0.8)] tracking-tight">AI Travel Canvas</h1>
-        
-        <!-- Input Form -->
-        <div class="bg-black/50 backdrop-blur-md p-8 rounded-3xl shadow-2xl mb-8 border border-amber-500/30">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <input type="text" id="origin" placeholder="Leaving from? (e.g. New York)" class="p-4 rounded-xl bg-black/60 text-white outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-400 border border-gray-700 transition-all">
-                <input type="text" id="destination" placeholder="Where to? (e.g. Japan)" class="p-4 rounded-xl bg-black/60 text-white outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-400 border border-gray-700 transition-all">
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="number" id="days" placeholder="How many days?" class="p-4 rounded-xl bg-black/60 text-white outline-none focus:ring-2 focus:ring-amber-400 placeholder-gray-400 border border-gray-700 transition-all">
-                <select id="budget" class="p-4 rounded-xl bg-black/60 text-white outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer border border-gray-700 transition-all">
-                    <option value="Backpacker">Backpacker (Budget)</option>
-                    <option value="Moderate">Moderate</option>
-                    <option value="Luxury">Luxury (Premium)</option>
-                </select>
-            </div>
-            <button onclick="planTrip()" class="w-full mt-8 bg-amber-600 hover:bg-amber-500 text-white font-bold text-lg py-4 px-4 rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.4)]">
-                Start Planning
-            </button>
-        </div>
-
-        <!-- Loading State -->
-        <div id="loading" class="hidden flex flex-col items-center justify-center my-12">
-            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-400 mb-6 shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
-            <p class="text-2xl text-amber-300 font-medium drop-shadow-md">Navigating spacetime to build your trip...</p>
-        </div>
-
-        <!-- Results Area -->
-        <div id="itinerary" class="space-y-6"></div>
+    <!-- Clean UI: Just the title, everything else removed -->
+    <div class="relative z-10 p-10">
+        <h1 class="text-6xl md:text-8xl font-extrabold text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,1)] tracking-widest text-center uppercase">
+            AI Travel
+        </h1>
     </div>
 
-    <script>
-        async function planTrip() {
-            const origin = document.getElementById('origin').value;
-            const destination = document.getElementById('destination').value;
-            const days = document.getElementById('days').value;
-            const budget = document.getElementById('budget').value;
-            const resultDiv = document.getElementById('itinerary');
-            const loadingDiv = document.getElementById('loading');
-
-            if(!origin || !destination || !days) {
-                alert("Please fill in where you are leaving from, your destination, and days!");
-                return;
-            }
-
-            resultDiv.innerHTML = '';
-            loadingDiv.classList.remove('hidden');
-
-            try {
-                // Calling your live Render Backend WITH the password protection
-                const response = await fetch('/api/plan-trip', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-site-password': 'mysecretpassword'
-                    },
-                    body: JSON.stringify({ origin, destination, days, budget })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Network response was not ok or unauthorized');
-                }
-
-                const data = await response.json();
-                loadingDiv.classList.add('hidden');
-                
-                resultDiv.innerHTML = `
-                    <div class="bg-black/60 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-amber-500/40">
-                        <h2 class="text-3xl font-bold text-amber-400 mb-6 drop-shadow-md">Your Custom Route:</h2>
-                        <pre class="bg-black/80 p-6 rounded-2xl overflow-x-auto text-amber-100 text-sm whitespace-pre-wrap border border-gray-700 shadow-inner">${JSON.stringify(data, null, 2)}</pre>
-                    </div>`;
-                
-            } catch (error) {
-                loadingDiv.classList.add('hidden');
-                resultDiv.innerHTML = `<div class="bg-red-900/80 border border-red-500 p-6 rounded-2xl text-red-100 backdrop-blur-md shadow-xl text-center font-medium">Error connecting to server. Make sure the backend is fully deployed on Render.</div>`;
-            }
-        }
-    </script>
 </body>
 </html>

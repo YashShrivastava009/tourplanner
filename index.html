@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Travel Planner</title>
+    <title>AI Travel Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. Set the uploaded image as the fixed background using the RAW GitHub URL */
+        /* 1. Fixed Black Hole Background */
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             background-color: #050505;
-            
-            /* BULLETPROOF FIX: Pulling directly from your GitHub repo */
             background-image: url('https://raw.githubusercontent.com/YashShrivastava009/tourplanner/main/image_da1ff9.jpg'); 
-            
             background-size: cover;
             background-position: center center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            height: 100vh;
+            min-height: 100vh;
             width: 100vw;
         }
         
-        /* 2. Animate the Black Hole: Rotating light overlay */
+        /* 2. Rotating Accretion Disk Light Overlay */
         .blackhole-swirl {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             width: 200vw;
@@ -53,9 +51,9 @@
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* 3. Gentle floating stardust */
+        /* 3. Floating Stardust */
         .stardust {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
@@ -79,20 +77,396 @@
             50% { opacity: 0.6; }
             100% { transform: scale(0.8) rotate(20deg); opacity: 0; }
         }
+
+        /* Smooth Fade Animation for Wizard Steps */
+        .step-panel {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.4); }
+        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 4px; }
     </style>
 </head>
-<body class="text-white min-h-screen font-sans relative flex items-center justify-center">
+<body class="text-white font-sans relative flex flex-col items-center py-12 px-4">
     
-    <!-- Background Animations over your image -->
+    <!-- Background Animations -->
     <div class="blackhole-swirl"></div>
     <div class="stardust"></div>
 
-    <!-- Clean UI: Just the title, everything else removed -->
-    <div class="relative z-10 p-10">
-        <h1 class="text-6xl md:text-8xl font-extrabold text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,1)] tracking-widest text-center uppercase">
-            AI Travel
-        </h1>
+    <!-- Main Content Wrapper -->
+    <div class="relative z-10 w-full max-w-4xl">
+        
+        <!-- Header Title -->
+        <div class="text-center mb-10">
+            <h1 class="text-5xl md:text-7xl font-extrabold text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,1)] tracking-widest uppercase">
+                AI Travel
+            </h1>
+            <p class="text-amber-200/70 tracking-[0.25em] uppercase text-xs md:text-sm mt-2">
+                Precision Trajectory & Itinerary Engine
+            </p>
+        </div>
+
+        <!-- INTERACTIVE MULTI-STEP QUESTIONNAIRE -->
+        <div id="wizard-container" class="bg-black/60 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-8 md:p-10 shadow-[0_0_50px_rgba(0,0,0,0.9)] max-w-2xl mx-auto">
+            
+            <!-- Step Progress Bar -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-2">
+                    <span id="badge-1" class="w-8 h-8 rounded-full bg-amber-500 text-black font-bold flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.8)]">1</span>
+                    <span class="text-xs uppercase tracking-wider text-amber-300 hidden sm:inline">Locations</span>
+                </div>
+                <div class="flex-1 h-[1px] bg-amber-500/20 mx-3"></div>
+                <div class="flex items-center space-x-2">
+                    <span id="badge-2" class="w-8 h-8 rounded-full bg-white/10 text-white/50 font-bold flex items-center justify-center text-sm">2</span>
+                    <span class="text-xs uppercase tracking-wider text-white/50 hidden sm:inline">Days & Budget</span>
+                </div>
+                <div class="flex-1 h-[1px] bg-amber-500/20 mx-3"></div>
+                <div class="flex items-center space-x-2">
+                    <span id="badge-3" class="w-8 h-8 rounded-full bg-white/10 text-white/50 font-bold flex items-center justify-center text-sm">3</span>
+                    <span class="text-xs uppercase tracking-wider text-white/50 hidden sm:inline">History</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Origin, Departure Airport City, Destination -->
+            <div id="step-1" class="step-panel space-y-6">
+                <h2 class="text-2xl font-bold text-amber-400 tracking-wide">Step 1: Your Coordinates</h2>
+                
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-amber-200/80 mb-2">Where do you live? (Home City)</label>
+                    <input type="text" id="homeCity" placeholder="e.g. Pune, Surat, or San Jose" class="w-full bg-white/5 border border-amber-500/30 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-amber-400 focus:bg-white/10 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-amber-200/80 mb-2">Which city will you take your flight from?</label>
+                    <input type="text" id="departureCity" placeholder="e.g. Mumbai, New Delhi, or San Francisco" class="w-full bg-white/5 border border-amber-500/30 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-amber-400 focus:bg-white/10 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-amber-200/80 mb-2">Where do you want to go? (Destination)</label>
+                    <input type="text" id="destination" placeholder="e.g. Tokyo, Paris, or Kerala" class="w-full bg-white/5 border border-amber-500/30 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-amber-400 focus:bg-white/10 transition-all">
+                </div>
+
+                <button onclick="nextStep(2)" class="w-full mt-4 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                    Continue to Step 2 →
+                </button>
+            </div>
+
+            <!-- STEP 2: Duration & Budget -->
+            <div id="step-2" class="step-panel hidden space-y-6">
+                <h2 class="text-2xl font-bold text-amber-400 tracking-wide">Step 2: Duration & Budget</h2>
+                
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-amber-200/80 mb-2">How many days is your tour?</label>
+                    <input type="number" id="days" min="1" max="30" placeholder="e.g. 5" class="w-full bg-white/5 border border-amber-500/30 rounded-xl px-5 py-4 text-white placeholder-white/30 focus:outline-none focus:border-amber-400 focus:bg-white/10 transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-amber-200/80 mb-3">Select your Budget Tier</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button type="button" onclick="selectBudget('Backpacker (Budget)')" id="btn-budget-1" class="budget-btn p-4 rounded-xl border border-amber-500/30 bg-white/5 hover:bg-amber-500/20 text-left transition-all">
+                            <div class="font-bold text-amber-300">Backpacker</div>
+                            <div class="text-xs text-white/60 mt-1">Hostels, street food & public transit</div>
+                        </button>
+                        <button type="button" onclick="selectBudget('Moderate (Standard)')" id="btn-budget-2" class="budget-btn p-4 rounded-xl border border-amber-400 bg-amber-500/20 text-left transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                            <div class="font-bold text-amber-300">Moderate</div>
+                            <div class="text-xs text-white/60 mt-1">3-4★ hotels, popular cafes & mix transit</div>
+                        </button>
+                        <button type="button" onclick="selectBudget('Luxury (Premium)')" id="btn-budget-3" class="budget-btn p-4 rounded-xl border border-amber-500/30 bg-white/5 hover:bg-amber-500/20 text-left transition-all">
+                            <div class="font-bold text-amber-300">Luxury</div>
+                            <div class="text-xs text-white/60 mt-1">5★ stays, fine dining & private cabs</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="budget" value="Moderate (Standard)">
+                </div>
+
+                <div class="flex gap-4 pt-2">
+                    <button onclick="nextStep(1)" class="w-1/3 bg-white/10 hover:bg-white/20 text-white uppercase tracking-wider font-bold py-4 rounded-xl transition-all">
+                        ← Back
+                    </button>
+                    <button onclick="nextStep(3)" class="w-2/3 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                        Continue to Step 3 →
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: First Time Check & Visited Places Filter -->
+            <div id="step-3" class="step-panel hidden space-y-6">
+                <h2 class="text-2xl font-bold text-amber-400 tracking-wide">Step 3: Past Visits</h2>
+                
+                <div>
+                    <label class="block text-xs uppercase tracking-widest text-amber-200/80 mb-3">Is this your first time visiting this destination?</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" onclick="setFirstTime('yes')" id="btn-first-yes" class="p-4 rounded-xl border border-amber-400 bg-amber-500/20 font-bold text-amber-300 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                            Yes, First Time!
+                        </button>
+                        <button type="button" onclick="setFirstTime('no')" id="btn-first-no" class="p-4 rounded-xl border border-amber-500/30 bg-white/5 hover:bg-amber-500/20 font-bold text-white/80 transition-all">
+                            No, I've Been Here
+                        </button>
+                    </div>
+                    <input type="hidden" id="isFirstTime" value="yes">
+                </div>
+
+                <!-- Conditional Box: Only appears if they clicked "No, I've Been Here" -->
+                <div id="visited-places-container" class="hidden step-panel">
+                    <label class="block text-xs uppercase tracking-widest text-amber-300 mb-2">
+                        Which places have you already visited? (We will cut these out)
+                    </label>
+                    <textarea id="visitedPlaces" rows="3" placeholder="e.g. Shibuya Crossing, Tokyo Tower, Senso-ji Temple..." class="w-full bg-white/5 border border-amber-500/40 rounded-xl px-5 py-3 text-white placeholder-white/30 focus:outline-none focus:border-amber-400 focus:bg-white/10 transition-all"></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-2">
+                    <button onclick="nextStep(2)" class="w-1/3 bg-white/10 hover:bg-white/20 text-white uppercase tracking-wider font-bold py-4 rounded-xl transition-all">
+                        ← Back
+                    </button>
+                    <button onclick="planTrip()" class="w-2/3 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_25px_rgba(245,158,11,0.7)]">
+                        Generate Master Plan
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LOADING SCREEN -->
+        <div id="loading" class="hidden flex flex-col items-center justify-center my-16 bg-black/60 backdrop-blur-xl p-10 rounded-3xl border border-amber-500/30 max-w-xl mx-auto text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-amber-400 mb-6 shadow-[0_0_20px_rgba(245,158,11,0.6)]"></div>
+            <p class="text-xl text-amber-300 font-bold tracking-widest uppercase">Constructing Your Complete Timeline...</p>
+            <p class="text-sm text-white/60 mt-2">Assigning wake-up times, transit links, hotels, and dining spots.</p>
+        </div>
+
+        <!-- RESULTS CONTAINER -->
+        <div id="itinerary" class="mt-10 space-y-8"></div>
+
     </div>
 
+    <script>
+        // Wizard Navigation Logic
+        function nextStep(step) {
+            if (step === 2) {
+                const home = document.getElementById('homeCity').value.trim();
+                const dep = document.getElementById('departureCity').value.trim();
+                const dest = document.getElementById('destination').value.trim();
+                if (!home || !dep || !dest) {
+                    alert("Please enter your home city, departure flight city, and destination.");
+                    return;
+                }
+            }
+            if (step === 3) {
+                const days = document.getElementById('days').value.trim();
+                if (!days || days < 1) {
+                    alert("Please enter how many days your tour will be.");
+                    return;
+                }
+            }
+
+            // Hide all steps
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.add('hidden');
+
+            // Show target step
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+
+            // Update Progress Badges
+            for (let i = 1; i <= 3; i++) {
+                const badge = document.getElementById(`badge-${i}`);
+                if (i <= step) {
+                    badge.className = "w-8 h-8 rounded-full bg-amber-500 text-black font-bold flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.8)]";
+                } else {
+                    badge.className = "w-8 h-8 rounded-full bg-white/10 text-white/50 font-bold flex items-center justify-center text-sm";
+                }
+            }
+        }
+
+        // Budget Selector Logic
+        function selectBudget(tier) {
+            document.getElementById('budget').value = tier;
+            const buttons = document.querySelectorAll('.budget-btn');
+            buttons.forEach(btn => {
+                btn.className = "budget-btn p-4 rounded-xl border border-amber-500/30 bg-white/5 hover:bg-amber-500/20 text-left transition-all";
+            });
+            event.currentTarget.className = "budget-btn p-4 rounded-xl border border-amber-400 bg-amber-500/20 text-left transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]";
+        }
+
+        // First-Time Toggle Logic
+        function setFirstTime(choice) {
+            document.getElementById('isFirstTime').value = choice;
+            const yesBtn = document.getElementById('btn-first-yes');
+            const noBtn = document.getElementById('btn-first-no');
+            const visitedBox = document.getElementById('visited-places-container');
+
+            if (choice === 'yes') {
+                yesBtn.className = "p-4 rounded-xl border border-amber-400 bg-amber-500/20 font-bold text-amber-300 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]";
+                noBtn.className = "p-4 rounded-xl border border-amber-500/30 bg-white/5 hover:bg-amber-500/20 font-bold text-white/80 transition-all";
+                visitedBox.classList.add('hidden');
+            } else {
+                noBtn.className = "p-4 rounded-xl border border-amber-400 bg-amber-500/20 font-bold text-amber-300 transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]";
+                yesBtn.className = "p-4 rounded-xl border border-amber-500/30 bg-white/5 hover:bg-amber-500/20 font-bold text-white/80 transition-all";
+                visitedBox.classList.remove('hidden');
+            }
+        }
+
+        function resetPlanner() {
+            document.getElementById('itinerary').innerHTML = '';
+            document.getElementById('wizard-container').classList.remove('hidden');
+            nextStep(1);
+        }
+
+        // Call Backend API & Render Visual Timeline
+        async function planTrip() {
+            const homeCity = document.getElementById('homeCity').value.trim();
+            const departureCity = document.getElementById('departureCity').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+            const days = document.getElementById('days').value.trim();
+            const budget = document.getElementById('budget').value;
+            const isFirstTime = document.getElementById('isFirstTime').value;
+            const visitedPlaces = document.getElementById('visitedPlaces').value.trim();
+
+            if (isFirstTime === 'no' && !visitedPlaces) {
+                alert("Please list the places you have already visited so our AI can exclude them!");
+                return;
+            }
+
+            const wizard = document.getElementById('wizard-container');
+            const loadingDiv = document.getElementById('loading');
+            const resultDiv = document.getElementById('itinerary');
+
+            wizard.classList.add('hidden');
+            resultDiv.innerHTML = '';
+            loadingDiv.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/plan-trip', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-site-password': 'mysecretpassword'
+                    },
+                    body: JSON.stringify({ 
+                        homeCity, 
+                        departureCity, 
+                        destination, 
+                        days, 
+                        budget, 
+                        isFirstTime, 
+                        visitedPlaces 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server error');
+                }
+
+                const data = await response.json();
+                loadingDiv.classList.add('hidden');
+                renderItinerary(data);
+
+            } catch (error) {
+                loadingDiv.classList.add('hidden');
+                wizard.classList.remove('hidden');
+                resultDiv.innerHTML = `
+                    <div class="bg-red-950/90 border border-red-500 p-6 rounded-2xl text-red-200 backdrop-blur-md text-center max-w-2xl mx-auto">
+                        Error generating trip. Please wait 60 seconds for Render to finish deploying both files and try again.
+                    </div>`;
+            }
+        }
+
+        function renderItinerary(data) {
+            const resultDiv = document.getElementById('itinerary');
+            const summary = data.summary || {};
+            const stay = summary.recommendedStay || {};
+            const daysList = data.days || [];
+
+            let html = `
+                <!-- Master Summary Card -->
+                <div class="bg-black/70 backdrop-blur-2xl p-8 rounded-3xl border border-amber-500/40 shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-amber-500/30 pb-6 mb-6 gap-4">
+                        <div>
+                            <span class="text-xs uppercase tracking-widest text-amber-400 font-bold">Confirmed Mission Plan</span>
+                            <h2 class="text-3xl md:text-4xl font-extrabold text-white mt-1">${summary.tripTitle || 'Custom Expedition'}</h2>
+                        </div>
+                        <button onclick="resetPlanner()" class="bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400 text-amber-300 px-5 py-2.5 rounded-xl text-xs uppercase tracking-widest font-bold transition-all self-start">
+                            ← Modify / New Trip
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
+                            <div class="text-xs uppercase tracking-widest text-amber-400 font-bold mb-1">1. Home to Departure Airport</div>
+                            <p class="text-sm text-white/90 leading-relaxed">${summary.homeToDepartureTransit || ''}</p>
+                        </div>
+                        <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
+                            <div class="text-xs uppercase tracking-widest text-amber-400 font-bold mb-1">2. Flight & Arrival Route</div>
+                            <p class="text-sm text-white/90 leading-relaxed">${summary.flightStrategy || ''}</p>
+                        </div>
+                        <div class="bg-amber-500/10 p-5 rounded-2xl border border-amber-500/30">
+                            <div class="text-xs uppercase tracking-widest text-amber-300 font-bold mb-1">3. Assigned Where To Stay</div>
+                            <div class="text-lg font-bold text-white">${stay.name || 'Recommended Hotel'} <span class="text-xs font-normal text-amber-200">(${stay.area || ''})</span></div>
+                            <p class="text-sm text-white/80 mt-1 leading-relaxed">${stay.details || ''}</p>
+                        </div>
+                        <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
+                            <div class="text-xs uppercase tracking-widest text-amber-400 font-bold mb-1">4. Local Transit Strategy</div>
+                            <p class="text-sm text-white/90 leading-relaxed">${summary.localTransportGuide || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Render Each Day Card
+            daysList.forEach(day => {
+                let scheduleHtml = '';
+                (day.schedule || []).forEach(item => {
+                    let badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+                    if (item.category === 'Meal') badgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+                    if (item.category === 'Transit') badgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+
+                    scheduleHtml += `
+                        <div class="relative pl-6 pb-6 border-l-2 border-amber-500/30 last:pb-0">
+                            <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.8)]"></div>
+                            <div class="bg-white/5 hover:bg-white/10 transition-all p-5 rounded-2xl border border-white/10">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <span class="text-amber-400 font-mono text-sm font-bold">${item.time || ''}</span>
+                                    <span class="text-xs px-3 py-1 rounded-full border ${badgeColor} uppercase tracking-wider font-bold">${item.category || 'Plan'}</span>
+                                </div>
+                                <h4 class="text-lg font-bold text-white">${item.title || ''}</h4>
+                                <div class="text-xs text-amber-200/70 mt-0.5 mb-2">📍 ${item.location || ''} &nbsp;|&nbsp; 🚆 ${item.transport || ''}</div>
+                                <p class="text-sm text-white/80 leading-relaxed">${item.description || ''}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div class="bg-black/70 backdrop-blur-2xl p-8 rounded-3xl border border-amber-500/30 shadow-2xl">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+                            <div>
+                                <span class="text-xs uppercase tracking-widest text-amber-400 font-bold">Day ${day.dayNumber}</span>
+                                <h3 class="text-2xl font-bold text-white">${day.dayTitle || ''}</h3>
+                            </div>
+                            <div class="flex gap-3">
+                                <span class="bg-amber-500/20 border border-amber-500/40 text-amber-300 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                    ⏰ Wake Up: ${day.wakeUpTime || '07:00 AM'}
+                                </span>
+                                <span class="bg-white/10 border border-white/20 text-white/80 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider">
+                                    🌙 Sleep: ${day.sleepTime || '10:30 PM'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            ${scheduleHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultDiv.innerHTML = html;
+        }
+    </script>
 </body>
 </html>

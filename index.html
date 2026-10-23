@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan Your Next Adventure</title>
+    <title>Plan Your Next Adventure — Desktop AI Travel Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,334 +16,360 @@
             overflow-x: hidden;
         }
 
-        /* Realistic Glowing Earth Horizon Container */
-        .earth-hero {
+        /* Widescreen Desktop Earth Horizon Container */
+        .earth-hero-desktop {
             position: relative;
             width: 100%;
-            height: 290px;
+            height: 430px;
             overflow: hidden;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
+             flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 24px;
         }
 
-        /* Glowing Earth Sphere Effect */
-        .earth-sphere {
+        /* Massive Panoramic Glowing Earth Sphere */
+        .earth-sphere-desktop {
             position: absolute;
-            top: 25px;
-            width: 150%;
-            max-width: 680px;
-            aspect-ratio: 1 / 1;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180vw;
+            min-width: 1500px;
+            max-width: 2400px;
+            height: 180vw;
+            min-height: 1500px;
+            max-height: 2400px;
             border-radius: 50%;
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.9) 0%, rgba(147, 197, 253, 0.45) 8%, rgba(29, 78, 216, 0.2) 22%, transparent 50%),
-                url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1400&q=85');
-            background-size: cover;
-            background-position: center 25%;
+                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(147, 197, 253, 0.45) 6%, rgba(37, 99, 235, 0.2) 18%, transparent 45%),
+                url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=90');
+            background-size: 110% auto;
+            background-position: center 8%;
             box-shadow: 
-                0 -12px 35px rgba(147, 197, 253, 0.55),
-                0 -3px 12px rgba(255, 255, 255, 0.8),
-                inset 0 15px 35px rgba(191, 219, 254, 0.4),
-                inset 0 -90px 90px #030508;
-            animation: subtlePulse 8s ease-in-out infinite alternate;
+                0 -20px 60px rgba(96, 165, 250, 0.55),
+                0 -4px 20px rgba(255, 255, 255, 0.9),
+                inset 0 25px 60px rgba(191, 219, 254, 0.45),
+                inset 0 -180px 160px #030508;
+            z-index: 1;
         }
 
-        /* Sunrise glint at top of Earth curve */
-        .earth-sunrise {
+        /* Atmospheric Sunrise Glint at Top of Earth Crest */
+        .earth-sunrise-desktop {
             position: absolute;
-            top: 12px;
-            left: 44%;
+            top: 14px;
+            left: 48%;
             transform: translateX(-50%);
-            width: 120px;
-            height: 28px;
-            background: radial-gradient(ellipse at center, rgba(255,255,255,0.95) 0%, rgba(191,219,254,0.5) 45%, transparent 75%);
-            filter: blur(4px);
+            width: 320px;
+            height: 45px;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(191,219,254,0.65) 40%, transparent 75%);
+            filter: blur(6px);
             z-index: 2;
             pointer-events: none;
         }
 
-        /* Bottom fade to blend Earth into dark UI */
-        .earth-fade {
+        /* Smooth Vignette Fade into Desktop Background */
+        .earth-fade-desktop {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 110px;
-            background: linear-gradient(to top, #030508 15%, rgba(3, 5, 8, 0.8) 55%, transparent 100%);
+            inset: 0;
+            background: 
+                linear-gradient(to top, #030508 8%, rgba(3, 5, 8, 0.85) 35%, transparent 75%),
+                linear-gradient(to right, #030508 0%, transparent 15%, transparent 85%, #030508 100%);
             z-index: 3;
             pointer-events: none;
         }
 
-        @keyframes subtlePulse {
-            0% { transform: scale(1) rotate(-0.5deg); }
-            100% { transform: scale(1.02) rotate(0.5deg); }
-        }
-
-        /* Glowing Orb inside "Ask me here..." input */
+        /* 3D Glowing Orb inside Command Bar */
         .orb-icon {
-            width: 28px;
-            height: 28px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #4b5563, #111827 70%);
+            background: radial-gradient(circle at 30% 30%, #6b7280, #111827 70%);
             box-shadow: 
-                inset -2px -2px 6px rgba(255, 255, 255, 0.35),
-                inset 2px 2px 6px rgba(0, 0, 0, 0.9),
-                0 0 10px rgba(255, 255, 255, 0.15);
+                inset -3px -3px 8px rgba(255, 255, 255, 0.4),
+                inset 3px 3px 8px rgba(0, 0, 0, 0.95),
+                0 0 14px rgba(147, 197, 253, 0.25);
             flex-shrink: 0;
         }
 
-        /* Hide scrollbars for horizontal carousel */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        /* Smooth Panel Expand Animation */
+        .panel-animate {
+            animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Smooth Modal / Drawer Animation */
-        .drawer-enter {
-            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(-12px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #030508; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
     </style>
 </head>
-<body class="min-h-screen flex justify-center bg-[#030508] text-white pb-28">
+<body class="min-h-screen bg-[#030508] text-white pb-32">
 
-    <!-- Responsive Mobile/App Container -->
-    <div class="w-full max-w-md md:max-w-2xl px-5 pt-8 relative">
+    <!-- FULL WIDESCREEN DESKTOP CONTAINER -->
+    <div class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8">
 
-        <!-- TOP HEADER: Greeting & Avatar -->
-        <div class="flex items-center justify-between mb-6">
+        <!-- TOP DESKTOP HEADER BAR -->
+        <header class="flex items-start justify-between relative z-20 mb-2">
             <div>
-                <p class="text-white/60 text-sm font-normal mb-1">Hi, Traveler!</p>
-                <div class="flex items-center gap-2 cursor-pointer" onclick="openWizard()">
-                    <h1 class="text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
-                        Plan Your Next<br>Adventure <span class="text-white/50 text-xl align-middle ml-1">⌄</span>
+                <p class="text-white/60 text-sm md:text-base font-normal mb-1">Hi, Traveler!</p>
+                <div onclick="openWizard()" class="inline-flex items-center gap-3 cursor-pointer group">
+                    <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight group-hover:text-blue-200 transition-colors">
+                        Plan Your Next Adventure
                     </h1>
+                    <span class="text-white/50 text-2xl mt-1 group-hover:translate-y-0.5 transition-transform">⌄</span>
                 </div>
             </div>
-            <div class="w-12 h-12 rounded-full overflow-hidden border border-white/20 shadow-lg flex-shrink-0">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Profile" class="w-full h-full object-cover">
+
+            <!-- Right Header Controls & Avatar -->
+            <div class="flex items-center gap-4">
+                <button onclick="openWizard()" class="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-5 py-2.5 text-xs font-medium text-white/80 transition-all">
+                    <span>✨ Custom Trip Architect</span>
+                </button>
+                <div class="w-12 h-12 rounded-full overflow-hidden border border-white/25 shadow-xl flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Profile" class="w-full h-full object-cover">
+                </div>
             </div>
-        </div>
+        </header>
 
-        <!-- CENTERPIECE: Glowing Earth Horizon + Prompt Bar -->
-        <div class="earth-hero -mx-5 px-5 mb-4">
-            <div class="earth-sunrise"></div>
-            <div class="earth-sphere"></div>
-            <div class="earth-fade"></div>
+        <!-- WIDESCREEN EARTH HORIZON HERO & COMMAND BAR -->
+        <section class="earth-hero-desktop -mx-6 lg:-mx-12 px-6 lg:px-12">
+            <div class="earth-sunrise-desktop"></div>
+            <div class="earth-sphere-desktop"></div>
+            <div class="earth-fade-desktop"></div>
 
-            <!-- "Ask me here..." Search Bar Overlay -->
-            <div class="relative z-10 w-full pb-2">
-                <div onclick="openWizard()" class="bg-[#151821]/85 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-3.5 flex items-center gap-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.8)] cursor-pointer hover:border-white/25 transition-all">
+            <!-- Centered Widescreen "Ask me here..." Command Bar -->
+            <div class="relative z-10 w-full max-w-3xl mx-auto">
+                <div onclick="openWizard()" class="bg-[#141822]/85 backdrop-blur-2xl border border-white/15 hover:border-blue-400/40 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-[0_20px_60px_rgba(0,0,0,0.9)] cursor-pointer transition-all">
                     <div class="orb-icon"></div>
                     <input 
                         type="text" 
                         id="quickDestinationInput" 
-                        placeholder="Ask me here..." 
+                        placeholder="Ask me here... (e.g., Tokyo, Swiss Alps, Paris, Kerala)" 
                         onclick="event.stopPropagation(); openWizard();"
                         onkeydown="if(event.key === 'Enter') openWizard()"
-                        class="bg-transparent text-white placeholder-white/40 text-sm w-full focus:outline-none"
+                        class="bg-transparent text-white placeholder-white/45 text-base w-full focus:outline-none"
                     >
-                    <button onclick="event.stopPropagation(); openWizard();" class="text-xs bg-white/10 hover:bg-white/20 text-white/90 px-3 py-1.5 rounded-lg font-medium transition-all flex-shrink-0">
-                        Plan
+                    <button onclick="event.stopPropagation(); openWizard();" class="bg-white/10 hover:bg-blue-600 text-white text-sm px-6 py-2.5 rounded-xl font-medium transition-all flex-shrink-0 border border-white/10">
+                        Configure Plan
                     </button>
                 </div>
 
-                <!-- Subtitle under prompt bar -->
-                <div class="flex items-center justify-center gap-2 mt-2.5 text-white/40 text-xs">
-                    <svg class="w-3.5 h-3.5 text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <!-- Waveform Subtitle -->
+                <div class="flex items-center justify-center gap-2.5 mt-3.5 text-white/45 text-sm">
+                    <svg class="w-4 h-4 text-blue-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 3v18M8 7v10M16 7v10M4 11v2M20 11v2" stroke-linecap="round"/>
                     </svg>
-                    <span>Just type your dream destination, we'll handle the plan</span>
+                    <span>Just type your dream destination, we'll handle the complete hour-by-hour plan</span>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- EXPANDABLE AI QUESTIONNAIRE DRAWER (Hidden until user clicks "Ask me here...") -->
-        <div id="planner-drawer" class="hidden drawer-enter bg-[#11131a]/95 backdrop-blur-2xl border border-white/15 rounded-3xl p-6 mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
-            <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
+        <!-- EXPANDABLE DESKTOP AI QUESTIONNAIRE PANEL -->
+        <section id="planner-drawer" class="hidden panel-animate bg-[#10131c]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-8 mb-10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] max-w-5xl mx-auto">
+            <div class="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
                 <div>
-                    <span class="text-[11px] uppercase tracking-widest text-blue-400 font-semibold">AI Travel Architect</span>
-                    <h2 class="text-lg font-semibold text-white">Customize Your Expedition</h2>
+                    <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">AI Travel Architect • Desktop Console</span>
+                    <h2 class="text-2xl font-semibold text-white mt-0.5">Configure Your Complete Expedition</h2>
                 </div>
-                <button onclick="closeWizard()" class="text-white/40 hover:text-white text-sm px-2 py-1">✕</button>
+                <button onclick="closeWizard()" class="w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition-all">✕</button>
             </div>
 
-            <!-- Step 1: Locations -->
-            <div id="step-1" class="space-y-4">
+            <!-- Multi-Column Desktop Form Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                 <div>
-                    <label class="block text-xs text-white/60 mb-1.5">Where do you want to go? (Destination)</label>
-                    <input type="text" id="destination" placeholder="e.g. Tokyo, Paris, Swiss Alps, or Kerala" class="w-full bg-[#1a1d26] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">1. Where do you live? (Home City)</label>
+                    <input type="text" id="homeCity" placeholder="e.g. Sagar, Pune, or New York" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-white/60 mb-1.5">Where do you live? (Home City)</label>
-                        <input type="text" id="homeCity" placeholder="e.g. Sagar, Pune, or NYC" class="w-full bg-[#1a1d26] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-white/60 mb-1.5">Flight Departure City</label>
-                        <input type="text" id="departureCity" placeholder="e.g. Bhopal, Delhi, or Mumbai" class="w-full bg-[#1a1d26] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                    </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">2. Flight Departure City</label>
+                    <input type="text" id="departureCity" placeholder="e.g. Bhopal, Delhi, or Mumbai" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
                 </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-white/60 mb-1.5">How many days?</label>
-                        <input type="number" id="days" min="1" max="30" placeholder="e.g. 5" class="w-full bg-[#1a1d26] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-white/60 mb-1.5">Budget Tier</label>
-                        <select id="budget" class="w-full bg-[#1a1d26] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-400">
-                            <option value="Backpacker (Budget)">Backpacker</option>
-                            <option value="Moderate (Standard)" selected>Moderate</option>
-                            <option value="Luxury (Premium)">Luxury</option>
-                        </select>
-                    </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">3. Destination (Where to?)</label>
+                    <input type="text" id="destination" placeholder="e.g. Tokyo, Swiss Alps, or Bali" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
                 </div>
+            </div>
 
-                <!-- First Time Check -->
-                <div class="pt-1">
-                    <label class="block text-xs text-white/60 mb-2">Is this your first time visiting this destination?</label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">4. Tour Duration (Days)</label>
+                    <input type="number" id="days" min="1" max="30" placeholder="e.g. 5" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
+                </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">5. Budget Tier</label>
+                    <select id="budget" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-blue-400 cursor-pointer">
+                        <option value="Backpacker (Budget)">Backpacker (Hostels, Street Food, Public Transit)</option>
+                        <option value="Moderate (Standard)" selected>Moderate (3-4★ Hotels, Popular Cafes, Mixed Transit)</option>
+                        <option value="Luxury (Premium)">Luxury (5★ Resorts, Fine Dining, Private Chauffeur)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">6. Is this your first visit here?</label>
                     <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="btn-first-yes" onclick="setFirstTime('yes')" class="py-2.5 px-4 rounded-xl border border-blue-400/60 bg-blue-500/20 text-xs font-semibold text-white transition-all">
+                        <button type="button" id="btn-first-yes" onclick="setFirstTime('yes')" class="py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all">
                             Yes, First Time
                         </button>
-                        <button type="button" id="btn-first-no" onclick="setFirstTime('no')" class="py-2.5 px-4 rounded-xl border border-white/10 bg-[#1a1d26] text-xs font-medium text-white/60 hover:text-white transition-all">
-                            No, I've Visited Before
+                        <button type="button" id="btn-first-no" onclick="setFirstTime('no')" class="py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all">
+                            No, Visited Before
                         </button>
                     </div>
                     <input type="hidden" id="isFirstTime" value="yes">
                 </div>
+            </div>
 
-                <!-- Conditional Visited Places Input -->
-                <div id="visited-places-container" class="hidden pt-1">
-                    <label class="block text-xs text-blue-300 mb-1.5">Which places did you already visit? (AI will cut these out)</label>
-                    <textarea id="visitedPlaces" rows="2" placeholder="e.g. Tokyo Tower, Shibuya Crossing, Senso-ji..." class="w-full bg-[#1a1d26] border border-blue-400/40 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400"></textarea>
-                </div>
+            <!-- Conditional Visited Places Filter -->
+            <div id="visited-places-container" class="hidden mb-6 panel-animate">
+                <label class="block text-xs uppercase tracking-wider text-blue-300 mb-2">
+                    Which places have you already visited in this destination? (Our AI will strictly cut these out and assign fresh spots)
+                </label>
+                <textarea id="visitedPlaces" rows="2" placeholder="e.g. Shibuya Crossing, Tokyo Tower, Senso-ji Temple..." class="w-full bg-[#181c28] border border-blue-400/40 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400"></textarea>
+            </div>
 
-                <button onclick="planTrip()" class="w-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm py-3.5 rounded-xl shadow-lg transition-all">
-                    Generate Complete Master Plan
+            <div class="flex justify-end">
+                <button onclick="planTrip()" class="w-full md:w-auto px-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm py-4 rounded-xl shadow-[0_10px_30px_rgba(37,99,235,0.4)] transition-all">
+                    Generate Complete Hour-by-Hour Master Plan →
                 </button>
             </div>
+        </section>
+
+        <!-- LOADING STATE -->
+        <div id="loading" class="hidden bg-[#10131c] border border-white/10 rounded-3xl p-12 mb-10 text-center max-w-3xl mx-auto">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p class="text-lg font-medium text-white">Calculating Your Complete Travel Trajectory...</p>
+            <p class="text-sm text-white/45 mt-1">Assigning home-to-airport transit, hotels, wake-up times, local transport, and dining</p>
         </div>
 
-        <!-- LOADING INDICATOR -->
-        <div id="loading" class="hidden bg-[#12151e] border border-white/10 rounded-3xl p-8 mb-8 text-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p class="text-sm font-medium text-white">Building your hour-by-hour itinerary...</p>
-            <p class="text-xs text-white/40 mt-1">Assigning wake-up times, flight routes, hotels, transit & meals</p>
-        </div>
+        <!-- MAIN DESKTOP CONTENT AREA: My Plan & Explore -->
+        <section class="border-t border-white/10 pt-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-8">
+                    <button class="text-white font-semibold text-xl border-b-2 border-blue-400 pb-1">My Plan</button>
+                    <button onclick="openWizard()" class="text-white/40 hover:text-white/80 font-medium text-xl pb-1 transition-colors">Explore</button>
+                </div>
+                <div class="flex items-center gap-2 text-white/50 text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                    </svg>
+                    <span id="places-count">12 places</span>
+                </div>
+            </div>
 
-        <!-- TABS HEADER: My Plan | Explore -->
-        <div class="flex items-center justify-between border-t border-white/10 pt-5 mb-4">
-            <div class="flex items-center gap-5">
-                <button class="text-white font-semibold text-base">My Plan</button>
-                <button onclick="openWizard()" class="text-white/40 hover:text-white/80 font-medium text-base transition-colors">Explore</button>
-            </div>
-            <div class="flex items-center gap-1.5 text-white/40 text-xs">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                </svg>
-                <span id="places-count">12 places</span>
-            </div>
-        </div>
-
-        <!-- HORIZONTAL PHOTO CAROUSEL (Matches Screenshot Thumbnails) -->
-        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2 mb-5 -mx-1 px-1">
-            <div onclick="quickSelectDestination('Mount Fuji & Tokyo, Japan')" class="w-20 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 cursor-pointer hover:scale-105 transition-transform relative group">
-                <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" alt="Fuji">
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </div>
-            <div onclick="quickSelectDestination('Zermatt & Swiss Alps')" class="w-20 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 cursor-pointer hover:scale-105 transition-transform relative group">
-                <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" alt="Alps">
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </div>
-            <div onclick="quickSelectDestination('Madagascar Baobab Avenue')" class="w-20 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 cursor-pointer hover:scale-105 transition-transform relative group">
-                <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" alt="Nature">
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </div>
-            <div onclick="quickSelectDestination('Kyoto & Osaka, Japan')" class="w-20 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 cursor-pointer hover:scale-105 transition-transform relative group">
-                <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" alt="City">
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </div>
-            <div onclick="quickSelectDestination('Amalfi Coast, Italy')" class="w-20 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 cursor-pointer hover:scale-105 transition-transform relative group">
-                <img src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" alt="Coast">
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </div>
-            <div onclick="quickSelectDestination('Bali, Indonesia')" class="w-20 h-24 rounded-2xl overflow-hidden flex-shrink-0 border border-white/10 cursor-pointer hover:scale-105 transition-transform relative group">
-                <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" alt="Tropics">
-                <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-            </div>
-        </div>
-
-        <!-- SAVED / DEFAULT PLAN CARDS (Matches Screenshot List Cards) -->
-        <div id="default-cards" class="space-y-3">
-            <div onclick="quickSelectDestination('Tokyo, Japan')" class="bg-[#12151e] hover:bg-[#181c28] border border-white/5 rounded-2xl p-3 flex items-center gap-4 cursor-pointer transition-all">
-                <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=200&q=80" alt="Tokyo" class="w-16 h-16 rounded-xl object-cover flex-shrink-0">
-                <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-medium text-white truncate">Tokyo in 10 Days: temples, markets</h3>
-                    <div class="flex items-center gap-3 text-white/40 text-xs mt-1.5">
-                        <span class="flex items-center gap-1">💳 8 types</span>
-                        <span>|</span>
-                        <span class="flex items-center gap-1">🗺️ 8 types</span>
+            <!-- 6-COLUMN WIDESCREEN DESTINATION GALLERY -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <div onclick="quickSelectDestination('Mount Fuji & Tokyo, Japan')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Mount Fuji">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Mt. Fuji, Japan</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectDestination('Tromsø & Northern Lights, Norway')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Aurora">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Aurora, Norway</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectDestination('Black Forest & Bavarian Alps, Germany')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Forest">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Highlands</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectDestination('Shinjuku & Shibuya, Tokyo')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Tokyo Neon">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Tokyo Nights</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectDestination('Santorini & Amalfi Coast')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Mediterranean">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Santorini</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectDestination('Ubud & Uluwatu, Bali')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Bali">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Bali Temples</span>
                     </div>
                 </div>
             </div>
 
-            <div onclick="quickSelectDestination('Swiss Alps & Interlaken')" class="bg-[#12151e]/60 hover:bg-[#181c28] border border-white/5 rounded-2xl p-3 flex items-center gap-4 cursor-pointer transition-all">
-                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=80" alt="Alps" class="w-16 h-16 rounded-xl object-cover flex-shrink-0">
-                <div class="flex-1 min-w-0">
-                    <h3 class="text-sm font-medium text-white truncate">Swiss Alps in 7 Days: scenic trains, peaks</h3>
-                    <div class="flex items-center gap-3 text-white/40 text-xs mt-1.5">
-                        <span class="flex items-center gap-1">💳 6 types</span>
-                        <span>|</span>
-                        <span class="flex items-center gap-1">🗺️ 10 stops</span>
+            <!-- 3-COLUMN WIDESCREEN SAVED / FEATURED PLAN CARDS -->
+            <div id="default-cards" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div onclick="quickSelectDestination('Tokyo, Japan')" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                    <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=200&q=80" alt="Tokyo" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-medium text-white truncate">Tokyo in 10 Days: temples, markets</h3>
+                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
+                            <span>💳 8 types</span>
+                            <span>|</span>
+                            <span>🗺️ 8 types</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="quickSelectDestination('Swiss Alps & Zermatt')" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=80" alt="Alps" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-medium text-white truncate">Swiss Alps in 7 Days: peaks, trains</h3>
+                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
+                            <span>💳 6 types</span>
+                            <span>|</span>
+                            <span>🗺️ 10 stops</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="quickSelectDestination('Paris & Nice, France')" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=200&q=80" alt="Paris" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-medium text-white truncate">Paris in 5 Days: cafes, art, river</h3>
+                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
+                            <span>💳 5 types</span>
+                            <span>|</span>
+                            <span>🗺️ 12 stops</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- GENERATED AI ITINERARY RESULTS CONTAINER -->
-        <div id="itinerary" class="mt-6 space-y-5"></div>
+            <!-- GENERATED WIDESCREEN AI ITINERARY CONTAINER -->
+            <div id="itinerary" class="mt-10 space-y-8"></div>
+        </section>
 
     </div>
 
-    <!-- FLOATING GLASS BOTTOM NAVIGATION BAR (Exact match to screenshot) -->
-    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm">
-        <div class="bg-[#181b24]/85 backdrop-blur-2xl border border-white/10 rounded-full px-3 py-2 flex items-center justify-between shadow-[0_10px_40px_rgba(0,0,0,0.9)]">
-            <!-- Active Home Icon -->
-            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="w-12 h-12 rounded-full bg-gradient-to-b from-white/15 to-white/5 border border-white/20 flex items-center justify-center text-white shadow-inner">
+    <!-- FLOATING GLASS DOCK (Centered cleanly at bottom of desktop viewport) -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
                 </svg>
             </button>
-            <!-- Globe Icon -->
-            <button onclick="openWizard()" class="w-12 h-12 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors">
+            <button onclick="openWizard()" title="Explore & Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="9"/>
                     <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
                 </svg>
             </button>
-            <!-- Community/People Icon -->
-            <button onclick="openWizard()" class="w-12 h-12 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors">
+            <button onclick="openWizard()" title="Travelers" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </button>
-            <!-- Map Icon -->
-            <button onclick="document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})" class="w-12 h-12 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors">
+            <button onclick="document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})" title="Itinerary Map" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                 </svg>
             </button>
-            <!-- Profile Icon -->
-            <button onclick="openWizard()" class="w-12 h-12 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors">
+            <button onclick="openWizard()" title="Profile" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
@@ -358,7 +384,9 @@
             if (quickInput && !destInput.value) {
                 destInput.value = quickInput;
             }
-            document.getElementById('planner-drawer').classList.remove('hidden');
+            const drawer = document.getElementById('planner-drawer');
+            drawer.classList.remove('hidden');
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function closeWizard() {
@@ -379,12 +407,12 @@
             const visitedBox = document.getElementById('visited-places-container');
 
             if (choice === 'yes') {
-                yesBtn.className = "py-2.5 px-4 rounded-xl border border-blue-400/60 bg-blue-500/20 text-xs font-semibold text-white transition-all";
-                noBtn.className = "py-2.5 px-4 rounded-xl border border-white/10 bg-[#1a1d26] text-xs font-medium text-white/60 hover:text-white transition-all";
+                yesBtn.className = "py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all";
+                noBtn.className = "py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all";
                 visitedBox.classList.add('hidden');
             } else {
-                noBtn.className = "py-2.5 px-4 rounded-xl border border-blue-400/60 bg-blue-500/20 text-xs font-semibold text-white transition-all";
-                yesBtn.className = "py-2.5 px-4 rounded-xl border border-white/10 bg-[#1a1d26] text-xs font-medium text-white/60 hover:text-white transition-all";
+                noBtn.className = "py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all";
+                yesBtn.className = "py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all";
                 visitedBox.classList.remove('hidden');
             }
         }
@@ -399,7 +427,7 @@
             const visitedPlaces = document.getElementById('visitedPlaces').value.trim();
 
             if (!homeCity || !departureCity || !destination || !days) {
-                alert("Please fill in your Destination, Home City, Flight Departure City, and Days.");
+                alert("Please fill in your Home City, Flight Departure City, Destination, and Tour Days.");
                 return;
             }
 
@@ -439,8 +467,8 @@
             } catch (error) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('itinerary').innerHTML = `
-                    <div class="bg-red-950/60 border border-red-500/40 p-5 rounded-2xl text-red-200 text-xs text-center">
-                        Unable to reach server. Make sure both server.js and index.html are deployed on Render.
+                    <div class="bg-red-950/60 border border-red-500/40 p-6 rounded-2xl text-red-200 text-sm text-center max-w-2xl mx-auto">
+                        Unable to reach backend server. Please wait 60 seconds for Render to finish deploying and try again.
                     </div>`;
             }
         }
@@ -451,86 +479,77 @@
             const stay = summary.recommendedStay || {};
             const daysList = data.days || [];
 
-            // Count total stops
             let totalStops = 0;
             daysList.forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
             document.getElementById('places-count').innerText = `${totalStops} places`;
 
-            // Update Top Featured Card in "My Plan"
-            document.getElementById('default-cards').innerHTML = `
-                <div class="bg-[#151924] border border-blue-500/30 rounded-2xl p-3.5 flex items-center gap-4 shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=200&q=80" class="w-16 h-16 rounded-xl object-cover flex-shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <span class="text-[10px] uppercase tracking-widest text-blue-400 font-semibold">Active Master Plan</span>
-                        <h3 class="text-sm font-semibold text-white truncate">${summary.tripTitle || `${destination} in ${days} Days`}</h3>
-                        <div class="flex items-center gap-3 text-white/50 text-xs mt-1">
-                            <span>💳 ${budget.split(' ')[0]}</span>
-                            <span>|</span>
-                            <span>🗺️ ${totalStops} scheduled stops</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-
+            // Top Widescreen Logistics Dashboard (4-Column Grid on Desktop)
             let html = `
-                <!-- Logistics & Stay Overview Card -->
-                <div class="bg-[#12151e] border border-white/10 rounded-3xl p-5 space-y-4">
-                    <div class="flex items-center justify-between border-b border-white/10 pb-3">
-                        <h3 class="text-base font-semibold text-white">Logistics & Assigned Stay</h3>
-                        <button onclick="openWizard()" class="text-xs text-blue-400 hover:underline">Edit Trip</button>
+                <div class="bg-[#10131c] border border-blue-500/30 rounded-3xl p-8 shadow-2xl">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6 mb-6">
+                        <div>
+                            <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Active Master Plan</span>
+                            <h2 class="text-3xl font-bold text-white mt-1">${summary.tripTitle || `${destination} (${days} Days)`}</h2>
+                        </div>
+                        <button onclick="openWizard()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all">
+                            Modify Parameters
+                        </button>
                     </div>
 
-                    <div class="space-y-3 text-xs">
-                        <div class="bg-[#1a1e29] p-3.5 rounded-2xl border border-white/5">
-                            <span class="text-blue-400 font-semibold block mb-1">🏠 Home to Departure Airport</span>
-                            <p class="text-white/80 leading-relaxed">${summary.homeToDepartureTransit || ''}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
+                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🏠 1. Home to Airport</span>
+                            <p class="text-sm text-white/85 leading-relaxed">${summary.homeToDepartureTransit || ''}</p>
                         </div>
-                        <div class="bg-[#1a1e29] p-3.5 rounded-2xl border border-white/5">
-                            <span class="text-blue-400 font-semibold block mb-1">✈️ Flight & Arrival Strategy</span>
-                            <p class="text-white/80 leading-relaxed">${summary.flightStrategy || ''}</p>
+                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
+                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">✈️ 2. Flight Strategy</span>
+                            <p class="text-sm text-white/85 leading-relaxed">${summary.flightStrategy || ''}</p>
                         </div>
-                        <div class="bg-blue-950/30 p-3.5 rounded-2xl border border-blue-500/20">
-                            <span class="text-blue-300 font-semibold block mb-1">🏨 Assigned Stay: ${stay.name || 'Hotel'} (${stay.area || ''})</span>
-                            <p class="text-white/80 leading-relaxed">${stay.details || ''}</p>
+                        <div class="bg-blue-950/30 p-5 rounded-2xl border border-blue-400/30">
+                            <span class="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-2">🏨 3. Assigned Stay</span>
+                            <div class="text-base font-bold text-white mb-1">${stay.name || 'Recommended Hotel'} <span class="text-xs font-normal text-blue-200">(${stay.area || ''})</span></div>
+                            <p class="text-xs text-white/80 leading-relaxed">${stay.details || ''}</p>
                         </div>
-                        <div class="bg-[#1a1e29] p-3.5 rounded-2xl border border-white/5">
-                            <span class="text-blue-400 font-semibold block mb-1">🚆 Local Transit Guide</span>
-                            <p class="text-white/80 leading-relaxed">${summary.localTransportGuide || ''}</p>
+                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
+                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🚆 4. Local Transit</span>
+                            <p class="text-sm text-white/85 leading-relaxed">${summary.localTransportGuide || ''}</p>
                         </div>
                     </div>
                 </div>
             `;
 
-            // Day-by-Day Cards
+            // Day-by-Day Widescreen Schedule Grid
             daysList.forEach(day => {
                 let scheduleHtml = '';
                 (day.schedule || []).forEach(item => {
                     scheduleHtml += `
-                        <div class="bg-[#181c27] p-3.5 rounded-2xl border border-white/5 space-y-1.5">
-                            <div class="flex items-center justify-between text-[11px]">
-                                <span class="text-blue-400 font-semibold">${item.time || ''}</span>
-                                <span class="px-2 py-0.5 rounded-md bg-white/5 text-white/60 uppercase">${item.category || 'Stop'}</span>
+                        <div class="bg-[#161a26] hover:bg-[#1c2130] p-5 rounded-2xl border border-white/5 flex flex-col justify-between transition-all">
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-2">
+                                    <span class="text-blue-400 font-semibold">${item.time || ''}</span>
+                                    <span class="px-2.5 py-0.5 rounded-md bg-white/5 text-white/60 uppercase text-[10px] tracking-wider font-semibold">${item.category || 'Plan'}</span>
+                                </div>
+                                <h4 class="text-base font-semibold text-white mb-1">${item.title || ''}</h4>
+                                <p class="text-xs text-blue-200/60 mb-3">📍 ${item.location || ''} &nbsp;•&nbsp; 🚕 ${item.transport || ''}</p>
                             </div>
-                            <h4 class="text-sm font-semibold text-white">${item.title || ''}</h4>
-                            <p class="text-[11px] text-white/50">📍 ${item.location || ''} &nbsp;•&nbsp; 🚕 ${item.transport || ''}</p>
-                            <p class="text-xs text-white/80 leading-relaxed pt-1">${item.description || ''}</p>
+                            <p class="text-xs text-white/80 leading-relaxed border-t border-white/5 pt-3">${item.description || ''}</p>
                         </div>
                     `;
                 });
 
                 html += `
-                    <div class="bg-[#12151e] border border-white/10 rounded-3xl p-5 space-y-4">
-                        <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div class="bg-[#10131c] border border-white/10 rounded-3xl p-8 shadow-xl">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
                             <div>
-                                <span class="text-[11px] uppercase tracking-wider text-blue-400 font-semibold">Day ${day.dayNumber}</span>
-                                <h3 class="text-base font-semibold text-white">${day.dayTitle || ''}</h3>
+                                <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Day ${day.dayNumber}</span>
+                                <h3 class="text-2xl font-bold text-white mt-0.5">${day.dayTitle || ''}</h3>
                             </div>
-                            <div class="text-right text-[11px] text-white/60">
-                                <div>☀️ Wake: <span class="text-white font-medium">${day.wakeUpTime || '07:00 AM'}</span></div>
-                                <div>🌙 Sleep: <span class="text-white font-medium">${day.sleepTime || '10:30 PM'}</span></div>
+                            <div class="flex items-center gap-4 text-xs">
+                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">☀️ Wake Up: <strong>${day.wakeUpTime || '07:00 AM'}</strong></span>
+                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">🌙 Sleep: <strong>${day.sleepTime || '10:30 PM'}</strong></span>
                             </div>
                         </div>
-                        <div class="space-y-2.5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             ${scheduleHtml}
                         </div>
                     </div>

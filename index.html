@@ -1,160 +1,962 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
-const { GoogleGenAI } = require('@google/genai');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
-
-// Initialize Gemini API with your Render Environment Key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// Password Protection Middleware
-const checkPassword = (req, res, next) => {
-    if (req.headers['x-site-password'] === 'mysecretpassword') {
-        next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
-    }
-};
-
-// NEW ROUTE: Gemini AI Live Place Recommender for any Country
-app.post('/api/recommend-places', checkPassword, async (req, res) => {
-    try {
-        const { country } = req.body;
-        const prompt = `List the top 10 best cities, regions, or iconic travel destinations to visit in ${country}. 
-        Return ONLY a strict JSON array of strings, for example: ["Place 1", "Place 2", "Place 3"]`;
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-            }
-        });
-
-        let rawText = typeof response.text === 'function' ? response.text() : response.text;
-        rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-        res.json({ places: JSON.parse(rawText) });
-    } catch (error) {
-        console.error("Place Recommendation Error:", error);
-        res.status(500).json({ error: "Failed to fetch recommendations" });
-    }
-});
-
-// MAIN ROUTE: Complete Master Trip Planner
-app.post('/api/plan-trip', checkPassword, async (req, res) => {
-    try {
-        const { 
-            homeCity, 
-            departureCity, 
-            destinationCountry,
-            selectedPlaces,
-            days, 
-            hotelBudget,
-            dailySpendingBudget,
-            transitStyle,
-            customBudgetNote,
-            isFirstTime, 
-            visitedPlaces 
-        } = req.body;
-
-        const placesToVisitText = (selectedPlaces && selectedPlaces.length > 0)
-            ? `The user specifically wants to visit these places in ${destinationCountry}: ${selectedPlaces.join(', ')}. Structure the route logically around these locations.`
-            : `Select the best cities and regions in ${destinationCountry} for a ${days}-day trip.`;
-
-        const exclusionRule = (isFirstTime === 'no' && visitedPlaces) 
-            ? `CRITICAL RULE: The user has visited ${destinationCountry} before and already saw: ${visitedPlaces}. DO NOT include any of these already-visited places. Suggest fresh attractions and areas.` 
-            : `This is the user's first time visiting ${destinationCountry}.`;
-
-        const prompt = `Act as an elite, hyper-detailed travel architect powered by Gemini. Build a complete, minute-by-minute travel plan based on these exact parameters:
-- Home City (where the user lives): ${homeCity}
-- Flight Departure City (where they board their flight/main transit): ${departureCity}
-- Destination Country: ${destinationCountry}
-- Specific Places to Cover: ${placesToVisitText}
-- Duration: ${days} Days
-- CUSTOM SPLIT BUDGET PROFILE:
-  * Hotel & Stay Preference: ${hotelBudget}
-  * Daily Food & Sights Spending: ${dailySpendingBudget}
-  * Local Transit Style: ${transitStyle}
-  * Special Budget Instruction: ${customBudgetNote || 'Balance the trip according to the split budget above (e.g., if Hotel is Luxury but Daily Spending is Low, book 5-star stays while recommending affordable street food, local eateries, and free/low-cost attractions).'}
-- Experience Rule: ${exclusionRule}
-
-You must decide EVERYTHING for the traveler:
-1. How to get from ${homeCity} to the airport/station in ${departureCity} (specify train, road, or domestic flight timing).
-2. Flight route from ${departureCity} to ${destinationCountry}.
-3. Exact hotel/stay recommendation matching the "${hotelBudget}" tier (name, neighborhood, why it fits their exact hotel preference).
-4. Local transportation strategy matching "${transitStyle}" while respecting their "${dailySpendingBudget}" daily spending preference.
-5. For EVERY SINGLE DAY (Day 1 to Day ${days}), provide:
-   - Exact Wake-Up Time (e.g., "07:00 AM") and Sleep Time
-   - Complete chronological schedule from morning until night:
-     * Breakfast, Lunch, and Dinner (exact time, specific restaurant/stall name matching "${dailySpendingBudget}" food budget, and what dish to order)
-     * Morning, Afternoon & Evening Activities (exact times, specific places, and EXACT transportation to take between each stop + travel duration)
-
-Return the response in STRICT JSON format matching this exact structure (no markdown codeblocks, just raw JSON):
-{
-  "summary": {
-    "tripTitle": "String",
-    "budgetStrategySummary": "String explaining how you tailored the hotels vs daily food/activity spending",
-    "homeToDepartureTransit": "String explaining how to travel from home city to departure city/airport",
-    "flightStrategy": "String explaining flight route from departure city to destination country",
-    "recommendedStay": {
-      "name": "String (Specific Hotel/Resort/Hostel Name)",
-      "area": "String (City & Neighborhood)",
-      "details": "String (Why this stay matches their ${hotelBudget} hotel tier and nightly estimate)"
-    },
-    "localTransportGuide": "String (Best passes, apps, or transit methods matching ${transitStyle})"
-  },
-  "days": [
-    {
-      "dayNumber": 1,
-      "dayTitle": "String (City & Theme of the day)",
-      "wakeUpTime": "String (e.g. 06:30 AM)",
-      "sleepTime": "String (e.g. 10:30 PM)",
-      "schedule": [
-        {
-          "time": "String (e.g. 07:30 AM - 08:30 AM)",
-          "category": "Meal | Activity | Transit | Stay",
-          "title": "String (Name of place, restaurant, or action)",
-          "location": "String (City & Neighborhood)",
-          "transport": "String (Exact transit to get here + duration)",
-          "costNote": "String (Estimated cost level matching their daily spending tier)",
-          "description": "String (What to do, what to eat, or insider tips)"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Your Next Adventure — Desktop AI Travel Architect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030508;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
-      ]
-    }
-  ]
-}`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
+        /* Widescreen Desktop Earth Horizon Container */
+        .earth-hero-desktop {
+            position: relative;
+            width: 100%;
+            height: 410px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 24px;
+        }
+
+        /* Massive Panoramic Glowing Earth Sphere */
+        .earth-sphere-desktop {
+            position: absolute;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180vw;
+            min-width: 1500px;
+            max-width: 2400px;
+            height: 180vw;
+            min-height: 1500px;
+            max-height: 2400px;
+            border-radius: 50%;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(147, 197, 253, 0.45) 6%, rgba(37, 99, 235, 0.2) 18%, transparent 45%),
+                url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=90');
+            background-size: 110% auto;
+            background-position: center 8%;
+            box-shadow: 
+                0 -20px 60px rgba(96, 165, 250, 0.55),
+                0 -4px 20px rgba(255, 255, 255, 0.9),
+                inset 0 25px 60px rgba(191, 219, 254, 0.45),
+                inset 0 -180px 160px #030508;
+            z-index: 1;
+        }
+
+        .earth-sunrise-desktop {
+            position: absolute;
+            top: 14px;
+            left: 48%;
+            transform: translateX(-50%);
+            width: 320px;
+            height: 45px;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(191,219,254,0.65) 40%, transparent 75%);
+            filter: blur(6px);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .earth-fade-desktop {
+            position: absolute;
+            inset: 0;
+            background: 
+                linear-gradient(to top, #030508 8%, rgba(3, 5, 8, 0.85) 35%, transparent 75%),
+                linear-gradient(to right, #030508 0%, transparent 15%, transparent 85%, #030508 100%);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .orb-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #6b7280, #111827 70%);
+            box-shadow: 
+                inset -3px -3px 8px rgba(255, 255, 255, 0.4),
+                inset 3px 3px 8px rgba(0, 0, 0, 0.95),
+                0 0 14px rgba(147, 197, 253, 0.25);
+            flex-shrink: 0;
+        }
+
+        /* Autocomplete Dropdown Menu Styling */
+        .autocomplete-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #141926;
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            border-radius: 14px;
+            max-height: 230px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.95);
+        }
+
+        .autocomplete-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.15s;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        .panel-animate {
+            animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar { width: 7px; height: 7px; }
+        ::-webkit-scrollbar-track { background: #0b0e17; }
+        ::-webkit-scrollbar-thumb { background: #263147; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    </style>
+</head>
+<body class="min-h-screen bg-[#030508] text-white pb-32">
+
+    <!-- FULL WIDESCREEN DESKTOP CONTAINER -->
+    <div class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8">
+
+        <!-- TOP DESKTOP HEADER BAR -->
+        <header class="flex items-start justify-between relative z-20 mb-2">
+            <div>
+                <p class="text-white/60 text-sm md:text-base font-normal mb-1">Hi, Traveler!</p>
+                <div onclick="openWizard()" class="inline-flex items-center gap-3 cursor-pointer group">
+                    <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight group-hover:text-blue-200 transition-colors">
+                        Plan Your Next Adventure
+                    </h1>
+                    <span class="text-white/50 text-2xl mt-1 group-hover:translate-y-0.5 transition-transform">⌄</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-2 text-xs font-medium text-emerald-300">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Gemini 2.5 AI Active</span>
+                </div>
+                <div class="w-12 h-12 rounded-full overflow-hidden border border-white/25 shadow-xl flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Profile" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </header>
+
+        <!-- WIDESCREEN EARTH HORIZON HERO & COMMAND BAR -->
+        <section class="earth-hero-desktop -mx-6 lg:-mx-12 px-6 lg:px-12">
+            <div class="earth-sunrise-desktop"></div>
+            <div class="earth-sphere-desktop"></div>
+            <div class="earth-fade-desktop"></div>
+
+            <!-- Centered Widescreen "Ask me here..." Command Bar -->
+            <div class="relative z-10 w-full max-w-3xl mx-auto">
+                <div onclick="openWizard()" class="bg-[#141822]/85 backdrop-blur-2xl border border-white/15 hover:border-blue-400/40 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-[0_20px_60px_rgba(0,0,0,0.9)] cursor-pointer transition-all">
+                    <div class="orb-icon"></div>
+                    <input 
+                        type="text" 
+                        id="quickDestinationInput" 
+                        placeholder="Ask me here... (Type a country like Japan, Switzerland, India, Italy)" 
+                        onclick="event.stopPropagation(); openWizard();"
+                        onkeydown="if(event.key === 'Enter') openWizard()"
+                        class="bg-transparent text-white placeholder-white/45 text-base w-full focus:outline-none"
+                    >
+                    <button onclick="event.stopPropagation(); openWizard();" class="bg-white/10 hover:bg-blue-600 text-white text-sm px-6 py-2.5 rounded-xl font-medium transition-all flex-shrink-0 border border-white/10">
+                        Configure Plan
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-center gap-2.5 mt-3.5 text-white/45 text-sm">
+                    <svg class="w-4 h-4 text-blue-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3v18M8 7v10M16 7v10M4 11v2M20 11v2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Just type your dream destination, we'll handle the complete hour-by-hour plan</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- EXPANDABLE DESKTOP AI QUESTIONNAIRE PANEL -->
+        <section id="planner-drawer" class="hidden panel-animate bg-[#10131c]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-8 mb-10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] max-w-5xl mx-auto">
+            <div class="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
+                <div>
+                    <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">AI Travel Architect • Desktop Console</span>
+                    <h2 class="text-2xl font-semibold text-white mt-0.5">Configure Your Complete Expedition</h2>
+                </div>
+                <button onclick="closeWizard()" class="w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition-all">✕</button>
+            </div>
+
+            <!-- ROW 1: Live Autocomplete Cities & Destination Country -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+                
+                <!-- 1. Home City with Live Typeahead -->
+                <div class="relative">
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">1. Where do you live? (Home City)</label>
+                    <input 
+                        type="text" 
+                        id="homeCity" 
+                        autocomplete="off"
+                        placeholder="Start typing city (e.g. s, sa, Sagar...)" 
+                        oninput="handleCityInput(this, 'homeCityDropdown', 'city')"
+                        onfocus="handleCityInput(this, 'homeCityDropdown', 'city')"
+                        class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400"
+                    >
+                    <div id="homeCityDropdown" class="autocomplete-menu hidden"></div>
+                </div>
+
+                <!-- 2. Flight Departure City with Live Typeahead -->
+                <div class="relative">
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">2. Flight Departure City</label>
+                    <input 
+                        type="text" 
+                        id="departureCity" 
+                        autocomplete="off"
+                        placeholder="Start typing airport city (e.g. Bhopal, Delhi...)" 
+                        oninput="handleCityInput(this, 'departureCityDropdown', 'airport')"
+                        onfocus="handleCityInput(this, 'departureCityDropdown', 'airport')"
+                        class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400"
+                    >
+                    <div id="departureCityDropdown" class="autocomplete-menu hidden"></div>
+                </div>
+
+                <!-- 3. Destination Country First with Live Typeahead -->
+                <div class="relative">
+                    <label class="block text-xs uppercase tracking-wider text-blue-300 font-semibold mb-2">3. Destination Country (Pick First)</label>
+                    <input 
+                        type="text" 
+                        id="destinationCountry" 
+                        autocomplete="off"
+                        placeholder="Start typing country (e.g. Japan, India, Italy...)" 
+                        oninput="handleCountryInput(this)"
+                        onfocus="handleCountryInput(this)"
+                        class="w-full bg-[#181c28] border border-blue-400/40 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400"
+                    >
+                    <div id="countryDropdown" class="autocomplete-menu hidden"></div>
+                </div>
+            </div>
+
+            <!-- DYNAMIC SECTION 3B: Recommended Places in Selected Country + Custom Places Adder -->
+            <div id="country-places-section" class="hidden panel-animate bg-[#151925] border border-blue-500/25 rounded-2xl p-5 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <div>
+                        <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold">Step 3B • Places in <span id="selected-country-label" class="underline">Selected Country</span></span>
+                        <p class="text-xs text-white/60 mt-0.5">Click recommended places below to include them, or type your own specific places:</p>
+                    </div>
+                    <button type="button" onclick="fetchGeminiPlacesForCountry()" id="ai-places-btn" class="text-xs bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 text-blue-300 px-3.5 py-1.5 rounded-xl font-medium transition-all">
+                        ✨ Ask Gemini AI for More Places
+                    </button>
+                </div>
+
+                <!-- Recommended Places Chips Container -->
+                <div id="recommended-places-chips" class="flex flex-wrap gap-2 mb-4"></div>
+
+                <!-- Add Custom Places Input -->
+                <div class="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-white/10">
+                    <div class="relative flex-1">
+                        <input 
+                            type="text" 
+                            id="customPlaceInput" 
+                            autocomplete="off"
+                            placeholder="Have a specific place or town in mind? Type here (live suggestions enabled)..." 
+                            oninput="handleCityInput(this, 'customPlaceDropdown', 'place')"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addCustomPlace(); }"
+                            class="w-full bg-[#10131c] border border-white/15 rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:border-blue-400"
+                        >
+                        <div id="customPlaceDropdown" class="autocomplete-menu hidden"></div>
+                    </div>
+                    <button type="button" onclick="addCustomPlace()" class="bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-all flex-shrink-0">
+                        + Add Place to Trip
+                    </button>
+                </div>
+            </div>
+
+            <!-- ROW 2: Tour Duration & First-Time Visit Check -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">4. Tour Duration (How Many Days?)</label>
+                    <input type="number" id="days" min="1" max="30" placeholder="e.g. 6" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">5. Is this your first visit to this country?</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btn-first-yes" onclick="setFirstTime('yes')" class="py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all">
+                            Yes, First Time
+                        </button>
+                        <button type="button" id="btn-first-no" onclick="setFirstTime('no')" class="py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all">
+                            No, Visited Before
+                        </button>
+                    </div>
+                    <input type="hidden" id="isFirstTime" value="yes">
+                </div>
+            </div>
+
+            <!-- Conditional Visited Places Exclusion Box -->
+            <div id="visited-places-container" class="hidden mb-6 panel-animate">
+                <label class="block text-xs uppercase tracking-wider text-amber-300 mb-2">
+                    Which places have you already visited? (Gemini will strictly cut these out of your plan)
+                </label>
+                <textarea id="visitedPlaces" rows="2" placeholder="e.g. Shibuya Crossing, Tokyo Tower, Senso-ji Temple..." class="w-full bg-[#181c28] border border-amber-400/40 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-amber-400"></textarea>
+            </div>
+
+            <!-- ROW 3: GRANULAR MIX-AND-MATCH BUDGET BUILDER -->
+            <div class="bg-[#151925] border border-white/10 rounded-2xl p-5 mb-6">
+                <div class="mb-4">
+                    <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold">6. Custom Budget Architect (Mix & Match)</span>
+                    <p class="text-xs text-white/55 mt-0.5">Customize how you want to spend—for example, choose Low Daily Spending with 4-5★ Premium Hotels:</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <!-- Hotel Comfort -->
+                    <div>
+                        <label class="block text-[11px] uppercase tracking-wider text-white/70 mb-1.5">🏨 Hotel & Stay Comfort</label>
+                        <select id="hotelBudget" class="w-full bg-[#10131c] border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-blue-400 cursor-pointer">
+                            <option value="Budget Hostels & Guesthouses">Budget (Hostels / Pod Stays)</option>
+                            <option value="3-to-4 Star Comfort & Boutique Hotels" selected>Comfort (Good 3-4★ Hotels)</option>
+                            <option value="5-Star Luxury Hotels & Resorts">Luxury (5★ Hotels & Resorts)</option>
+                        </select>
+                    </div>
+
+                    <!-- Daily Spending (Food & Sights) -->
+                    <div>
+                        <label class="block text-[11px] uppercase tracking-wider text-white/70 mb-1.5">🍜 Daily Food & Sights Spending</label>
+                        <select id="dailySpendingBudget" class="w-full bg-[#10131c] border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-blue-400 cursor-pointer">
+                            <option value="Low / Economical (Street Food, Local Spots & Free/Cheap Sights)">Low Spending (Street Food & Local Spots)</option>
+                            <option value="Moderate (Popular Cafes, Casual Dining & Standard Tickets)" selected>Moderate (Cafes & Popular Attractions)</option>
+                            <option value="High / Splurge (Fine Dining & VIP Experiences)">High Spending (Fine Dining & VIP Tours)</option>
+                        </select>
+                    </div>
+
+                    <!-- Local Transit Style -->
+                    <div>
+                        <label class="block text-[11px] uppercase tracking-wider text-white/70 mb-1.5">🚆 Local Transit Style</label>
+                        <select id="transitStyle" class="w-full bg-[#10131c] border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-blue-400 cursor-pointer">
+                            <option value="Public Transit Only (Metro, Trains & Buses - Most Economical)">Public Transit (Metro, Trains & Buses)</option>
+                            <option value="Smart Mix (Metro/Trains by day + Cabs when needed)" selected>Mixed (Metro/Trains + Occasional Cab)</option>
+                            <option value="Private Cabs & Chauffeur Only">Private Cabs / Chauffeur Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Optional Custom Budget Note -->
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-white/60 mb-1.5">💡 Specific Budget Preference (Optional)</label>
+                    <input 
+                        type="text" 
+                        id="customBudgetNote" 
+                        placeholder="e.g. Keep daily food and travel cheap, but I want top-notch safe hotels with a great view" 
+                        class="w-full bg-[#10131c] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-blue-400"
+                    >
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="planTrip()" class="w-full md:w-auto px-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm py-4 rounded-xl shadow-[0_10px_30px_rgba(37,99,235,0.4)] transition-all">
+                    Generate Complete Hour-by-Hour Master Plan →
+                </button>
+            </div>
+        </section>
+
+        <!-- LOADING STATE -->
+        <div id="loading" class="hidden bg-[#10131c] border border-white/10 rounded-3xl p-12 mb-10 text-center max-w-3xl mx-auto">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p class="text-lg font-medium text-white">Gemini AI is Designing Your Complete Travel Trajectory...</p>
+            <p class="text-sm text-white/45 mt-1">Matching your split hotel/daily budget, selected places, wake-up times, and transit</p>
+        </div>
+
+        <!-- MAIN DESKTOP CONTENT AREA: My Plan & Explore -->
+        <section class="border-t border-white/10 pt-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-8">
+                    <button class="text-white font-semibold text-xl border-b-2 border-blue-400 pb-1">My Plan</button>
+                    <button onclick="openWizard()" class="text-white/40 hover:text-white/80 font-medium text-xl pb-1 transition-colors">Explore</button>
+                </div>
+                <div class="flex items-center gap-2 text-white/50 text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                    </svg>
+                    <span id="places-count">12 places</span>
+                </div>
+            </div>
+
+            <!-- 6-COLUMN WIDESCREEN DESTINATION GALLERY -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <div onclick="quickSelectCountry('Japan', ['Tokyo', 'Mount Fuji', 'Kyoto'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Mount Fuji">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Japan</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectCountry('Norway', ['Tromsø', 'Lofoten Islands', 'Oslo'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Aurora">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Norway</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectCountry('Switzerland', ['Interlaken', 'Zermatt', 'Lucerne'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Switzerland">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Switzerland</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectCountry('South Korea', ['Seoul', 'Busan', 'Jeju Island'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="City Lights">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">South Korea</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectCountry('Greece', ['Santorini', 'Athens', 'Mykonos'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Greece">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Greece</span>
+                    </div>
+                </div>
+                <div onclick="quickSelectCountry('Indonesia', ['Ubud (Bali)', 'Uluwatu', 'Nusa Penida'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
+                    <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Bali">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
+                        <span class="text-xs font-medium text-white">Indonesia (Bali)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3-COLUMN WIDESCREEN SAVED / FEATURED PLAN CARDS -->
+            <div id="default-cards" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div onclick="quickSelectCountry('Japan', ['Tokyo', 'Kyoto', 'Osaka'])" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                    <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=200&q=80" alt="Tokyo" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-medium text-white truncate">Japan in 10 Days: temples, markets</h3>
+                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
+                            <span>🏨 4★ Stays</span>
+                            <span>|</span>
+                            <span>🍜 Low Daily Spend</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="quickSelectCountry('Switzerland', ['Zermatt', 'Interlaken', 'Lucerne'])" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=80" alt="Alps" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-medium text-white truncate">Switzerland in 7 Days: peaks, trains</h3>
+                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
+                            <span>🏨 Comfort</span>
+                            <span>|</span>
+                            <span>🚆 Scenic Rail</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="quickSelectCountry('India', ['Kerala', 'Munnar', 'Alleppey'])" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                    <img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=200&q=80" alt="Kerala" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-medium text-white truncate">India (Kerala) in 6 Days: backwaters</h3>
+                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
+                            <span>🏨 5★ Resorts</span>
+                            <span>|</span>
+                            <span>🍜 Local Dining</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GENERATED WIDESCREEN AI ITINERARY CONTAINER -->
+            <div id="itinerary" class="mt-10 space-y-8"></div>
+        </section>
+
+    </div>
+
+    <!-- FLOATING GLASS DOCK -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
+                </svg>
+            </button>
+            <button onclick="openWizard()" title="Explore & Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                </svg>
+            </button>
+            <button onclick="openWizard()" title="Custom Budget" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </button>
+            <button onclick="document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})" title="Itinerary Map" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. BUILT-IN INSTANT CITIES & COUNTRIES + LIVE GLOBAL GEOCODING ---
+        const QUICK_CITIES = [
+            "Sagar, Madhya Pradesh, India", "Satna, Madhya Pradesh, India", "Saharanpur, Uttar Pradesh, India",
+            "Sambalpur, Odisha, India", "Surat, Gujarat, India", "Shimla, Himachal Pradesh, India",
+            "Srinagar, Jammu & Kashmir, India", "Siliguri, West Bengal, India", "Solapur, Maharashtra, India",
+            "Salem, Tamil Nadu, India", "San Francisco, USA", "San Jose, USA", "San Diego, USA",
+            "Seattle, USA", "Sydney, Australia", "Singapore, Singapore", "Seoul, South Korea",
+            "Shanghai, China", "Stockholm, Sweden", "Bhopal, Madhya Pradesh, India", "Indore, Madhya Pradesh, India",
+            "Jabalpur, Madhya Pradesh, India", "Gwalior, Madhya Pradesh, India", "Ujjain, Madhya Pradesh, India",
+            "New Delhi, Delhi, India", "Mumbai, Maharashtra, India", "Pune, Maharashtra, India",
+            "Nagpur, Maharashtra, India", "Bengaluru, Karnataka, India", "Hyderabad, Telangana, India",
+            "Chennai, Tamil Nadu, India", "Kolkata, West Bengal, India", "Ahmedabad, Gujarat, India",
+            "Jaipur, Rajasthan, India", "Udaipur, Rajasthan, India", "Jodhpur, Rajasthan, India",
+            "Lucknow, Uttar Pradesh, India", "Varanasi, Uttar Pradesh, India", "Agra, Uttar Pradesh, India",
+            "Kochi, Kerala, India", "Thiruvananthapuram, Kerala, India", "Goa (Panaji), India",
+            "Chandigarh, India", "Amritsar, Punjab, India", "Dehradun, Uttarakhand, India",
+            "Patna, Bihar, India", "Ranchi, Jharkhand, India", "Raipur, Chhattisgarh, India",
+            "Guwahati, Assam, India", "Bhubaneswar, Odisha, India", "Visakhapatnam, Andhra Pradesh, India",
+            "New York, USA", "Los Angeles, USA", "Chicago, USA", "London, United Kingdom",
+            "Manchester, United Kingdom", "Paris, France", "Nice, France", "Tokyo, Japan",
+            "Osaka, Japan", "Kyoto, Japan", "Dubai, UAE", "Abu Dhabi, UAE", "Bangkok, Thailand",
+            "Phuket, Thailand", "Toronto, Canada", "Vancouver, Canada", "Melbourne, Australia",
+            "Frankfurt, Germany", "Munich, Germany", "Berlin, Germany", "Rome, Italy", "Milan, Italy",
+            "Zurich, Switzerland", "Geneva, Switzerland", "Amsterdam, Netherlands", "Madrid, Spain", "Barcelona, Spain"
+        ];
+
+        const COUNTRY_PLACES_DB = {
+            "India": ["Kerala (Munnar & Alleppey)", "Goa", "Jaipur & Udaipur (Rajasthan)", "Manali & Kasol", "Leh-Ladakh", "Rishikesh & Mussoorie", "Varanasi", "Darjeeling & Gangtok", "Andaman Islands", "Coorg & Ooty"],
+            "Japan": ["Tokyo", "Kyoto", "Osaka", "Mount Fuji (Hakone)", "Nara", "Hiroshima", "Sapporo (Hokkaido)", "Takayama", "Okinawa"],
+            "Switzerland": ["Interlaken", "Zermatt (Matterhorn)", "Lucerne", "Jungfraujoch", "Lauterbrunnen", "Zurich", "Geneva", "Montreux", "Grindelwald"],
+            "Thailand": ["Bangkok", "Phuket", "Krabi & Phi Phi Islands", "Chiang Mai", "Koh Samui", "Pattaya", "Ayutthaya"],
+            "Italy": ["Rome", "Venice", "Florence (Tuscany)", "Amalfi Coast & Positano", "Milan", "Lake Como", "Cinque Terre", "Naples"],
+            "France": ["Paris", "Nice & French Riviera", "Chamonix (Mont Blanc)", "Lyon", "Bordeaux", "Mont Saint-Michel", "Provence"],
+            "United Arab Emirates": ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah (Jebel Jais)", "Hatta Mountains"],
+            "Indonesia": ["Ubud (Bali)", "Uluwatu & Seminyak", "Nusa Penida", "Gili Islands", "Lombok", "Yogyakarta", "Komodo Island"],
+            "United Kingdom": ["London", "Edinburgh (Scotland)", "Scottish Highlands & Isle of Skye", "Lake District", "Oxford & Cotswolds", "Bath"],
+            "United States": ["New York City", "Grand Canyon & Sedona", "Los Angeles & Santa Monica", "San Francisco & Yosemite", "Las Vegas", "Miami", "Hawaii (Maui & Oahu)"],
+            "Singapore": ["Marina Bay & Gardens by the Bay", "Sentosa Island", "Chinatown & Little India", "Orchard Road", "Jewel Changi"],
+            "Vietnam": ["Ha Long Bay", "Hanoi", "Hoi An & Da Nang", "Ho Chi Minh City", "Ninh Binh", "Sapa"],
+            "Greece": ["Santorini", "Athens", "Mykonos", "Crete", "Meteora", "Zakynthos"],
+            "Norway": ["Tromsø (Northern Lights)", "Lofoten Islands", "Bergen & Norwegian Fjords", "Oslo", "Geirangerfjord"],
+            "South Korea": ["Seoul", "Busan", "Jeju Island", "Gyeongju", "Incheon"],
+            "Maldives": ["Male", "Maafushi Local Island", "Baa Atoll", "Ari Atoll Overwater Villas"],
+            "Australia": ["Sydney", "Melbourne & Great Ocean Road", "Gold Coast", "Cairns (Great Barrier Reef)", "Tasmania"],
+            "Spain": ["Barcelona", "Madrid", "Seville", "Granada", "Ibiza & Mallorca", "Valencia"],
+            "Germany": ["Munich & Bavarian Alps", "Berlin", "Black Forest", "Neuschwanstein Castle", "Hamburg", "Cologne"],
+            "Turkey": ["Istanbul", "Cappadocia", "Antalya", "Pamukkale", "Bodrum"],
+            "Nepal": ["Kathmandu", "Pokhara", "Chitwan National Park", "Nagarkot"]
+        };
+
+        const ALL_COUNTRIES = Object.keys(COUNTRY_PLACES_DB).concat([
+            "Canada", "Mexico", "Brazil", "Argentina", "Peru", "Chile", "Egypt", "South Africa", "Kenya", 
+            "Morocco", "Mauritius", "Seychelles", "Sri Lanka", "Bhutan", "Malaysia", "Philippines", 
+            "Cambodia", "China", "Taiwan", "New Zealand", "Austria", "Netherlands", "Belgium", "Portugal", 
+            "Ireland", "Iceland", "Sweden", "Finland", "Denmark", "Czech Republic", "Hungary", "Croatia", "Poland"
+        ]);
+
+        // Track Selected Places for the Country
+        let activePlacesList = [];
+        let selectedPlacesSet = new Set();
+        let searchTimeout = null;
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.relative')) {
+                document.querySelectorAll('.autocomplete-menu').forEach(el => el.classList.add('hidden'));
             }
         });
 
-        let rawText = typeof response.text === 'function' ? response.text() : response.text;
-        rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+        // Live City Autocomplete (Instant Local + Live Worldwide API for s, sa, sab...)
+        function handleCityInput(inputEl, dropdownId, mode) {
+            const query = inputEl.value.trim();
+            const dropdown = document.getElementById(dropdownId);
 
-        const parsedData = JSON.parse(rawText);
-        res.json(parsedData);
+            // Hide other dropdowns
+            document.querySelectorAll('.autocomplete-menu').forEach(el => {
+                if (el.id !== dropdownId) el.classList.add('hidden');
+            });
 
-    } catch (error) {
-        console.error("AI Generation Error:", error);
-        res.status(500).json({ error: "Failed to generate itinerary", details: error.message });
-    }
-});
+            if (!query) {
+                dropdown.classList.add('hidden');
+                return;
+            }
 
-// Serve the main frontend
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+            const lowerQuery = query.toLowerCase();
+            // 1. Instant prefix matches (starts with s, sa, sab...) + substring matches
+            const startsWithMatches = QUICK_CITIES.filter(c => c.toLowerCase().startsWith(lowerQuery));
+            const containsMatches = QUICK_CITIES.filter(c => !c.toLowerCase().startsWith(lowerQuery) && c.toLowerCase().includes(lowerQuery));
+            const localResults = [...startsWithMatches, ...containsMatches].slice(0, 6);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+            renderDropdownItems(dropdown, inputEl, localResults, mode);
+
+            // 2. Fetch live global cities from Open-Meteo Geocoding API if 2+ letters typed
+            if (query.length >= 2) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=8&language=en&format=json`);
+                        const data = await res.json();
+                        if (data && data.results) {
+                            const apiCities = data.results.map(item => {
+                                const parts = [item.name];
+                                if (item.admin1) parts.push(item.admin1);
+                                if (item.country) parts.push(item.country);
+                                return parts.join(', ');
+                            });
+                            // Merge without duplicates
+                            const combined = Array.from(new Set([...localResults, ...apiCities])).slice(0, 8);
+                            renderDropdownItems(dropdown, inputEl, combined, mode);
+                        }
+                    } catch (err) {
+                        // Silently keep local results if offline
+                    }
+                }, 180);
+            }
+        }
+
+        function renderDropdownItems(dropdown, inputEl, items, mode) {
+            if (!items || items.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            const icon = mode === 'airport' ? '✈️' : '📍';
+            dropdown.innerHTML = items.map(city => `
+                <div class="autocomplete-item" onclick="selectAutocompleteValue('${inputEl.id}', '${dropdown.id}', '${city.replace(/'/g, "\\'")}')">
+                    <span>${icon} ${city}</span>
+                    <span class="text-[10px] text-blue-400 uppercase tracking-wider">Select</span>
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectAutocompleteValue(inputId, dropdownId, value) {
+            const input = document.getElementById(inputId);
+            input.value = value;
+            document.getElementById(dropdownId).classList.add('hidden');
+        }
+
+        // Live Country Autocomplete + Trigger Recommended Places
+        function handleCountryInput(inputEl) {
+            const query = inputEl.value.trim().toLowerCase();
+            const dropdown = document.getElementById('countryDropdown');
+
+            document.querySelectorAll('.autocomplete-menu').forEach(el => {
+                if (el.id !== 'countryDropdown') el.classList.add('hidden');
+            });
+
+            const matches = query 
+                ? ALL_COUNTRIES.filter(c => c.toLowerCase().startsWith(query) || c.toLowerCase().includes(query)).slice(0, 8)
+                : ALL_COUNTRIES.slice(0, 8);
+
+            dropdown.innerHTML = matches.map(country => `
+                <div class="autocomplete-item" onclick="selectCountry('${country.replace(/'/g, "\\'")}')">
+                    <span>🌍 ${country}</span>
+                    <span class="text-[10px] text-blue-400 uppercase tracking-wider">Pick Country</span>
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+        }
+
+        function selectCountry(country, preselectedPlaces = null) {
+            document.getElementById('destinationCountry').value = country;
+            document.getElementById('countryDropdown').classList.add('hidden');
+            document.getElementById('selected-country-label').innerText = country;
+            document.getElementById('country-places-section').classList.remove('hidden');
+
+            const defaultPlaces = COUNTRY_PLACES_DB[country] || [`Capital & Highlights of ${country}`];
+            activePlacesList = [...defaultPlaces];
+            selectedPlacesSet = new Set(preselectedPlaces || defaultPlaces.slice(0, 3));
+            renderPlaceChips();
+        }
+
+        function renderPlaceChips() {
+            const container = document.getElementById('recommended-places-chips');
+            container.innerHTML = activePlacesList.map(place => {
+                const isSelected = selectedPlacesSet.has(place);
+                const safePlace = place.replace(/'/g, "\\'");
+                return `
+                    <button 
+                        type="button" 
+                        onclick="togglePlaceSelection('${safePlace}')"
+                        class="px-3.5 py-2 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                            isSelected 
+                            ? 'bg-blue-600/30 border-blue-400 text-white shadow-[0_0_12px_rgba(59,130,246,0.3)]' 
+                            : 'bg-[#10131c] border-white/10 text-white/60 hover:text-white hover:border-white/25'
+                        }"
+                    >
+                        <span>${isSelected ? '✓' : '+'}</span>
+                        <span>${place}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function togglePlaceSelection(place) {
+            if (selectedPlacesSet.has(place)) {
+                selectedPlacesSet.delete(place);
+            } else {
+                selectedPlacesSet.add(place);
+            }
+            renderPlaceChips();
+        }
+
+        function addCustomPlace() {
+            const input = document.getElementById('customPlaceInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            if (!activePlacesList.includes(val)) {
+                activePlacesList.push(val);
+            }
+            selectedPlacesSet.add(val);
+            input.value = '';
+            document.getElementById('customPlaceDropdown').classList.add('hidden');
+            renderPlaceChips();
+        }
+
+        // Ask Gemini AI for More Places in the Chosen Country
+        async function fetchGeminiPlacesForCountry() {
+            const country = document.getElementById('destinationCountry').value.trim();
+            if (!country) {
+                alert("Please enter a Destination Country first.");
+                return;
+            }
+            const btn = document.getElementById('ai-places-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "✨ Asking Gemini AI...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/recommend-places', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-site-password': 'mysecretpassword'
+                    },
+                    body: JSON.stringify({ country })
+                });
+                const data = await res.json();
+                if (data && Array.isArray(data.places)) {
+                    data.places.forEach(p => {
+                        if (!activePlacesList.includes(p)) activePlacesList.push(p);
+                    });
+                    renderPlaceChips();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function openWizard() {
+            const quickInput = document.getElementById('quickDestinationInput').value.trim();
+            const countryInput = document.getElementById('destinationCountry');
+            if (quickInput && !countryInput.value) {
+                selectCountry(quickInput);
+            }
+            const drawer = document.getElementById('planner-drawer');
+            drawer.classList.remove('hidden');
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function closeWizard() {
+            document.getElementById('planner-drawer').classList.add('hidden');
+        }
+
+        function quickSelectCountry(country, places) {
+            document.getElementById('quickDestinationInput').value = country;
+            openWizard();
+            selectCountry(country, places);
+            document.getElementById('homeCity').focus();
+        }
+
+        function setFirstTime(choice) {
+            document.getElementById('isFirstTime').value = choice;
+            const yesBtn = document.getElementById('btn-first-yes');
+            const noBtn = document.getElementById('btn-first-no');
+            const visitedBox = document.getElementById('visited-places-container');
+
+            if (choice === 'yes') {
+                yesBtn.className = "py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all";
+                noBtn.className = "py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all";
+                visitedBox.classList.add('hidden');
+            } else {
+                noBtn.className = "py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all";
+                yesBtn.className = "py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all";
+                visitedBox.classList.remove('hidden');
+            }
+        }
+
+        async function planTrip() {
+            const homeCity = document.getElementById('homeCity').value.trim();
+            const departureCity = document.getElementById('departureCity').value.trim();
+            const destinationCountry = document.getElementById('destinationCountry').value.trim() || document.getElementById('quickDestinationInput').value.trim();
+            const days = document.getElementById('days').value.trim();
+            const hotelBudget = document.getElementById('hotelBudget').value;
+            const dailySpendingBudget = document.getElementById('dailySpendingBudget').value;
+            const transitStyle = document.getElementById('transitStyle').value;
+            const customBudgetNote = document.getElementById('customBudgetNote').value.trim();
+            const isFirstTime = document.getElementById('isFirstTime').value;
+            const visitedPlaces = document.getElementById('visitedPlaces').value.trim();
+            const selectedPlaces = Array.from(selectedPlacesSet);
+
+            if (!homeCity || !departureCity || !destinationCountry || !days) {
+                alert("Please fill in your Home City, Flight Departure City, Destination Country, and Tour Days.");
+                return;
+            }
+
+            if (isFirstTime === 'no' && !visitedPlaces) {
+                alert("Please enter the places you have already visited so Gemini can cut them out.");
+                return;
+            }
+
+            closeWizard();
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('itinerary').innerHTML = '';
+
+            try {
+                const response = await fetch('/api/plan-trip', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-site-password': 'mysecretpassword'
+                    },
+                    body: JSON.stringify({ 
+                        homeCity, 
+                        departureCity, 
+                        destinationCountry,
+                        selectedPlaces,
+                        days, 
+                        hotelBudget,
+                        dailySpendingBudget,
+                        transitStyle,
+                        customBudgetNote,
+                        isFirstTime, 
+                        visitedPlaces 
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch');
+
+                const data = await response.json();
+                document.getElementById('loading').classList.add('hidden');
+                renderItinerary(data, destinationCountry, days, hotelBudget, dailySpendingBudget);
+
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('itinerary').innerHTML = `
+                    <div class="bg-red-950/60 border border-red-500/40 p-6 rounded-2xl text-red-200 text-sm text-center max-w-2xl mx-auto">
+                        Unable to reach backend server. Please wait 60 seconds for Render to finish deploying both files and try again.
+                    </div>`;
+            }
+        }
+
+        function renderItinerary(data, destinationCountry, days, hotelBudget, dailySpendingBudget) {
+            const resultDiv = document.getElementById('itinerary');
+            const summary = data.summary || {};
+            const stay = summary.recommendedStay || {};
+            const daysList = data.days || [];
+
+            let totalStops = 0;
+            daysList.forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
+            document.getElementById('places-count').innerText = `${totalStops} places`;
+
+            let html = `
+                <div class="bg-[#10131c] border border-blue-500/30 rounded-3xl p-8 shadow-2xl">
+                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6 mb-6">
+                        <div>
+                            <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Gemini AI Confirmed Expedition</span>
+                            <h2 class="text-3xl font-bold text-white mt-1">${summary.tripTitle || `${destinationCountry} (${days} Days)`}</h2>
+                            <p class="text-xs text-emerald-300 mt-1.5">${summary.budgetStrategySummary || `Stay: ${hotelBudget} • Daily Spend: ${dailySpendingBudget}`}</p>
+                        </div>
+                        <button onclick="openWizard()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all">
+                            Modify Parameters
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
+                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🏠 1. Home to Airport</span>
+                            <p class="text-sm text-white/85 leading-relaxed">${summary.homeToDepartureTransit || ''}</p>
+                        </div>
+                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
+                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">✈️ 2. Flight Strategy</span>
+                            <p class="text-sm text-white/85 leading-relaxed">${summary.flightStrategy || ''}</p>
+                        </div>
+                        <div class="bg-blue-950/30 p-5 rounded-2xl border border-blue-400/30">
+                            <span class="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-2">🏨 3. Assigned Stay</span>
+                            <div class="text-base font-bold text-white mb-1">${stay.name || 'Recommended Hotel'} <span class="text-xs font-normal text-blue-200">(${stay.area || ''})</span></div>
+                            <p class="text-xs text-white/80 leading-relaxed">${stay.details || ''}</p>
+                        </div>
+                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
+                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🚆 4. Local Transit</span>
+                            <p class="text-sm text-white/85 leading-relaxed">${summary.localTransportGuide || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            daysList.forEach(day => {
+                let scheduleHtml = '';
+                (day.schedule || []).forEach(item => {
+                    scheduleHtml += `
+                        <div class="bg-[#161a26] hover:bg-[#1c2130] p-5 rounded-2xl border border-white/5 flex flex-col justify-between transition-all">
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-2">
+                                    <span class="text-blue-400 font-semibold">${item.time || ''}</span>
+                                    <span class="px-2.5 py-0.5 rounded-md bg-white/5 text-white/60 uppercase text-[10px] tracking-wider font-semibold">${item.category || 'Plan'}</span>
+                                </div>
+                                <h4 class="text-base font-semibold text-white mb-1">${item.title || ''}</h4>
+                                <p class="text-xs text-blue-200/60 mb-2">📍 ${item.location || ''} &nbsp;•&nbsp; 🚕 ${item.transport || ''}</p>
+                                ${item.costNote ? `<p class="text-[11px] text-emerald-300/90 mb-2">💳 ${item.costNote}</p>` : ''}
+                            </div>
+                            <p class="text-xs text-white/80 leading-relaxed border-t border-white/5 pt-3">${item.description || ''}</p>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div class="bg-[#10131c] border border-white/10 rounded-3xl p-8 shadow-xl">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+                            <div>
+                                <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Day ${day.dayNumber}</span>
+                                <h3 class="text-2xl font-bold text-white mt-0.5">${day.dayTitle || ''}</h3>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs">
+                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">☀️ Wake Up: <strong>${day.wakeUpTime || '07:00 AM'}</strong></span>
+                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">🌙 Sleep: <strong>${day.sleepTime || '10:30 PM'}</strong></span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${scheduleHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultDiv.innerHTML = html;
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

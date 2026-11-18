@@ -27,6 +27,50 @@ function getGeminiClient() {
     return new GoogleGenAI({ apiKey });
 }
 
+// Smart Gemini caller: uses the latest Flash model and auto-switches if Google updates model names
+async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 8192) {
+    const candidateModels = [
+        'gemini-3.8-flash',
+        'gemini-3.0-flash',
+        'gemini-3-flash',
+        'gemini-flash-latest'
+    ];
+    let lastError = null;
+
+    for (const modelName of candidateModels) {
+        try {
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    maxOutputTokens
+                }
+            });
+            return response;
+        } catch (err) {
+            lastError = err;
+            const msg = err && err.message ? err.message : JSON.stringify(err);
+
+            // If the API error recommends a specific model name, add it to the list automatically
+            const matches = msg.match(/models\/([a-zA-Z0-9._-]+)/g);
+            if (matches && matches.length > 1) {
+                const suggestedModel = matches[1].replace('models/', '');
+                if (!candidateModels.includes(suggestedModel)) {
+                    candidateModels.push(suggestedModel);
+                }
+            }
+
+            // If it's a 404 / model availability issue, try the next model in the list
+            if (msg.includes('404') || msg.includes('NOT_FOUND') || msg.includes('no longer available')) {
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw lastError;
+}
+
 // ROUTE 1: Gemini AI Live Place Recommender for any Country
 app.post('/api/recommend-places', checkPassword, async (req, res) => {
     try {
@@ -35,13 +79,7 @@ app.post('/api/recommend-places', checkPassword, async (req, res) => {
         const prompt = `List the top 10 best cities, regions, or iconic travel destinations to visit in ${country}. 
         Return ONLY a strict JSON array of strings, for example: ["Place 1", "Place 2", "Place 3"]`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-            }
-        });
+        const response = await generateJsonWithGemini(ai, prompt, 2048);
 
         let rawText = typeof response.text === 'function' ? response.text() : response.text;
         rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
@@ -61,7 +99,7 @@ app.post('/api/plan-trip', checkPassword, async (req, res) => {
             homeCity, 
             departureCity, 
             destinationCountry,
-             destination, // fallback if older frontend calls it
+            destination,
             selectedPlaces,
             days, 
             hotelBudget,
@@ -133,14 +171,7 @@ Return ONLY valid JSON matching this exact structure:
   ]
 }`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                maxOutputTokens: 8192,
-            }
-        });
+        const response = await generateJsonWithGemini(ai, prompt, 8192);
 
         let rawText = typeof response.text === 'function' ? response.text() : response.text;
         if (!rawText) {

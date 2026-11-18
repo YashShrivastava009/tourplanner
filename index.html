@@ -16,7 +16,6 @@
             overflow-x: hidden;
         }
 
-        /* Widescreen Desktop Earth Horizon Container */
         .earth-hero-desktop {
             position: relative;
             width: 100%;
@@ -29,7 +28,6 @@
             padding-bottom: 24px;
         }
 
-        /* Massive Panoramic Glowing Earth Sphere */
         .earth-sphere-desktop {
             position: absolute;
             top: 35px;
@@ -90,7 +88,6 @@
             flex-shrink: 0;
         }
 
-        /* Autocomplete Dropdown Menu Styling */
         .autocomplete-menu {
             position: absolute;
             top: calc(100% + 6px);
@@ -141,7 +138,6 @@
 </head>
 <body class="min-h-screen bg-[#030508] text-white pb-32">
 
-    <!-- FULL WIDESCREEN DESKTOP CONTAINER -->
     <div class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8">
 
         <!-- TOP DESKTOP HEADER BAR -->
@@ -173,7 +169,6 @@
             <div class="earth-sphere-desktop"></div>
             <div class="earth-fade-desktop"></div>
 
-            <!-- Centered Widescreen "Ask me here..." Command Bar -->
             <div class="relative z-10 w-full max-w-3xl mx-auto">
                 <div onclick="openWizard()" class="bg-[#141822]/85 backdrop-blur-2xl border border-white/15 hover:border-blue-400/40 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-[0_20px_60px_rgba(0,0,0,0.9)] cursor-pointer transition-all">
                     <div class="orb-icon"></div>
@@ -211,8 +206,6 @@
 
             <!-- ROW 1: Live Autocomplete Cities & Destination Country -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-                
-                <!-- 1. Home City with Live Typeahead -->
                 <div class="relative">
                     <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">1. Where do you live? (Home City)</label>
                     <input 
@@ -227,7 +220,6 @@
                     <div id="homeCityDropdown" class="autocomplete-menu hidden"></div>
                 </div>
 
-                <!-- 2. Flight Departure City with Live Typeahead -->
                 <div class="relative">
                     <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">2. Flight Departure City</label>
                     <input 
@@ -242,7 +234,6 @@
                     <div id="departureCityDropdown" class="autocomplete-menu hidden"></div>
                 </div>
 
-                <!-- 3. Destination Country First with Live Typeahead -->
                 <div class="relative">
                     <label class="block text-xs uppercase tracking-wider text-blue-300 font-semibold mb-2">3. Destination Country (Pick First)</label>
                     <input 
@@ -258,29 +249,27 @@
                 </div>
             </div>
 
-            <!-- DYNAMIC SECTION 3B: Recommended Places in Selected Country + Country-Locked Custom Places Adder -->
+            <!-- DYNAMIC SECTION 3B: Recommended Places in Selected Country + Country-Locked Search -->
             <div id="country-places-section" class="hidden panel-animate bg-[#151925] border border-blue-500/25 rounded-2xl p-5 mb-6">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <div>
                         <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold">Step 3B • Places in <span id="selected-country-label" class="underline">Selected Country</span></span>
-                        <p class="text-xs text-white/60 mt-0.5">Click recommended places below to include them, or search for any city/place inside this country:</p>
+                        <p class="text-xs text-white/60 mt-0.5">Click recommended places below to include them, or search for any city/town inside <span id="selected-country-subtext" class="text-blue-300 font-medium">this country</span>:</p>
                     </div>
                     <button type="button" onclick="fetchGeminiPlacesForCountry()" id="ai-places-btn" class="text-xs bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 text-blue-300 px-3.5 py-1.5 rounded-xl font-medium transition-all">
                         ✨ Ask Gemini AI for More Places
                     </button>
                 </div>
 
-                <!-- Recommended Places Chips Container -->
                 <div id="recommended-places-chips" class="flex flex-wrap gap-2 mb-4"></div>
 
-                <!-- Add Custom Places Input (Strictly filtered to selected Destination Country) -->
                 <div class="flex flex-col sm:flex-row gap-2.5 pt-2 border-t border-white/10">
                     <div class="relative flex-1">
                         <input 
                             type="text" 
                             id="customPlaceInput" 
                             autocomplete="off"
-                            placeholder="Search any city or place in this country..." 
+                            placeholder="Search cities & places inside the selected country..." 
                             oninput="handleCountrySpecificPlaceInput(this)"
                             onfocus="handleCountrySpecificPlaceInput(this)"
                             onkeydown="if(event.key === 'Enter') { event.preventDefault(); addCustomPlace(); }"
@@ -298,7 +287,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                 <div>
                     <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">4. Tour Duration (How Many Days?)</label>
-                    <input type="number" id="days" min="1" max="30" placeholder="e.g. 6" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
+                    <input type="number" id="days" min="1" max="14" value="5" placeholder="e.g. 5" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
                 </div>
 
                 <div>
@@ -331,7 +320,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <!-- Hotel Comfort -->
                     <div>
                         <label class="block text-[11px] uppercase tracking-wider text-white/70 mb-1.5">🏨 Hotel & Stay Comfort</label>
                         <select id="hotelBudget" class="w-full bg-[#10131c] border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-blue-400 cursor-pointer">
@@ -341,7 +329,6 @@
                         </select>
                     </div>
 
-                    <!-- Daily Spending (Food & Sights) -->
                     <div>
                         <label class="block text-[11px] uppercase tracking-wider text-white/70 mb-1.5">🍜 Daily Food & Sights Spending</label>
                         <select id="dailySpendingBudget" class="w-full bg-[#10131c] border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-blue-400 cursor-pointer">
@@ -351,7 +338,6 @@
                         </select>
                     </div>
 
-                    <!-- Local Transit Style -->
                     <div>
                         <label class="block text-[11px] uppercase tracking-wider text-white/70 mb-1.5">🚆 Local Transit Style</label>
                         <select id="transitStyle" class="w-full bg-[#10131c] border border-white/15 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-blue-400 cursor-pointer">
@@ -362,7 +348,6 @@
                     </div>
                 </div>
 
-                <!-- Optional Custom Budget Note -->
                 <div>
                     <label class="block text-[11px] uppercase tracking-wider text-white/60 mb-1.5">💡 Specific Budget Preference (Optional)</label>
                     <input 
@@ -469,7 +454,7 @@
                     </div>
                 </div>
 
-                <div onclick="quickSelectCountry('India', ['Kerala (Munnar & Alleppey)', 'Goa', 'Jaipur & Udaipur (Rajasthan)'])" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
+                <div onclick="quickSelectCountry('India', ['Kerala (Munnar & Alleppey)', 'Goa'])" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
                     <img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=200&q=80" alt="Kerala" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
                     <div class="flex-1 min-w-0">
                         <h3 class="text-base font-medium text-white truncate">India (Kerala) in 6 Days: backwaters</h3>
@@ -516,7 +501,6 @@
     </div>
 
     <script>
-        // --- 1. BUILT-IN INSTANT CITIES, COUNTRY ISO CODES & COUNTRY-SPECIFIC PLACES ---
         const QUICK_CITIES = [
             "Sagar, Madhya Pradesh, India", "Satna, Madhya Pradesh, India", "Saharanpur, Uttar Pradesh, India",
             "Sambalpur, Odisha, India", "Surat, Gujarat, India", "Shimla, Himachal Pradesh, India",
@@ -542,40 +526,32 @@
             "Zurich, Switzerland", "Geneva, Switzerland", "Amsterdam, Netherlands", "Madrid, Spain", "Barcelona, Spain"
         ];
 
-        // Featured chips shown immediately when a country is picked
         const COUNTRY_PLACES_DB = {
-            "India": ["Kerala (Munnar & Alleppey)", "Goa", "Jaipur & Udaipur (Rajasthan)", "Manali & Kasol", "Leh-Ladakh", "Rishikesh & Mussoorie", "Varanasi", "Darjeeling & Gangtok", "Andaman Islands", "Coorg & Ooty"],
-            "Japan": ["Tokyo", "Kyoto", "Osaka", "Mount Fuji (Hakone)", "Nara", "Hiroshima", "Sapporo (Hokkaido)", "Takayama", "Okinawa"],
-            "Switzerland": ["Interlaken", "Zermatt (Matterhorn)", "Lucerne", "Jungfraujoch", "Lauterbrunnen", "Zurich", "Geneva", "Montreux", "Grindelwald"],
-            "Thailand": ["Bangkok", "Phuket", "Krabi & Phi Phi Islands", "Chiang Mai", "Koh Samui", "Pattaya", "Ayutthaya"],
-            "Italy": ["Rome", "Venice", "Florence (Tuscany)", "Amalfi Coast & Positano", "Milan", "Lake Como", "Cinque Terre", "Naples"],
-            "France": ["Paris", "Nice & French Riviera", "Chamonix (Mont Blanc)", "Lyon", "Bordeaux", "Mont Saint-Michel", "Provence"],
-            "United Arab Emirates": ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah (Jebel Jais)", "Hatta Mountains"],
-            "Indonesia": ["Ubud (Bali)", "Uluwatu & Seminyak", "Nusa Penida", "Gili Islands", "Lombok", "Yogyakarta", "Komodo Island"],
-            "United Kingdom": ["London", "Edinburgh (Scotland)", "Scottish Highlands & Isle of Skye", "Lake District", "Oxford & Cotswolds", "Bath"],
-            "United States": ["New York City", "Grand Canyon & Sedona", "Los Angeles & Santa Monica", "San Francisco & Yosemite", "Las Vegas", "Miami", "Hawaii (Maui & Oahu)"],
-            "Singapore": ["Marina Bay & Gardens by the Bay", "Sentosa Island", "Chinatown & Little India", "Orchard Road", "Jewel Changi"],
-            "Vietnam": ["Ha Long Bay", "Hanoi", "Hoi An & Da Nang", "Ho Chi Minh City", "Ninh Binh", "Sapa"],
-            "Greece": ["Santorini", "Athens", "Mykonos", "Crete", "Meteora", "Zakynthos"],
-            "Norway": ["Tromsø (Northern Lights)", "Lofoten Islands", "Bergen & Norwegian Fjords", "Oslo", "Geirangerfjord"],
-            "South Korea": ["Seoul", "Busan", "Jeju Island", "Gyeongju", "Incheon"],
-            "Maldives": ["Male", "Maafushi Local Island", "Baa Atoll", "Ari Atoll Overwater Villas"],
-            "Australia": ["Sydney", "Melbourne & Great Ocean Road", "Gold Coast", "Cairns (Great Barrier Reef)", "Tasmania"],
-            "Spain": ["Barcelona", "Madrid", "Seville", "Granada", "Ibiza & Mallorca", "Valencia"],
-            "Germany": ["Munich & Bavarian Alps", "Berlin", "Black Forest", "Neuschwanstein Castle", "Hamburg", "Cologne"],
-            "Turkey": ["Istanbul", "Cappadocia", "Antalya", "Pamukkale", "Bodrum"],
-            "Nepal": ["Kathmandu", "Pokhara", "Chitwan National Park", "Nagarkot"]
+            "Japan": ["Tokyo", "Kyoto", "Osaka", "Mount Fuji (Hakone)", "Nara", "Hiroshima", "Sapporo (Hokkaido)", "Takayama", "Okinawa", "Fukuoka", "Nagoya", "Kobe", "Yokohama", "Kanazawa", "Nikko", "Kamakura", "Kawaguchiko", "Beppu", "Miyajima", "Nagasaki"],
+            "India": ["Kerala (Munnar & Alleppey)", "Goa", "Jaipur & Udaipur (Rajasthan)", "Manali & Kasol", "Leh-Ladakh", "Rishikesh & Mussoorie", "Varanasi", "Darjeeling & Gangtok", "Andaman Islands", "Coorg & Ooty", "Agra", "Mumbai", "New Delhi", "Bengaluru", "Jodhpur", "Shimla", "Amritsar", "Hampi"],
+            "Switzerland": ["Interlaken", "Zermatt (Matterhorn)", "Lucerne", "Jungfraujoch", "Lauterbrunnen", "Zurich", "Geneva", "Montreux", "Grindelwald", "Bern", "Lugano", "St. Moritz", "Basel", "Davos"],
+            "Thailand": ["Bangkok", "Phuket", "Krabi & Phi Phi Islands", "Chiang Mai", "Koh Samui", "Pattaya", "Ayutthaya", "Chiang Rai", "Hua Hin", "Koh Tao"],
+            "Italy": ["Rome", "Venice", "Florence (Tuscany)", "Amalfi Coast & Positano", "Milan", "Lake Como", "Cinque Terre", "Naples", "Verona", "Pisa", "Siena", "Sicily (Palermo & Taormina)", "Bologna"],
+            "France": ["Paris", "Nice & French Riviera", "Chamonix (Mont Blanc)", "Lyon", "Bordeaux", "Mont Saint-Michel", "Provence", "Cannes", "Marseille", "Strasbourg", "Annecy"],
+            "United Arab Emirates": ["Dubai", "Abu Dhabi", "Sharjah", "Ras Al Khaimah (Jebel Jais)", "Hatta Mountains", "Fujairah", "Al Ain"],
+            "Indonesia": ["Ubud (Bali)", "Uluwatu & Seminyak", "Nusa Penida", "Gili Islands", "Lombok", "Yogyakarta", "Komodo Island", "Jakarta", "Mount Bromo", "Canggu"],
+            "United Kingdom": ["London", "Edinburgh (Scotland)", "Scottish Highlands & Isle of Skye", "Lake District", "Oxford & Cotswolds", "Bath", "Cambridge", "Manchester", "Liverpool", "York"],
+            "United States": ["New York City", "Grand Canyon & Sedona", "Los Angeles & Santa Monica", "San Francisco & Yosemite", "Las Vegas", "Miami", "Hawaii (Maui & Oahu)", "Chicago", "Orlando", "Yellowstone", "Seattle"],
+            "Singapore": ["Marina Bay & Gardens by the Bay", "Sentosa Island", "Chinatown & Little India", "Orchard Road", "Jewel Changi", "Clarke Quay"],
+            "Vietnam": ["Ha Long Bay", "Hanoi", "Hoi An & Da Nang", "Ho Chi Minh City", "Ninh Binh", "Sapa", "Phu Quoc", "Hue"],
+            "Greece": ["Santorini", "Athens", "Mykonos", "Crete", "Meteora", "Zakynthos", "Rhodes", "Corfu", "Naxos"],
+            "Norway": ["Tromsø (Northern Lights)", "Lofoten Islands", "Bergen & Norwegian Fjords", "Oslo", "Geirangerfjord", "Stavanger", "Flåm", "Ålesund"],
+            "South Korea": ["Seoul", "Busan", "Jeju Island", "Gyeongju", "Incheon", "Suwon", "Gangneung", "Jeonju"],
+            "Maldives": ["Male", "Maafushi Local Island", "Baa Atoll", "Ari Atoll Overwater Villas", "Hulhumale"],
+            "Australia": ["Sydney", "Melbourne & Great Ocean Road", "Gold Coast", "Cairns (Great Barrier Reef)", "Tasmania", "Brisbane", "Perth", "Uluru"],
+            "Spain": ["Barcelona", "Madrid", "Seville", "Granada", "Ibiza & Mallorca", "Valencia", "Malaga", "San Sebastian"],
+            "Germany": ["Munich & Bavarian Alps", "Berlin", "Black Forest", "Neuschwanstein Castle", "Hamburg", "Cologne", "Frankfurt", "Heidelberg"],
+            "Turkey": ["Istanbul", "Cappadocia", "Antalya", "Pamukkale", "Bodrum", "Ephesus", "Fethiye"],
+            "Nepal": ["Kathmandu", "Pokhara", "Chitwan National Park", "Nagarkot", "Lumbini", "Mustang"]
         };
 
-        // Extended Country-Specific Cities for Instant 1-Letter Typeahead inside Step 3B
-        const COUNTRY_EXTRA_CITIES = {
-            "Japan": ["Tokyo", "Kyoto", "Osaka", "Yokohama", "Nagoya", "Sapporo", "Fukuoka", "Kobe", "Kawasaki", "Hiroshima", "Sendai", "Chiba", "Kitakyushu", "Sakai", "Niigata", "Hamamatsu", "Kumamoto", "Sagamihara", "Okayama", "Shizuoka", "Kanazawa", "Nagasaki", "Matsuyama", "Utsunomiya", "Matsudo", "Kawaguchi", "Ichikawa", "Oita", "Fukuyama", "Amagasaki", "Kurashiki", "Takamatsu", "Toyama", "Nagano", "Gifu", "Miyazaki", "Toyohashi", "Kagoshima", "Naha (Okinawa)", "Hakodate", "Aomori", "Akita", "Morioka", "Yamagata", "Fukushima", "Mito", "Maebashi", "Kofu", "Tsu", "Otsu", "Wakayama", "Tottori", "Matsue", "Yamaguchi", "Tokushima", "Kochi", "Saga", "Beppu", "Yufu (Yufuin)", "Nikko", "Kamakura", "Hakone", "Kawaguchiko (Mt. Fuji)", "Takayama", "Shirakawa-go", "Nara", "Uji", "Koyasan", "Naoshima", "Miyajima", "Otaru", "Furano", "Biei", "Noboribetsu", "Niseko", "Inuyama", "Inazawa", "Ine (Kyoto)", "Inagi", "Inami", "Ito", "Izu", "Ishigaki", "Izumo", "Iwakuni", "Ise", "Ikaho"],
-            "India": ["Mumbai", "New Delhi", "Bengaluru", "Hyderabad", "Ahmedabad", "Chennai", "Kolkata", "Surat", "Pune", "Jaipur", "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra", "Nashik", "Ranchi", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", "Amritsar", "Allahabad (Prayagraj)", "Gwalior", "Jabalpur", "Coimbatore", "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh", "Solapur", "Mysore (Mysuru)", "Tiruchirappalli", "Dehradun", "Kochi", "Thiruvananthapuram", "Udaipur", "Jaisalmer", "Rishikesh", "Haridwar", "Shimla", "Manali", "Dharamshala", "Leh", "Gangtok", "Darjeeling", "Ooty", "Kodaikanal", "Munnar", "Alleppey", "Panaji (Goa)", "Sagar", "Satna", "Ujjain", "Pachmarhi", "Khajuraho"]
-        };
-
-        // ISO-2 Country Codes for Strict Geocoding API Filtering
         const COUNTRY_ISO_MAP = {
-            "India": "IN", "Japan": "JP", "Switzerland": "CH", "Thailand": "TH", "Italy": "IT",
+            "Japan": "JP", "India": "IN", "Switzerland": "CH", "Thailand": "TH", "Italy": "IT",
             "France": "FR", "United Arab Emirates": "AE", "Indonesia": "ID", "United Kingdom": "GB",
             "United States": "US", "Singapore": "SG", "Vietnam": "VN", "Greece": "GR", "Norway": "NO",
             "South Korea": "KR", "Maldives": "MV", "Australia": "AU", "Spain": "ES", "Germany": "DE",
@@ -590,20 +566,16 @@
 
         const ALL_COUNTRIES = Object.keys(COUNTRY_ISO_MAP);
 
-        // Track Selected Places for the Country
         let activePlacesList = [];
         let selectedPlacesSet = new Set();
         let searchTimeout = null;
-        let placeSearchTimeout = null;
 
-        // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
                 document.querySelectorAll('.autocomplete-menu').forEach(el => el.classList.add('hidden'));
             }
         });
 
-        // 1 & 2. Global City Autocomplete (Matches ONLY the City Name, not the Country name at the end!)
         function handleCityInput(inputEl, dropdownId, mode) {
             const query = inputEl.value.trim();
             const dropdown = document.getElementById(dropdownId);
@@ -619,7 +591,6 @@
 
             const lowerQuery = query.toLowerCase();
 
-            // Match strictly against the CITY NAME (first segment before comma), not the country name!
             const startsWithMatches = QUICK_CITIES.filter(c => {
                 const cityName = c.split(',')[0].trim().toLowerCase();
                 return cityName.startsWith(lowerQuery);
@@ -653,7 +624,6 @@
             }
         }
 
-        // 3B. STRICT COUNTRY-LOCKED PLACE AUTOCOMPLETE (Only recommends places inside the chosen Destination Country)
         function handleCountrySpecificPlaceInput(inputEl) {
             const query = inputEl.value.trim();
             const dropdown = document.getElementById('customPlaceDropdown');
@@ -665,87 +635,81 @@
 
             if (!selectedCountry) {
                 dropdown.innerHTML = `
-                    <div class="autocomplete-item text-amber-300">
-                        <span>⚠️ Please pick a Destination Country in Box 3 first</span>
+                    <div class="px-4 py-3 text-xs text-amber-300">
+                        Please select a Destination Country in Box 3 first.
                     </div>`;
                 dropdown.classList.remove('hidden');
                 return;
             }
 
-            // Build pool of known places inside the selected country ONLY
-            const countryPool = Array.from(new Set([
-                ...(COUNTRY_PLACES_DB[selectedCountry] || []),
-                ...(COUNTRY_EXTRA_CITIES[selectedCountry] || []),
-                ...activePlacesList
-            ]));
+            const countryPlaces = COUNTRY_PLACES_DB[selectedCountry] || [];
+            const lowerQuery = query.toLowerCase();
 
             if (!query) {
-                // Show top places from that country that aren't selected yet
-                const unselected = countryPool.filter(p => !selectedPlacesSet.has(p)).slice(0, 6);
-                renderCountryPlaceDropdown(dropdown, unselected, selectedCountry);
+                const unpicked = countryPlaces.filter(p => !selectedPlacesSet.has(p)).slice(0, 6);
+                renderCountrySpecificDropdown(dropdown, unpicked, selectedCountry);
                 return;
             }
 
-            const lowerQuery = query.toLowerCase();
-            const startsWith = countryPool.filter(p => p.toLowerCase().startsWith(lowerQuery));
-            const contains = countryPool.filter(p => !p.toLowerCase().startsWith(lowerQuery) && p.toLowerCase().includes(lowerQuery));
-            const localCountryMatches = [...startsWith, ...contains].slice(0, 7);
+            const startsWithLocal = countryPlaces.filter(p => p.toLowerCase().startsWith(lowerQuery));
+            const containsLocal = countryPlaces.filter(p => !p.toLowerCase().startsWith(lowerQuery) && p.toLowerCase().includes(lowerQuery));
+            const localCountryMatches = [...startsWithLocal, ...containsLocal].slice(0, 6);
 
-            renderCountryPlaceDropdown(dropdown, localCountryMatches, selectedCountry);
+            renderCountrySpecificDropdown(dropdown, localCountryMatches, selectedCountry);
 
-            // Live API lookup strictly locked to selectedCountry's ISO code & country name
             if (query.length >= 2) {
-                clearTimeout(placeSearchTimeout);
-                placeSearchTimeout = setTimeout(async () => {
+                const isoCode = COUNTRY_ISO_MAP[selectedCountry] || '';
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(async () => {
                     try {
-                        const isoCode = COUNTRY_ISO_MAP[selectedCountry] || '';
-                        const countryParam = isoCode ? `&countryCode=${isoCode}` : '';
-                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=12&language=en&format=json${countryParam}`);
+                        const isoParam = isoCode ? `&countryCode=${isoCode}` : '';
+                        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=12&language=en&format=json${isoParam}`);
                         const data = await res.json();
 
+                        let apiPlaces = [];
                         if (data && data.results) {
-                            // Double-filter by country code OR country name so no foreign city ever leaks in
-                            const filteredApiPlaces = data.results
-                                .filter(item => {
-                                    if (isoCode && item.country_code) {
-                                        return item.country_code.toUpperCase() === isoCode;
-                                    }
-                                    return item.country && item.country.toLowerCase() === selectedCountry.toLowerCase();
-                                })
-                                .map(item => {
-                                    if (item.admin1 && item.admin1.toLowerCase() !== item.name.toLowerCase()) {
-                                        return `${item.name} (${item.admin1})`;
-                                    }
-                                    return item.name;
-                                });
+                            const validResults = data.results.filter(item => {
+                                if (isoCode && item.country_code) {
+                                    return item.country_code.toUpperCase() === isoCode;
+                                }
+                                return item.country && item.country.toLowerCase() === selectedCountry.toLowerCase();
+                            });
 
-                            const combined = Array.from(new Set([...localCountryMatches, ...filteredApiPlaces])).slice(0, 8);
-                            renderCountryPlaceDropdown(dropdown, combined, selectedCountry);
+                            apiPlaces = validResults.map(item => {
+                                if (item.admin1 && item.admin1.toLowerCase() !== item.name.toLowerCase()) {
+                                    return `${item.name} (${item.admin1})`;
+                                }
+                                return item.name;
+                            });
                         }
+
+                        const combined = Array.from(new Set([...localCountryMatches, ...apiPlaces])).slice(0, 8);
+                        renderCountrySpecificDropdown(dropdown, combined, selectedCountry);
                     } catch (err) {}
                 }, 180);
             }
         }
 
-        function renderCountryPlaceDropdown(dropdown, places, selectedCountry) {
+        function renderCountrySpecificDropdown(dropdown, places, selectedCountry) {
             if (!places || places.length === 0) {
                 dropdown.innerHTML = `
-                    <div class="autocomplete-item text-white/50">
-                        <span>No matching city found in ${selectedCountry}. Press "+ Add Place to Trip" to add custom spot.</span>
+                    <div class="px-4 py-3 text-xs text-white/50">
+                        No matching city found in <strong class="text-white">${selectedCountry}</strong>. Press Enter to add custom spot.
                     </div>`;
                 dropdown.classList.remove('hidden');
                 return;
             }
+
             dropdown.innerHTML = places.map(place => `
-                <div class="autocomplete-item" onclick="selectCountryPlaceFromDropdown('${place.replace(/'/g, "\\'")}')">
-                    <span>📍 ${place}, <span class="text-white/50 text-xs">${selectedCountry}</span></span>
-                    <span class="text-[10px] text-blue-400 uppercase tracking-wider font-semibold">+ Add to ${selectedCountry}</span>
+                <div class="autocomplete-item" onclick="selectPlaceInCountry('${place.replace(/'/g, "\\'")}')">
+                    <span>📍 ${place} <span class="text-white/40 text-[11px] ml-1">• ${selectedCountry}</span></span>
+                    <span class="text-[10px] text-emerald-400 uppercase tracking-wider font-semibold">+ Add to ${selectedCountry}</span>
                 </div>
             `).join('');
             dropdown.classList.remove('hidden');
         }
 
-        function selectCountryPlaceFromDropdown(place) {
+        function selectPlaceInCountry(place) {
             if (!activePlacesList.includes(place)) {
                 activePlacesList.push(place);
             }
@@ -776,7 +740,6 @@
             document.getElementById(dropdownId).classList.add('hidden');
         }
 
-        // Live Country Autocomplete + Trigger Recommended Places
         function handleCountryInput(inputEl) {
             const query = inputEl.value.trim().toLowerCase();
             const dropdown = document.getElementById('countryDropdown');
@@ -802,13 +765,13 @@
             document.getElementById('destinationCountry').value = country;
             document.getElementById('countryDropdown').classList.add('hidden');
             document.getElementById('selected-country-label').innerText = country;
-            document.getElementById('customPlaceInput').placeholder = `Search any city or place in ${country} (e.g. type a letter)...`;
+            document.getElementById('selected-country-subtext').innerText = country;
             document.getElementById('customPlaceInput').value = '';
-            document.getElementById('customPlaceDropdown').classList.add('hidden');
+            document.getElementById('customPlaceInput').placeholder = `Search cities & places in ${country} (e.g. type a city in ${country})...`;
             document.getElementById('country-places-section').classList.remove('hidden');
 
             const defaultPlaces = COUNTRY_PLACES_DB[country] || [`Capital & Highlights of ${country}`];
-            activePlacesList = [...defaultPlaces];
+            activePlacesList = [...defaultPlaces.slice(0, 10)];
             selectedPlacesSet = new Set(preselectedPlaces || defaultPlaces.slice(0, 3));
             renderPlaceChips();
         }
@@ -858,7 +821,6 @@
             renderPlaceChips();
         }
 
-        // Ask Gemini AI for More Places in the Chosen Country
         async function fetchGeminiPlacesForCountry() {
             const country = document.getElementById('destinationCountry').value.trim();
             if (!country) {
@@ -885,6 +847,8 @@
                         if (!activePlacesList.includes(p)) activePlacesList.push(p);
                     });
                     renderPlaceChips();
+                } else if (data && data.details) {
+                    alert("Gemini Error: " + data.details);
                 }
             } catch (e) {
                 console.error(e);
@@ -982,17 +946,21 @@
                     })
                 });
 
-                if (!response.ok) throw new Error('Failed to fetch');
-
                 const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.details || data.error || `Server error (${response.status})`);
+                }
+
                 document.getElementById('loading').classList.add('hidden');
                 renderItinerary(data, destinationCountry, days, hotelBudget, dailySpendingBudget);
 
             } catch (error) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('itinerary').innerHTML = `
-                    <div class="bg-red-950/60 border border-red-500/40 p-6 rounded-2xl text-red-200 text-sm text-center max-w-2xl mx-auto">
-                        Unable to reach backend server. Please wait 60 seconds for Render to finish deploying both files and try again.
+                    <div class="bg-red-950/70 border border-red-500/50 p-6 rounded-2xl text-red-200 text-sm text-center max-w-2xl mx-auto space-y-2">
+                        <div class="font-bold text-red-300 uppercase tracking-wider text-xs">Diagnostic Server Message</div>
+                        <div>${error.message}</div>
                     </div>`;
             }
         }

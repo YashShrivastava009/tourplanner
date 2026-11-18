@@ -1,564 +1,160 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan Your Next Adventure — Desktop AI Travel Architect</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #030508;
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+const { GoogleGenAI } = require('@google/genai');
 
-        /* Widescreen Desktop Earth Horizon Container */
-        .earth-hero-desktop {
-            position: relative;
-            width: 100%;
-            height: 430px;
-            overflow: hidden;
-            display: flex;
-             flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 24px;
-        }
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
 
-        /* Massive Panoramic Glowing Earth Sphere */
-        .earth-sphere-desktop {
-            position: absolute;
-            top: 35px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 180vw;
-            min-width: 1500px;
-            max-width: 2400px;
-            height: 180vw;
-            min-height: 1500px;
-            max-height: 2400px;
-            border-radius: 50%;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(147, 197, 253, 0.45) 6%, rgba(37, 99, 235, 0.2) 18%, transparent 45%),
-                url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=90');
-            background-size: 110% auto;
-            background-position: center 8%;
-            box-shadow: 
-                0 -20px 60px rgba(96, 165, 250, 0.55),
-                0 -4px 20px rgba(255, 255, 255, 0.9),
-                inset 0 25px 60px rgba(191, 219, 254, 0.45),
-                inset 0 -180px 160px #030508;
-            z-index: 1;
-        }
+// Initialize Gemini API with your Render Environment Key
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-        /* Atmospheric Sunrise Glint at Top of Earth Crest */
-        .earth-sunrise-desktop {
-            position: absolute;
-            top: 14px;
-            left: 48%;
-            transform: translateX(-50%);
-            width: 320px;
-            height: 45px;
-            background: radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(191,219,254,0.65) 40%, transparent 75%);
-            filter: blur(6px);
-            z-index: 2;
-            pointer-events: none;
-        }
+// Password Protection Middleware
+const checkPassword = (req, res, next) => {
+    if (req.headers['x-site-password'] === 'mysecretpassword') {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+};
 
-        /* Smooth Vignette Fade into Desktop Background */
-        .earth-fade-desktop {
-            position: absolute;
-            inset: 0;
-            background: 
-                linear-gradient(to top, #030508 8%, rgba(3, 5, 8, 0.85) 35%, transparent 75%),
-                linear-gradient(to right, #030508 0%, transparent 15%, transparent 85%, #030508 100%);
-            z-index: 3;
-            pointer-events: none;
-        }
+// NEW ROUTE: Gemini AI Live Place Recommender for any Country
+app.post('/api/recommend-places', checkPassword, async (req, res) => {
+    try {
+        const { country } = req.body;
+        const prompt = `List the top 10 best cities, regions, or iconic travel destinations to visit in ${country}. 
+        Return ONLY a strict JSON array of strings, for example: ["Place 1", "Place 2", "Place 3"]`;
 
-        /* 3D Glowing Orb inside Command Bar */
-        .orb-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #6b7280, #111827 70%);
-            box-shadow: 
-                inset -3px -3px 8px rgba(255, 255, 255, 0.4),
-                inset 3px 3px 8px rgba(0, 0, 0, 0.95),
-                0 0 14px rgba(147, 197, 253, 0.25);
-            flex-shrink: 0;
-        }
-
-        /* Smooth Panel Expand Animation */
-        .panel-animate {
-            animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #030508; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
-    </style>
-</head>
-<body class="min-h-screen bg-[#030508] text-white pb-32">
-
-    <!-- FULL WIDESCREEN DESKTOP CONTAINER -->
-    <div class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8">
-
-        <!-- TOP DESKTOP HEADER BAR -->
-        <header class="flex items-start justify-between relative z-20 mb-2">
-            <div>
-                <p class="text-white/60 text-sm md:text-base font-normal mb-1">Hi, Traveler!</p>
-                <div onclick="openWizard()" class="inline-flex items-center gap-3 cursor-pointer group">
-                    <h1 class="text-4xl lg:text-5xl font-semibold tracking-tight leading-tight group-hover:text-blue-200 transition-colors">
-                        Plan Your Next Adventure
-                    </h1>
-                    <span class="text-white/50 text-2xl mt-1 group-hover:translate-y-0.5 transition-transform">⌄</span>
-                </div>
-            </div>
-
-            <!-- Right Header Controls & Avatar -->
-            <div class="flex items-center gap-4">
-                <button onclick="openWizard()" class="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-5 py-2.5 text-xs font-medium text-white/80 transition-all">
-                    <span>✨ Custom Trip Architect</span>
-                </button>
-                <div class="w-12 h-12 rounded-full overflow-hidden border border-white/25 shadow-xl flex-shrink-0">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Profile" class="w-full h-full object-cover">
-                </div>
-            </div>
-        </header>
-
-        <!-- WIDESCREEN EARTH HORIZON HERO & COMMAND BAR -->
-        <section class="earth-hero-desktop -mx-6 lg:-mx-12 px-6 lg:px-12">
-            <div class="earth-sunrise-desktop"></div>
-            <div class="earth-sphere-desktop"></div>
-            <div class="earth-fade-desktop"></div>
-
-            <!-- Centered Widescreen "Ask me here..." Command Bar -->
-            <div class="relative z-10 w-full max-w-3xl mx-auto">
-                <div onclick="openWizard()" class="bg-[#141822]/85 backdrop-blur-2xl border border-white/15 hover:border-blue-400/40 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-[0_20px_60px_rgba(0,0,0,0.9)] cursor-pointer transition-all">
-                    <div class="orb-icon"></div>
-                    <input 
-                        type="text" 
-                        id="quickDestinationInput" 
-                        placeholder="Ask me here... (e.g., Tokyo, Swiss Alps, Paris, Kerala)" 
-                        onclick="event.stopPropagation(); openWizard();"
-                        onkeydown="if(event.key === 'Enter') openWizard()"
-                        class="bg-transparent text-white placeholder-white/45 text-base w-full focus:outline-none"
-                    >
-                    <button onclick="event.stopPropagation(); openWizard();" class="bg-white/10 hover:bg-blue-600 text-white text-sm px-6 py-2.5 rounded-xl font-medium transition-all flex-shrink-0 border border-white/10">
-                        Configure Plan
-                    </button>
-                </div>
-
-                <!-- Waveform Subtitle -->
-                <div class="flex items-center justify-center gap-2.5 mt-3.5 text-white/45 text-sm">
-                    <svg class="w-4 h-4 text-blue-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 3v18M8 7v10M16 7v10M4 11v2M20 11v2" stroke-linecap="round"/>
-                    </svg>
-                    <span>Just type your dream destination, we'll handle the complete hour-by-hour plan</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- EXPANDABLE DESKTOP AI QUESTIONNAIRE PANEL -->
-        <section id="planner-drawer" class="hidden panel-animate bg-[#10131c]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-8 mb-10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] max-w-5xl mx-auto">
-            <div class="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
-                <div>
-                    <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">AI Travel Architect • Desktop Console</span>
-                    <h2 class="text-2xl font-semibold text-white mt-0.5">Configure Your Complete Expedition</h2>
-                </div>
-                <button onclick="closeWizard()" class="w-9 h-9 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white transition-all">✕</button>
-            </div>
-
-            <!-- Multi-Column Desktop Form Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">1. Where do you live? (Home City)</label>
-                    <input type="text" id="homeCity" placeholder="e.g. Sagar, Pune, or New York" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">2. Flight Departure City</label>
-                    <input type="text" id="departureCity" placeholder="e.g. Bhopal, Delhi, or Mumbai" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">3. Destination (Where to?)</label>
-                    <input type="text" id="destination" placeholder="e.g. Tokyo, Swiss Alps, or Bali" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">4. Tour Duration (Days)</label>
-                    <input type="number" id="days" min="1" max="30" placeholder="e.g. 5" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400">
-                </div>
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">5. Budget Tier</label>
-                    <select id="budget" class="w-full bg-[#181c28] border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-blue-400 cursor-pointer">
-                        <option value="Backpacker (Budget)">Backpacker (Hostels, Street Food, Public Transit)</option>
-                        <option value="Moderate (Standard)" selected>Moderate (3-4★ Hotels, Popular Cafes, Mixed Transit)</option>
-                        <option value="Luxury (Premium)">Luxury (5★ Resorts, Fine Dining, Private Chauffeur)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-white/60 mb-2">6. Is this your first visit here?</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="btn-first-yes" onclick="setFirstTime('yes')" class="py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all">
-                            Yes, First Time
-                        </button>
-                        <button type="button" id="btn-first-no" onclick="setFirstTime('no')" class="py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all">
-                            No, Visited Before
-                        </button>
-                    </div>
-                    <input type="hidden" id="isFirstTime" value="yes">
-                </div>
-            </div>
-
-            <!-- Conditional Visited Places Filter -->
-            <div id="visited-places-container" class="hidden mb-6 panel-animate">
-                <label class="block text-xs uppercase tracking-wider text-blue-300 mb-2">
-                    Which places have you already visited in this destination? (Our AI will strictly cut these out and assign fresh spots)
-                </label>
-                <textarea id="visitedPlaces" rows="2" placeholder="e.g. Shibuya Crossing, Tokyo Tower, Senso-ji Temple..." class="w-full bg-[#181c28] border border-blue-400/40 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-blue-400"></textarea>
-            </div>
-
-            <div class="flex justify-end">
-                <button onclick="planTrip()" class="w-full md:w-auto px-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm py-4 rounded-xl shadow-[0_10px_30px_rgba(37,99,235,0.4)] transition-all">
-                    Generate Complete Hour-by-Hour Master Plan →
-                </button>
-            </div>
-        </section>
-
-        <!-- LOADING STATE -->
-        <div id="loading" class="hidden bg-[#10131c] border border-white/10 rounded-3xl p-12 mb-10 text-center max-w-3xl mx-auto">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p class="text-lg font-medium text-white">Calculating Your Complete Travel Trajectory...</p>
-            <p class="text-sm text-white/45 mt-1">Assigning home-to-airport transit, hotels, wake-up times, local transport, and dining</p>
-        </div>
-
-        <!-- MAIN DESKTOP CONTENT AREA: My Plan & Explore -->
-        <section class="border-t border-white/10 pt-8">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-8">
-                    <button class="text-white font-semibold text-xl border-b-2 border-blue-400 pb-1">My Plan</button>
-                    <button onclick="openWizard()" class="text-white/40 hover:text-white/80 font-medium text-xl pb-1 transition-colors">Explore</button>
-                </div>
-                <div class="flex items-center gap-2 text-white/50 text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
-                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                    </svg>
-                    <span id="places-count">12 places</span>
-                </div>
-            </div>
-
-            <!-- 6-COLUMN WIDESCREEN DESTINATION GALLERY -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                <div onclick="quickSelectDestination('Mount Fuji & Tokyo, Japan')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Mount Fuji">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Mt. Fuji, Japan</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectDestination('Tromsø & Northern Lights, Norway')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Aurora">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Aurora, Norway</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectDestination('Black Forest & Bavarian Alps, Germany')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Forest">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Highlands</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectDestination('Shinjuku & Shibuya, Tokyo')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Tokyo Neon">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Tokyo Nights</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectDestination('Santorini & Amalfi Coast')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Mediterranean">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Santorini</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectDestination('Ubud & Uluwatu, Bali')" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Bali">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Bali Temples</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3-COLUMN WIDESCREEN SAVED / FEATURED PLAN CARDS -->
-            <div id="default-cards" class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div onclick="quickSelectDestination('Tokyo, Japan')" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=200&q=80" alt="Tokyo" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-base font-medium text-white truncate">Tokyo in 10 Days: temples, markets</h3>
-                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
-                            <span>💳 8 types</span>
-                            <span>|</span>
-                            <span>🗺️ 8 types</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div onclick="quickSelectDestination('Swiss Alps & Zermatt')" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=80" alt="Alps" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-base font-medium text-white truncate">Swiss Alps in 7 Days: peaks, trains</h3>
-                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
-                            <span>💳 6 types</span>
-                            <span>|</span>
-                            <span>🗺️ 10 stops</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div onclick="quickSelectDestination('Paris & Nice, France')" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=200&q=80" alt="Paris" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-base font-medium text-white truncate">Paris in 5 Days: cafes, art, river</h3>
-                        <div class="flex items-center gap-3 text-white/45 text-xs mt-2">
-                            <span>💳 5 types</span>
-                            <span>|</span>
-                            <span>🗺️ 12 stops</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GENERATED WIDESCREEN AI ITINERARY CONTAINER -->
-            <div id="itinerary" class="mt-10 space-y-8"></div>
-        </section>
-
-    </div>
-
-    <!-- FLOATING GLASS DOCK (Centered cleanly at bottom of desktop viewport) -->
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
-            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
-                </svg>
-            </button>
-            <button onclick="openWizard()" title="Explore & Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9"/>
-                    <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
-                </svg>
-            </button>
-            <button onclick="openWizard()" title="Travelers" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-            </button>
-            <button onclick="document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})" title="Itinerary Map" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                </svg>
-            </button>
-            <button onclick="openWizard()" title="Profile" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <script>
-        function openWizard() {
-            const quickInput = document.getElementById('quickDestinationInput').value.trim();
-            const destInput = document.getElementById('destination');
-            if (quickInput && !destInput.value) {
-                destInput.value = quickInput;
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
             }
-            const drawer = document.getElementById('planner-drawer');
-            drawer.classList.remove('hidden');
-            drawer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        let rawText = typeof response.text === 'function' ? response.text() : response.text;
+        rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+        res.json({ places: JSON.parse(rawText) });
+    } catch (error) {
+        console.error("Place Recommendation Error:", error);
+        res.status(500).json({ error: "Failed to fetch recommendations" });
+    }
+});
+
+// MAIN ROUTE: Complete Master Trip Planner
+app.post('/api/plan-trip', checkPassword, async (req, res) => {
+    try {
+        const { 
+            homeCity, 
+            departureCity, 
+            destinationCountry,
+            selectedPlaces,
+            days, 
+            hotelBudget,
+            dailySpendingBudget,
+            transitStyle,
+            customBudgetNote,
+            isFirstTime, 
+            visitedPlaces 
+        } = req.body;
+
+        const placesToVisitText = (selectedPlaces && selectedPlaces.length > 0)
+            ? `The user specifically wants to visit these places in ${destinationCountry}: ${selectedPlaces.join(', ')}. Structure the route logically around these locations.`
+            : `Select the best cities and regions in ${destinationCountry} for a ${days}-day trip.`;
+
+        const exclusionRule = (isFirstTime === 'no' && visitedPlaces) 
+            ? `CRITICAL RULE: The user has visited ${destinationCountry} before and already saw: ${visitedPlaces}. DO NOT include any of these already-visited places. Suggest fresh attractions and areas.` 
+            : `This is the user's first time visiting ${destinationCountry}.`;
+
+        const prompt = `Act as an elite, hyper-detailed travel architect powered by Gemini. Build a complete, minute-by-minute travel plan based on these exact parameters:
+- Home City (where the user lives): ${homeCity}
+- Flight Departure City (where they board their flight/main transit): ${departureCity}
+- Destination Country: ${destinationCountry}
+- Specific Places to Cover: ${placesToVisitText}
+- Duration: ${days} Days
+- CUSTOM SPLIT BUDGET PROFILE:
+  * Hotel & Stay Preference: ${hotelBudget}
+  * Daily Food & Sights Spending: ${dailySpendingBudget}
+  * Local Transit Style: ${transitStyle}
+  * Special Budget Instruction: ${customBudgetNote || 'Balance the trip according to the split budget above (e.g., if Hotel is Luxury but Daily Spending is Low, book 5-star stays while recommending affordable street food, local eateries, and free/low-cost attractions).'}
+- Experience Rule: ${exclusionRule}
+
+You must decide EVERYTHING for the traveler:
+1. How to get from ${homeCity} to the airport/station in ${departureCity} (specify train, road, or domestic flight timing).
+2. Flight route from ${departureCity} to ${destinationCountry}.
+3. Exact hotel/stay recommendation matching the "${hotelBudget}" tier (name, neighborhood, why it fits their exact hotel preference).
+4. Local transportation strategy matching "${transitStyle}" while respecting their "${dailySpendingBudget}" daily spending preference.
+5. For EVERY SINGLE DAY (Day 1 to Day ${days}), provide:
+   - Exact Wake-Up Time (e.g., "07:00 AM") and Sleep Time
+   - Complete chronological schedule from morning until night:
+     * Breakfast, Lunch, and Dinner (exact time, specific restaurant/stall name matching "${dailySpendingBudget}" food budget, and what dish to order)
+     * Morning, Afternoon & Evening Activities (exact times, specific places, and EXACT transportation to take between each stop + travel duration)
+
+Return the response in STRICT JSON format matching this exact structure (no markdown codeblocks, just raw JSON):
+{
+  "summary": {
+    "tripTitle": "String",
+    "budgetStrategySummary": "String explaining how you tailored the hotels vs daily food/activity spending",
+    "homeToDepartureTransit": "String explaining how to travel from home city to departure city/airport",
+    "flightStrategy": "String explaining flight route from departure city to destination country",
+    "recommendedStay": {
+      "name": "String (Specific Hotel/Resort/Hostel Name)",
+      "area": "String (City & Neighborhood)",
+      "details": "String (Why this stay matches their ${hotelBudget} hotel tier and nightly estimate)"
+    },
+    "localTransportGuide": "String (Best passes, apps, or transit methods matching ${transitStyle})"
+  },
+  "days": [
+    {
+      "dayNumber": 1,
+      "dayTitle": "String (City & Theme of the day)",
+      "wakeUpTime": "String (e.g. 06:30 AM)",
+      "sleepTime": "String (e.g. 10:30 PM)",
+      "schedule": [
+        {
+          "time": "String (e.g. 07:30 AM - 08:30 AM)",
+          "category": "Meal | Activity | Transit | Stay",
+          "title": "String (Name of place, restaurant, or action)",
+          "location": "String (City & Neighborhood)",
+          "transport": "String (Exact transit to get here + duration)",
+          "costNote": "String (Estimated cost level matching their daily spending tier)",
+          "description": "String (What to do, what to eat, or insider tips)"
         }
+      ]
+    }
+  ]
+}`;
 
-        function closeWizard() {
-            document.getElementById('planner-drawer').classList.add('hidden');
-        }
-
-        function quickSelectDestination(place) {
-            document.getElementById('quickDestinationInput').value = place;
-            document.getElementById('destination').value = place;
-            openWizard();
-            document.getElementById('homeCity').focus();
-        }
-
-        function setFirstTime(choice) {
-            document.getElementById('isFirstTime').value = choice;
-            const yesBtn = document.getElementById('btn-first-yes');
-            const noBtn = document.getElementById('btn-first-no');
-            const visitedBox = document.getElementById('visited-places-container');
-
-            if (choice === 'yes') {
-                yesBtn.className = "py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all";
-                noBtn.className = "py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all";
-                visitedBox.classList.add('hidden');
-            } else {
-                noBtn.className = "py-3.5 px-4 rounded-xl border border-blue-400 bg-blue-500/20 text-xs font-semibold text-white transition-all";
-                yesBtn.className = "py-3.5 px-4 rounded-xl border border-white/10 bg-[#181c28] text-xs font-medium text-white/60 hover:text-white transition-all";
-                visitedBox.classList.remove('hidden');
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
             }
-        }
+        });
 
-        async function planTrip() {
-            const homeCity = document.getElementById('homeCity').value.trim();
-            const departureCity = document.getElementById('departureCity').value.trim();
-            const destination = document.getElementById('destination').value.trim() || document.getElementById('quickDestinationInput').value.trim();
-            const days = document.getElementById('days').value.trim();
-            const budget = document.getElementById('budget').value;
-            const isFirstTime = document.getElementById('isFirstTime').value;
-            const visitedPlaces = document.getElementById('visitedPlaces').value.trim();
+        let rawText = typeof response.text === 'function' ? response.text() : response.text;
+        rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
 
-            if (!homeCity || !departureCity || !destination || !days) {
-                alert("Please fill in your Home City, Flight Departure City, Destination, and Tour Days.");
-                return;
-            }
+        const parsedData = JSON.parse(rawText);
+        res.json(parsedData);
 
-            if (isFirstTime === 'no' && !visitedPlaces) {
-                alert("Please enter the places you have already visited so our AI can exclude them.");
-                return;
-            }
+    } catch (error) {
+        console.error("AI Generation Error:", error);
+        res.status(500).json({ error: "Failed to generate itinerary", details: error.message });
+    }
+});
 
-            closeWizard();
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('itinerary').innerHTML = '';
+// Serve the main frontend
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-            try {
-                const response = await fetch('/api/plan-trip', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-site-password': 'mysecretpassword'
-                    },
-                    body: JSON.stringify({ 
-                        homeCity, 
-                        departureCity, 
-                        destination, 
-                        days, 
-                        budget, 
-                        isFirstTime, 
-                        visitedPlaces 
-                    })
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch');
-
-                const data = await response.json();
-                document.getElementById('loading').classList.add('hidden');
-                renderItinerary(data, destination, days, budget);
-
-            } catch (error) {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('itinerary').innerHTML = `
-                    <div class="bg-red-950/60 border border-red-500/40 p-6 rounded-2xl text-red-200 text-sm text-center max-w-2xl mx-auto">
-                        Unable to reach backend server. Please wait 60 seconds for Render to finish deploying and try again.
-                    </div>`;
-            }
-        }
-
-        function renderItinerary(data, destination, days, budget) {
-            const resultDiv = document.getElementById('itinerary');
-            const summary = data.summary || {};
-            const stay = summary.recommendedStay || {};
-            const daysList = data.days || [];
-
-            let totalStops = 0;
-            daysList.forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
-            document.getElementById('places-count').innerText = `${totalStops} places`;
-
-            // Top Widescreen Logistics Dashboard (4-Column Grid on Desktop)
-            let html = `
-                <div class="bg-[#10131c] border border-blue-500/30 rounded-3xl p-8 shadow-2xl">
-                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6 mb-6">
-                        <div>
-                            <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Active Master Plan</span>
-                            <h2 class="text-3xl font-bold text-white mt-1">${summary.tripTitle || `${destination} (${days} Days)`}</h2>
-                        </div>
-                        <button onclick="openWizard()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all">
-                            Modify Parameters
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
-                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🏠 1. Home to Airport</span>
-                            <p class="text-sm text-white/85 leading-relaxed">${summary.homeToDepartureTransit || ''}</p>
-                        </div>
-                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
-                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">✈️ 2. Flight Strategy</span>
-                            <p class="text-sm text-white/85 leading-relaxed">${summary.flightStrategy || ''}</p>
-                        </div>
-                        <div class="bg-blue-950/30 p-5 rounded-2xl border border-blue-400/30">
-                            <span class="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-2">🏨 3. Assigned Stay</span>
-                            <div class="text-base font-bold text-white mb-1">${stay.name || 'Recommended Hotel'} <span class="text-xs font-normal text-blue-200">(${stay.area || ''})</span></div>
-                            <p class="text-xs text-white/80 leading-relaxed">${stay.details || ''}</p>
-                        </div>
-                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
-                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🚆 4. Local Transit</span>
-                            <p class="text-sm text-white/85 leading-relaxed">${summary.localTransportGuide || ''}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Day-by-Day Widescreen Schedule Grid
-            daysList.forEach(day => {
-                let scheduleHtml = '';
-                (day.schedule || []).forEach(item => {
-                    scheduleHtml += `
-                        <div class="bg-[#161a26] hover:bg-[#1c2130] p-5 rounded-2xl border border-white/5 flex flex-col justify-between transition-all">
-                            <div>
-                                <div class="flex items-center justify-between text-xs mb-2">
-                                    <span class="text-blue-400 font-semibold">${item.time || ''}</span>
-                                    <span class="px-2.5 py-0.5 rounded-md bg-white/5 text-white/60 uppercase text-[10px] tracking-wider font-semibold">${item.category || 'Plan'}</span>
-                                </div>
-                                <h4 class="text-base font-semibold text-white mb-1">${item.title || ''}</h4>
-                                <p class="text-xs text-blue-200/60 mb-3">📍 ${item.location || ''} &nbsp;•&nbsp; 🚕 ${item.transport || ''}</p>
-                            </div>
-                            <p class="text-xs text-white/80 leading-relaxed border-t border-white/5 pt-3">${item.description || ''}</p>
-                        </div>
-                    `;
-                });
-
-                html += `
-                    <div class="bg-[#10131c] border border-white/10 rounded-3xl p-8 shadow-xl">
-                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
-                            <div>
-                                <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Day ${day.dayNumber}</span>
-                                <h3 class="text-2xl font-bold text-white mt-0.5">${day.dayTitle || ''}</h3>
-                            </div>
-                            <div class="flex items-center gap-4 text-xs">
-                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">☀️ Wake Up: <strong>${day.wakeUpTime || '07:00 AM'}</strong></span>
-                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">🌙 Sleep: <strong>${day.sleepTime || '10:30 PM'}</strong></span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${scheduleHtml}
-                        </div>
-                    </div>
-                `;
-            });
-
-            resultDiv.innerHTML = html;
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
-        }
-    </script>
-</body>
-</html>
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

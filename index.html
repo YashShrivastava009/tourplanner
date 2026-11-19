@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Your Next Adventure — Desktop AI Travel Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -16,6 +16,7 @@
             overflow-x: hidden;
         }
 
+        /* --- HOME PAGE EARTH HORIZON --- */
         .earth-hero-desktop {
             position: relative;
             width: 100%;
@@ -88,6 +89,7 @@
             flex-shrink: 0;
         }
 
+        /* --- AUTOCOMPLETE DROPDOWN --- */
         .autocomplete-menu {
             position: absolute;
             top: calc(100% + 6px);
@@ -114,31 +116,55 @@
             transition: background 0.15s;
         }
 
-        .autocomplete-item:last-child {
-            border-bottom: none;
-        }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover { background: rgba(59, 130, 246, 0.25); }
 
-        .autocomplete-item:hover {
-            background: rgba(59, 130, 246, 0.25);
-        }
-
+        /* --- ANIMATIONS --- */
         .panel-animate {
-            animation: fadeSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: fadeSlide 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(-10px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* --- TIMELINE GLOW TRACK --- */
+        .timeline-track {
+            position: relative;
+        }
+        .timeline-track::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            bottom: 24px;
+            left: 19px;
+            width: 2px;
+            background: linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(16, 185, 129, 0.5), rgba(139, 92, 246, 0.4), transparent);
+        }
+
+        /* --- CUSTOM SCROLLBAR --- */
         ::-webkit-scrollbar { width: 7px; height: 7px; }
-        ::-webkit-scrollbar-track { background: #0b0e17; }
+        ::-webkit-scrollbar-track { background: #070a11; }
         ::-webkit-scrollbar-thumb { background: #263147; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        /* --- CLEAN PRINT / PDF EXPORT --- */
+        @media print {
+            body { background: #ffffff !important; color: #111827 !important; }
+            .no-print { display: none !important; }
+            #home-page { display: none !important; }
+            #itinerary-page { display: block !important; background: #ffffff !important; }
+            .print-card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+            .print-card * { color: #0f172a !important; }
+        }
     </style>
 </head>
-<body class="min-h-screen bg-[#030508] text-white pb-32">
+<body class="min-h-screen bg-[#030508] text-white">
 
-    <div class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8">
+    <!-- ===================================================================== -->
+    <!-- VIEW 1: HOME PAGE (EARTH HERO, CONFIG CONSOLE, GALLERY)               -->
+    <!-- ===================================================================== -->
+    <div id="home-page" class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-32">
 
         <!-- TOP DESKTOP HEADER BAR -->
         <header class="flex items-start justify-between relative z-20 mb-2">
@@ -153,9 +179,12 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <button id="header-resume-btn" onclick="openItineraryPage()" class="hidden items-center gap-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/50 rounded-full px-4 py-2 text-xs font-semibold text-blue-200 transition-all">
+                    <span>🗺️ View Active Plan →</span>
+                </button>
                 <div class="hidden sm:flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-2 text-xs font-medium text-emerald-300">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Gemini 2.5 AI Active</span>
+                    <span>Gemini AI Active</span>
                 </div>
                 <div class="w-12 h-12 rounded-full overflow-hidden border border-white/25 shadow-xl flex-shrink-0">
                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Profile" class="w-full h-full object-cover">
@@ -193,6 +222,9 @@
                 </div>
             </div>
         </section>
+
+        <!-- DIAGNOSTIC ERROR CONTAINER (Only shown if backend fails) -->
+        <div id="error-banner" class="hidden mb-8 max-w-3xl mx-auto"></div>
 
         <!-- EXPANDABLE DESKTOP AI QUESTIONNAIRE PANEL -->
         <section id="planner-drawer" class="hidden panel-animate bg-[#10131c]/95 backdrop-blur-2xl border border-blue-500/30 rounded-3xl p-8 mb-10 shadow-[0_25px_70px_rgba(0,0,0,0.95)] max-w-5xl mx-auto">
@@ -366,13 +398,6 @@
             </div>
         </section>
 
-        <!-- LOADING STATE -->
-        <div id="loading" class="hidden bg-[#10131c] border border-white/10 rounded-3xl p-12 mb-10 text-center max-w-3xl mx-auto">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
-            <p class="text-lg font-medium text-white">Gemini AI is Designing Your Complete Travel Trajectory...</p>
-            <p class="text-sm text-white/45 mt-1">Matching your split hotel/daily budget, selected places, wake-up times, and transit</p>
-        </div>
-
         <!-- MAIN DESKTOP CONTENT AREA: My Plan & Explore -->
         <section class="border-t border-white/10 pt-8">
             <div class="flex items-center justify-between mb-6">
@@ -387,6 +412,9 @@
                     <span id="places-count">12 places</span>
                 </div>
             </div>
+
+            <!-- RESUME ACTIVE GENERATED PLAN BANNER (Appears after generating a trip) -->
+            <div id="saved-plan-banner" class="hidden mb-8"></div>
 
             <!-- 6-COLUMN WIDESCREEN DESTINATION GALLERY -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -428,8 +456,8 @@
                 </div>
             </div>
 
-            <!-- 3-COLUMN WIDESCREEN SAVED / FEATURED PLAN CARDS -->
-            <div id="default-cards" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- 3-COLUMN WIDESCREEN FEATURED TEMPLATES -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div onclick="quickSelectCountry('Japan', ['Tokyo', 'Kyoto', 'Osaka'])" class="bg-[#11141d] hover:bg-[#171b26] border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all shadow-lg">
                     <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=200&q=80" alt="Tokyo" class="w-20 h-20 rounded-xl object-cover flex-shrink-0">
                     <div class="flex-1 min-w-0">
@@ -466,41 +494,219 @@
                     </div>
                 </div>
             </div>
-
-            <!-- GENERATED WIDESCREEN AI ITINERARY CONTAINER -->
-            <div id="itinerary" class="mt-10 space-y-8"></div>
         </section>
 
-    </div>
-
-    <!-- FLOATING GLASS DOCK -->
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
-            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
-                </svg>
-            </button>
-            <button onclick="openWizard()" title="Explore & Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9"/>
-                    <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
-                </svg>
-            </button>
-            <button onclick="openWizard()" title="Custom Budget" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </button>
-            <button onclick="document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})" title="Itinerary Map" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                </svg>
-            </button>
+        <!-- FLOATING GLASS DOCK (Only visible on Home Page so it never covers itinerary cards) -->
+        <div id="home-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+            <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
+                    </svg>
+                </button>
+                <button onclick="openWizard()" title="Explore & Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                    </svg>
+                </button>
+                <button onclick="openWizard()" title="Custom Budget" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </button>
+                <button onclick="if(currentTripData) openItineraryPage(); else openWizard();" title="Active Itinerary" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- FULL-SCREEN CINEMATIC LOADING OVERLAY                                 -->
+    <!-- ===================================================================== -->
+    <div id="loading-overlay" class="hidden fixed inset-0 z-[120] bg-[#030508]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center">
+        <div class="relative mb-8">
+            <div class="w-24 h-24 rounded-full border-2 border-blue-500/20 border-t-blue-400 animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-2xl">🌍</div>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Architecting Your Expedition</h2>
+        <p id="loading-status-text" class="text-sm text-blue-300/80 mt-2 max-w-md">
+            Connecting flight corridors, matching your split hotel & daily spending budget, and plotting your daily timeline...
+        </p>
+        <div class="w-64 h-1.5 bg-white/10 rounded-full overflow-hidden mt-6">
+            <div class="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 w-2/3 animate-pulse rounded-full"></div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 2: DEDICATED FULL-SCREEN INTERACTIVE ITINERARY PAGE              -->
+    <!-- ===================================================================== -->
+    <div id="itinerary-page" class="hidden min-h-screen bg-[#04070d] text-white panel-animate pb-20">
+
+        <!-- STICKY TOP NAVIGATION BAR WITH PROMINENT BACK BUTTON -->
+        <nav class="sticky top-0 z-40 bg-[#060911]/90 backdrop-blur-2xl border-b border-white/10 no-print">
+            <div class="max-w-7xl mx-auto px-6 lg:px-10 h-16 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4 min-w-0">
+                    <button onclick="goBackHome()" class="flex items-center gap-2 bg-white/10 hover:bg-blue-600 border border-white/15 hover:border-blue-400 text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        <span>Back to Home</span>
+                    </button>
+                    <div class="hidden md:flex items-center gap-2 text-xs text-white/50 truncate">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span id="nav-trip-route" class="truncate font-medium text-white/80">Your Expedition</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2.5 flex-shrink-0">
+                    <button onclick="modifyCurrentTrip()" class="bg-white/5 hover:bg-white/15 border border-white/10 text-white/85 px-4 py-2 rounded-xl text-xs font-medium transition-all">
+                        ✏️ Edit Trip
+                    </button>
+                    <button onclick="window.print()" class="bg-blue-600/25 hover:bg-blue-600/45 border border-blue-400/40 text-blue-200 px-4 py-2 rounded-xl text-xs font-semibold transition-all">
+                        🖨️ Save PDF
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- CINEMATIC DESTINATION HERO BANNER -->
+        <section id="itinerary-hero" class="relative w-full h-72 md:h-80 overflow-hidden border-b border-white/10">
+            <img id="hero-bg-image" src="" alt="Destination Backdrop" class="w-full h-full object-cover scale-105 opacity-60">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#04070d] via-[#04070d]/65 to-black/30"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-[#04070d]/90 via-transparent to-[#04070d]/70"></div>
+
+            <div class="absolute inset-0 max-w-7xl mx-auto px-6 lg:px-10 flex flex-col justify-end pb-8">
+                <div class="flex flex-wrap items-end justify-between gap-6">
+                    <div class="max-w-3xl">
+                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                            <span class="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[11px] font-semibold uppercase tracking-widest">
+                                Gemini AI Master Plan
+                            </span>
+                            <span id="hero-route-badge" class="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-white/85 text-[11px] font-medium"></span>
+                            <span id="hero-days-badge" class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-semibold"></span>
+                        </div>
+                        <h1 id="hero-trip-title" class="text-3xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg"></h1>
+                        <p id="hero-budget-summary" class="text-sm text-white/75 mt-2.5 leading-relaxed max-w-2xl"></p>
+                    </div>
+
+                    <!-- LIVE INTERACTIVE READINESS WIDGET -->
+                    <div class="bg-[#0d121d]/85 backdrop-blur-xl border border-white/15 rounded-2xl p-4 w-full sm:w-64 shadow-2xl no-print">
+                        <div class="flex items-center justify-between text-xs mb-2">
+                            <span class="text-white/60 font-medium">Trip Checklist Progress</span>
+                            <span id="progress-percent" class="text-emerald-400 font-bold">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-2.5">
+                            <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-white/50">
+                            <span id="progress-stops-label">0 / 0 stops checked</span>
+                            <span id="progress-favs-label" class="text-amber-300">★ 0 saved</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2-COLUMN DESKTOP WORKSPACE -->
+        <main class="max-w-7xl mx-auto px-6 lg:px-10 pt-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+                <!-- LEFT COLUMN (4 COLS): STICKY MISSION CONTROL & LOGISTICS SIDEBAR -->
+                <aside class="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
+                    
+                    <!-- Assigned Stay Spotlight Card -->
+                    <div class="print-card bg-gradient-to-br from-[#121a2d] via-[#0e1422] to-[#0a0e18] border border-blue-500/35 rounded-3xl p-6 shadow-xl">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[11px] uppercase tracking-widest text-blue-300 font-bold">🏨 Assigned Stay</span>
+                            <a id="sidebar-hotel-map" href="#" target="_blank" rel="noopener noreferrer" class="no-print text-[11px] bg-blue-500/20 hover:bg-blue-500/40 border border-blue-400/40 text-blue-200 px-3 py-1 rounded-full font-medium transition-all">
+                                📍 Map ↗
+                            </a>
+                        </div>
+                        <h3 id="sidebar-hotel-name" class="text-lg font-bold text-white leading-snug"></h3>
+                        <p id="sidebar-hotel-area" class="text-xs text-blue-300/80 mt-0.5 mb-3"></p>
+                        <p id="sidebar-hotel-details" class="text-xs text-white/80 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Travel Logistics Accordion / Cards -->
+                    <div class="print-card bg-[#0d111b] border border-white/10 rounded-3xl p-6 space-y-5 shadow-xl">
+                        <h3 class="text-xs uppercase tracking-widest text-white/50 font-bold border-b border-white/10 pb-3">Travel Logistics Blueprint</h3>
+
+                        <div>
+                            <div class="flex items-center gap-2 text-xs font-semibold text-cyan-300 mb-1">
+                                <span>🏠</span><span>Home to Departure Airport</span>
+                            </div>
+                            <p id="sidebar-home-transit" class="text-xs text-white/75 leading-relaxed"></p>
+                        </div>
+
+                        <div class="border-t border-white/5 pt-4">
+                            <div class="flex items-center gap-2 text-xs font-semibold text-indigo-300 mb-1">
+                                <span>✈️</span><span>Flight & Arrival Strategy</span>
+                            </div>
+                            <p id="sidebar-flight-strategy" class="text-xs text-white/75 leading-relaxed"></p>
+                        </div>
+
+                        <div class="border-t border-white/5 pt-4">
+                            <div class="flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-1">
+                                <span>🚆</span><span>Local Transit Guide</span>
+                            </div>
+                            <p id="sidebar-local-transit" class="text-xs text-white/75 leading-relaxed"></p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Trip Breakdown Stats -->
+                    <div class="no-print bg-[#0d111b] border border-white/10 rounded-3xl p-5 grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-white/5 rounded-2xl p-3">
+                            <div id="stat-activities" class="text-xl font-bold text-blue-400">0</div>
+                            <div class="text-[10px] uppercase tracking-wider text-white/50 mt-0.5">Sights</div>
+                        </div>
+                        <div class="bg-white/5 rounded-2xl p-3">
+                            <div id="stat-meals" class="text-xl font-bold text-emerald-400">0</div>
+                            <div class="text-[10px] uppercase tracking-wider text-white/50 mt-0.5">Dining</div>
+                        </div>
+                        <div class="bg-white/5 rounded-2xl p-3">
+                            <div id="stat-transit" class="text-xl font-bold text-cyan-400">0</div>
+                            <div class="text-[10px] uppercase tracking-wider text-white/50 mt-0.5">Transit</div>
+                        </div>
+                    </div>
+
+                </aside>
+
+                <!-- RIGHT COLUMN (8 COLS): INTERACTIVE DAY TABS & VISUAL TIMELINE -->
+                <section class="lg:col-span-8 space-y-6">
+
+                    <!-- INTERACTIVE DAY SELECTOR TABS -->
+                    <div class="no-print bg-[#0d111b] border border-white/10 rounded-2xl p-3 shadow-lg">
+                        <div id="day-tabs-bar" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
+                    </div>
+
+                    <!-- CATEGORY FILTER PILLS -->
+                    <div class="no-print flex flex-wrap items-center justify-between gap-3">
+                        <div id="category-filter-bar" class="flex flex-wrap items-center gap-2">
+                            <button onclick="setCategoryFilter('ALL')" data-filter="ALL" class="filter-pill px-4 py-1.5 rounded-full text-xs font-semibold border transition-all bg-blue-600/30 border-blue-400 text-white">All Stops</button>
+                            <button onclick="setCategoryFilter('Activity')" data-filter="Activity" class="filter-pill px-4 py-1.5 rounded-full text-xs font-medium border transition-all bg-white/5 border-white/10 text-white/60 hover:text-white">🧭 Activities</button>
+                            <button onclick="setCategoryFilter('Meal')" data-filter="Meal" class="filter-pill px-4 py-1.5 rounded-full text-xs font-medium border transition-all bg-white/5 border-white/10 text-white/60 hover:text-white">🍜 Meals</button>
+                            <button onclick="setCategoryFilter('Transit')" data-filter="Transit" class="filter-pill px-4 py-1.5 rounded-full text-xs font-medium border transition-all bg-white/5 border-white/10 text-white/60 hover:text-white">🚆 Transit</button>
+                            <button onclick="setCategoryFilter('FAVORITES')" data-filter="FAVORITES" class="filter-pill px-4 py-1.5 rounded-full text-xs font-medium border transition-all bg-white/5 border-white/10 text-amber-300/80 hover:text-amber-300">★ Favorites</button>
+                        </div>
+                        <span class="text-[11px] text-white/40">Click any stop to check off, favorite, or open in Maps</span>
+                    </div>
+
+                    <!-- ACTIVE TIMELINE CONTENT -->
+                    <div id="timeline-stage" class="space-y-8"></div>
+
+                </section>
+            </div>
+        </main>
+    </div>
+
     <script>
+        // =========================================================================
+        // 1. DATABASES & BACKDROP IMAGES
+        // =========================================================================
         const QUICK_CITIES = [
             "Sagar, Madhya Pradesh, India", "Satna, Madhya Pradesh, India", "Saharanpur, Uttar Pradesh, India",
             "Sambalpur, Odisha, India", "Surat, Gujarat, India", "Shimla, Himachal Pradesh, India",
@@ -564,12 +770,81 @@
             "Denmark": "DK", "Czech Republic": "CZ", "Hungary": "HU", "Croatia": "HR", "Poland": "PL"
         };
 
+        const COUNTRY_BACKDROPS = {
+            "Japan": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1800&q=85",
+            "Switzerland": "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=1800&q=85",
+            "India": "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=1800&q=85",
+            "Italy": "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1800&q=85",
+            "France": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1800&q=85",
+            "Greece": "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=1800&q=85",
+            "Norway": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1800&q=85",
+            "South Korea": "https://images.unsplash.com/photo-1538485399081-7191377e8241?auto=format&fit=crop&w=1800&q=85",
+            "Indonesia": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1800&q=85",
+            "Thailand": "https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1800&q=85",
+            "United Arab Emirates": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1800&q=85",
+            "United Kingdom": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1800&q=85",
+            "United States": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1800&q=85",
+            "Singapore": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1800&q=85",
+            "Vietnam": "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1800&q=85",
+            "Turkey": "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1800&q=85",
+            "Spain": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1800&q=85",
+            "Germany": "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1800&q=85",
+            "Australia": "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1800&q=85"
+        };
+        const DEFAULT_BACKDROP = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1800&q=85";
+
         const ALL_COUNTRIES = Object.keys(COUNTRY_ISO_MAP);
 
+        // =========================================================================
+        // 2. APPLICATION STATE
+        // =========================================================================
         let activePlacesList = [];
         let selectedPlacesSet = new Set();
         let searchTimeout = null;
 
+        // Itinerary Interactive State
+        let currentTripData = null;
+        let currentTripMeta = null;
+        let activeDayView = 0; // 0 = Day 1, 1 = Day 2..., 'ALL' = All Days
+        let activeCategoryFilter = 'ALL';
+        let checkedStops = new Set();
+        let favoriteStops = new Set();
+        let stopNotes = {};
+
+        // Restore last generated trip from localStorage if available
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                const saved = localStorage.getItem('ai_travel_last_trip');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && parsed.data && parsed.meta) {
+                        currentTripData = parsed.data;
+                        currentTripMeta = parsed.meta;
+                        checkedStops = new Set(parsed.checked || []);
+                        favoriteStops = new Set(parsed.favorites || []);
+                        stopNotes = parsed.notes || {};
+                        updateHomeActivePlanBanner();
+                    }
+                }
+            } catch (e) {}
+        });
+
+        function saveStateToStorage() {
+            if (!currentTripData || !currentTripMeta) return;
+            try {
+                localStorage.setItem('ai_travel_last_trip', JSON.stringify({
+                    data: currentTripData,
+                    meta: currentTripMeta,
+                    checked: Array.from(checkedStops),
+                    favorites: Array.from(favoriteStops),
+                    notes: stopNotes
+                }));
+            } catch (e) {}
+        }
+
+        // =========================================================================
+        // 3. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
+        // =========================================================================
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
                 document.querySelectorAll('.autocomplete-menu').forEach(el => el.classList.add('hidden'));
@@ -590,11 +865,7 @@
             }
 
             const lowerQuery = query.toLowerCase();
-
-            const startsWithMatches = QUICK_CITIES.filter(c => {
-                const cityName = c.split(',')[0].trim().toLowerCase();
-                return cityName.startsWith(lowerQuery);
-            });
+            const startsWithMatches = QUICK_CITIES.filter(c => c.split(',')[0].trim().toLowerCase().startsWith(lowerQuery));
             const containsMatches = QUICK_CITIES.filter(c => {
                 const cityName = c.split(',')[0].trim().toLowerCase();
                 return !cityName.startsWith(lowerQuery) && cityName.includes(lowerQuery);
@@ -634,10 +905,7 @@
             });
 
             if (!selectedCountry) {
-                dropdown.innerHTML = `
-                    <div class="px-4 py-3 text-xs text-amber-300">
-                        Please select a Destination Country in Box 3 first.
-                    </div>`;
+                dropdown.innerHTML = `<div class="px-4 py-3 text-xs text-amber-300">Please select a Destination Country in Box 3 first.</div>`;
                 dropdown.classList.remove('hidden');
                 return;
             }
@@ -669,9 +937,7 @@
                         let apiPlaces = [];
                         if (data && data.results) {
                             const validResults = data.results.filter(item => {
-                                if (isoCode && item.country_code) {
-                                    return item.country_code.toUpperCase() === isoCode;
-                                }
+                                if (isoCode && item.country_code) return item.country_code.toUpperCase() === isoCode;
                                 return item.country && item.country.toLowerCase() === selectedCountry.toLowerCase();
                             });
 
@@ -692,27 +958,22 @@
 
         function renderCountrySpecificDropdown(dropdown, places, selectedCountry) {
             if (!places || places.length === 0) {
-                dropdown.innerHTML = `
-                    <div class="px-4 py-3 text-xs text-white/50">
-                        No matching city found in <strong class="text-white">${selectedCountry}</strong>. Press Enter to add custom spot.
-                    </div>`;
+                dropdown.innerHTML = `<div class="px-4 py-3 text-xs text-white/50">No matching city found in <strong class="text-white">${escapeHtml(selectedCountry)}</strong>. Press Enter to add custom spot.</div>`;
                 dropdown.classList.remove('hidden');
                 return;
             }
 
             dropdown.innerHTML = places.map(place => `
                 <div class="autocomplete-item" onclick="selectPlaceInCountry('${place.replace(/'/g, "\\'")}')">
-                    <span>📍 ${place} <span class="text-white/40 text-[11px] ml-1">• ${selectedCountry}</span></span>
-                    <span class="text-[10px] text-emerald-400 uppercase tracking-wider font-semibold">+ Add to ${selectedCountry}</span>
+                    <span>📍 ${escapeHtml(place)} <span class="text-white/40 text-[11px] ml-1">• ${escapeHtml(selectedCountry)}</span></span>
+                    <span class="text-[10px] text-emerald-400 uppercase tracking-wider font-semibold">+ Add</span>
                 </div>
             `).join('');
             dropdown.classList.remove('hidden');
         }
 
         function selectPlaceInCountry(place) {
-            if (!activePlacesList.includes(place)) {
-                activePlacesList.push(place);
-            }
+            if (!activePlacesList.includes(place)) activePlacesList.push(place);
             selectedPlacesSet.add(place);
             document.getElementById('customPlaceInput').value = '';
             document.getElementById('customPlaceDropdown').classList.add('hidden');
@@ -727,7 +988,7 @@
             const icon = mode === 'airport' ? '✈️' : '📍';
             dropdown.innerHTML = items.map(city => `
                 <div class="autocomplete-item" onclick="selectAutocompleteValue('${inputEl.id}', '${dropdown.id}', '${city.replace(/'/g, "\\'")}')">
-                    <span>${icon} ${city}</span>
+                    <span>${icon} ${escapeHtml(city)}</span>
                     <span class="text-[10px] text-blue-400 uppercase tracking-wider">Select</span>
                 </div>
             `).join('');
@@ -735,8 +996,7 @@
         }
 
         function selectAutocompleteValue(inputId, dropdownId, value) {
-            const input = document.getElementById(inputId);
-            input.value = value;
+            document.getElementById(inputId).value = value;
             document.getElementById(dropdownId).classList.add('hidden');
         }
 
@@ -754,7 +1014,7 @@
 
             dropdown.innerHTML = matches.map(country => `
                 <div class="autocomplete-item" onclick="selectCountry('${country.replace(/'/g, "\\'")}')">
-                    <span>🌍 ${country}</span>
+                    <span>🌍 ${escapeHtml(country)}</span>
                     <span class="text-[10px] text-blue-400 uppercase tracking-wider">Pick Country</span>
                 </div>
             `).join('');
@@ -767,7 +1027,7 @@
             document.getElementById('selected-country-label').innerText = country;
             document.getElementById('selected-country-subtext').innerText = country;
             document.getElementById('customPlaceInput').value = '';
-            document.getElementById('customPlaceInput').placeholder = `Search cities & places in ${country} (e.g. type a city in ${country})...`;
+            document.getElementById('customPlaceInput').placeholder = `Search cities & places in ${country}...`;
             document.getElementById('country-places-section').classList.remove('hidden');
 
             const defaultPlaces = COUNTRY_PLACES_DB[country] || [`Capital & Highlights of ${country}`];
@@ -792,18 +1052,15 @@
                         }"
                     >
                         <span>${isSelected ? '✓' : '+'}</span>
-                        <span>${place}</span>
+                        <span>${escapeHtml(place)}</span>
                     </button>
                 `;
             }).join('');
         }
 
         function togglePlaceSelection(place) {
-            if (selectedPlacesSet.has(place)) {
-                selectedPlacesSet.delete(place);
-            } else {
-                selectedPlacesSet.add(place);
-            }
+            if (selectedPlacesSet.has(place)) selectedPlacesSet.delete(place);
+            else selectedPlacesSet.add(place);
             renderPlaceChips();
         }
 
@@ -811,10 +1068,7 @@
             const input = document.getElementById('customPlaceInput');
             const val = input.value.trim();
             if (!val) return;
-
-            if (!activePlacesList.includes(val)) {
-                activePlacesList.push(val);
-            }
+            if (!activePlacesList.includes(val)) activePlacesList.push(val);
             selectedPlacesSet.add(val);
             input.value = '';
             document.getElementById('customPlaceDropdown').classList.add('hidden');
@@ -858,12 +1112,13 @@
             }
         }
 
+        // =========================================================================
+        // 4. HOME WIZARD & PAGE NAVIGATION
+        // =========================================================================
         function openWizard() {
             const quickInput = document.getElementById('quickDestinationInput').value.trim();
             const countryInput = document.getElementById('destinationCountry');
-            if (quickInput && !countryInput.value) {
-                selectCountry(quickInput);
-            }
+            if (quickInput && !countryInput.value) selectCountry(quickInput);
             const drawer = document.getElementById('planner-drawer');
             drawer.classList.remove('hidden');
             drawer.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -897,6 +1152,68 @@
             }
         }
 
+        function goBackHome() {
+            document.getElementById('itinerary-page').classList.add('hidden');
+            document.getElementById('home-page').classList.remove('hidden');
+            updateHomeActivePlanBanner();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function modifyCurrentTrip() {
+            goBackHome();
+            setTimeout(() => openWizard(), 150);
+        }
+
+        function openItineraryPage() {
+            if (!currentTripData) return;
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('itinerary-page').classList.remove('hidden');
+            renderDedicatedItineraryPage();
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        function updateHomeActivePlanBanner() {
+            const banner = document.getElementById('saved-plan-banner');
+            const headerBtn = document.getElementById('header-resume-btn');
+            if (!currentTripData || !currentTripMeta) {
+                banner.classList.add('hidden');
+                headerBtn.classList.add('hidden');
+                return;
+            }
+
+            const summary = currentTripData.summary || {};
+            const daysCount = (currentTripData.days || []).length;
+            let totalStops = 0;
+            (currentTripData.days || []).forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
+
+            document.getElementById('places-count').innerText = `${totalStops} places`;
+            headerBtn.classList.remove('hidden');
+            headerBtn.classList.add('flex');
+
+            const bg = COUNTRY_BACKDROPS[currentTripMeta.destinationCountry] || DEFAULT_BACKDROP;
+            banner.innerHTML = `
+                <div onclick="openItineraryPage()" class="bg-gradient-to-r from-[#121a2d] via-[#101625] to-[#0d121d] hover:border-blue-400 border border-blue-500/40 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 cursor-pointer transition-all shadow-[0_10px_40px_rgba(37,99,235,0.2)]">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <img src="${bg}" class="w-20 h-20 rounded-2xl object-cover flex-shrink-0 border border-white/15">
+                        <div class="min-w-0">
+                            <span class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">● Your Generated Master Plan Ready</span>
+                            <h3 class="text-lg font-bold text-white truncate mt-0.5">${escapeHtml(summary.tripTitle || currentTripMeta.destinationCountry)}</h3>
+                            <p class="text-xs text-white/60 mt-1">
+                                ✈️ ${escapeHtml(currentTripMeta.departureCity)} → ${escapeHtml(currentTripMeta.destinationCountry)} &nbsp;•&nbsp; ${daysCount} Days &nbsp;•&nbsp; ${totalStops} Stops
+                            </p>
+                        </div>
+                    </div>
+                    <button class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-6 py-3 rounded-xl flex-shrink-0 shadow-lg transition-all">
+                        Open Interactive Plan →
+                    </button>
+                </div>
+            `;
+            banner.classList.remove('hidden');
+        }
+
+        // =========================================================================
+        // 5. CALL BACKEND API TO GENERATE TRIP
+        // =========================================================================
         async function planTrip() {
             const homeCity = document.getElementById('homeCity').value.trim();
             const departureCity = document.getElementById('departureCity').value.trim();
@@ -920,9 +1237,27 @@
                 return;
             }
 
-            closeWizard();
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('itinerary').innerHTML = '';
+            const errorBanner = document.getElementById('error-banner');
+            errorBanner.classList.add('hidden');
+            errorBanner.innerHTML = '';
+
+            // Show full-screen cinematic loading overlay
+            const loader = document.getElementById('loading-overlay');
+            const statusText = document.getElementById('loading-status-text');
+            loader.classList.remove('hidden');
+
+            const statusSteps = [
+                `Mapping transit from ${homeCity} to ${departureCity} airport...`,
+                `Selecting ${hotelBudget.split(' ')[0]} stays in ${destinationCountry}...`,
+                `Balancing daily food & activity stops for ${days} days...`,
+                `Finalizing wake-up schedules and local transit timings...`
+            ];
+            let stepIdx = 0;
+            statusText.innerText = statusSteps[0];
+            const statusTimer = setInterval(() => {
+                stepIdx = (stepIdx + 1) % statusSteps.length;
+                statusText.innerText = statusSteps[stepIdx];
+            }, 2600);
 
             try {
                 const response = await fetch('/api/plan-trip', {
@@ -947,109 +1282,428 @@
                 });
 
                 const data = await response.json();
+                clearInterval(statusTimer);
+                loader.classList.add('hidden');
 
                 if (!response.ok) {
                     throw new Error(data.details || data.error || `Server error (${response.status})`);
                 }
 
-                document.getElementById('loading').classList.add('hidden');
-                renderItinerary(data, destinationCountry, days, hotelBudget, dailySpendingBudget);
+                // Reset interactive trackers for new trip
+                currentTripData = data;
+                currentTripMeta = {
+                    homeCity,
+                    departureCity,
+                    destinationCountry,
+                    days,
+                    hotelBudget,
+                    dailySpendingBudget
+                };
+                activeDayView = 0;
+                activeCategoryFilter = 'ALL';
+                checkedStops = new Set();
+                favoriteStops = new Set();
+                stopNotes = {};
+
+                closeWizard();
+                saveStateToStorage();
+                openItineraryPage();
 
             } catch (error) {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('itinerary').innerHTML = `
-                    <div class="bg-red-950/70 border border-red-500/50 p-6 rounded-2xl text-red-200 text-sm text-center max-w-2xl mx-auto space-y-2">
+                clearInterval(statusTimer);
+                loader.classList.add('hidden');
+                errorBanner.innerHTML = `
+                    <div class="bg-red-950/80 border border-red-500/50 p-6 rounded-2xl text-red-200 text-sm text-center space-y-2 shadow-2xl">
                         <div class="font-bold text-red-300 uppercase tracking-wider text-xs">Diagnostic Server Message</div>
-                        <div>${error.message}</div>
+                        <div class="break-words">${escapeHtml(error.message)}</div>
                     </div>`;
+                errorBanner.classList.remove('hidden');
+                errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
-        function renderItinerary(data, destinationCountry, days, hotelBudget, dailySpendingBudget) {
-            const resultDiv = document.getElementById('itinerary');
-            const summary = data.summary || {};
+        // =========================================================================
+        // 6. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
+        // =========================================================================
+        function renderDedicatedItineraryPage() {
+            const summary = currentTripData.summary || {};
             const stay = summary.recommendedStay || {};
-            const daysList = data.days || [];
+            const daysList = currentTripData.days || [];
 
-            let totalStops = 0;
-            daysList.forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
-            document.getElementById('places-count').innerText = `${totalStops} places`;
+            // Hero Backdrop & Text
+            const heroBg = COUNTRY_BACKDROPS[currentTripMeta.destinationCountry] || DEFAULT_BACKDROP;
+            document.getElementById('hero-bg-image').src = heroBg;
+            document.getElementById('hero-trip-title').innerText = summary.tripTitle || `${currentTripMeta.destinationCountry} Expedition`;
+            document.getElementById('hero-route-badge').innerText = `✈️ ${currentTripMeta.departureCity} → ${currentTripMeta.destinationCountry}`;
+            document.getElementById('hero-days-badge').innerText = `📅 ${daysList.length} Days`;
+            document.getElementById('nav-trip-route').innerText = `${summary.tripTitle || currentTripMeta.destinationCountry} (${daysList.length} Days)`;
+            document.getElementById('hero-budget-summary').innerText = summary.budgetStrategySummary || `Stay: ${currentTripMeta.hotelBudget} • Daily Spend: ${currentTripMeta.dailySpendingBudget}`;
 
-            let html = `
-                <div class="bg-[#10131c] border border-blue-500/30 rounded-3xl p-8 shadow-2xl">
-                    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6 mb-6">
-                        <div>
-                            <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Gemini AI Confirmed Expedition</span>
-                            <h2 class="text-3xl font-bold text-white mt-1">${summary.tripTitle || `${destinationCountry} (${days} Days)`}</h2>
-                            <p class="text-xs text-emerald-300 mt-1.5">${summary.budgetStrategySummary || `Stay: ${hotelBudget} • Daily Spend: ${dailySpendingBudget}`}</p>
-                        </div>
-                        <button onclick="openWizard()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all">
-                            Modify Parameters
-                        </button>
-                    </div>
+            // Left Mission Control Sidebar
+            document.getElementById('sidebar-hotel-name').innerText = stay.name || 'Recommended Stay';
+            document.getElementById('sidebar-hotel-area').innerText = stay.area ? `📍 ${stay.area}` : '';
+            document.getElementById('sidebar-hotel-details').innerText = stay.details || '';
+            const hotelQuery = encodeURIComponent(`${stay.name || ''} ${stay.area || ''} ${currentTripMeta.destinationCountry}`);
+            document.getElementById('sidebar-hotel-map').href = `https://www.google.com/maps/search/?api=1&query=${hotelQuery}`;
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
-                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🏠 1. Home to Airport</span>
-                            <p class="text-sm text-white/85 leading-relaxed">${summary.homeToDepartureTransit || ''}</p>
-                        </div>
-                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
-                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">✈️ 2. Flight Strategy</span>
-                            <p class="text-sm text-white/85 leading-relaxed">${summary.flightStrategy || ''}</p>
-                        </div>
-                        <div class="bg-blue-950/30 p-5 rounded-2xl border border-blue-400/30">
-                            <span class="text-xs uppercase tracking-wider text-blue-300 font-semibold block mb-2">🏨 3. Assigned Stay</span>
-                            <div class="text-base font-bold text-white mb-1">${stay.name || 'Recommended Hotel'} <span class="text-xs font-normal text-blue-200">(${stay.area || ''})</span></div>
-                            <p class="text-xs text-white/80 leading-relaxed">${stay.details || ''}</p>
-                        </div>
-                        <div class="bg-[#161a26] p-5 rounded-2xl border border-white/5">
-                            <span class="text-xs uppercase tracking-wider text-blue-400 font-semibold block mb-2">🚆 4. Local Transit</span>
-                            <p class="text-sm text-white/85 leading-relaxed">${summary.localTransportGuide || ''}</p>
-                        </div>
-                    </div>
-                </div>
+            document.getElementById('sidebar-home-transit').innerText = summary.homeToDepartureTransit || 'Travel to your departure airport ahead of check-in.';
+            document.getElementById('sidebar-flight-strategy').innerText = summary.flightStrategy || 'Direct or 1-stop flight to your destination.';
+            document.getElementById('sidebar-local-transit').innerText = summary.localTransportGuide || 'Use local metro/rail passes and ride-hailing apps.';
+
+            // Compute category stats
+            let acts = 0, meals = 0, trans = 0;
+            daysList.forEach(d => {
+                (d.schedule || []).forEach(item => {
+                    const cat = (item.category || '').toLowerCase();
+                    if (cat.includes('meal') || cat.includes('food')) meals++;
+                    else if (cat.includes('transit') || cat.includes('flight')) trans++;
+                    else acts++;
+                });
+            });
+            document.getElementById('stat-activities').innerText = acts;
+            document.getElementById('stat-meals').innerText = meals;
+            document.getElementById('stat-transit').innerText = trans;
+
+            renderDayTabs();
+            updateFilterButtonsUI();
+            renderTimelineStage();
+            updateProgressWidget();
+        }
+
+        function renderDayTabs() {
+            const daysList = currentTripData.days || [];
+            const tabsBar = document.getElementById('day-tabs-bar');
+
+            let html = daysList.map((day, idx) => {
+                const isActive = activeDayView === idx;
+                return `
+                    <button 
+                        onclick="selectDayTab(${idx})"
+                        class="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${
+                            isActive 
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.45)]' 
+                            : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+                        }"
+                    >
+                        <span>Day ${day.dayNumber || idx + 1}</span>
+                        <span class="text-[10px] opacity-75 hidden sm:inline">• ${(day.schedule || []).length} stops</span>
+                    </button>
+                `;
+            }).join('');
+
+            const isAllActive = activeDayView === 'ALL';
+            html += `
+                <button 
+                    onclick="selectDayTab('ALL')"
+                    class="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border ml-auto ${
+                        isAllActive 
+                        ? 'bg-emerald-600/30 border-emerald-400 text-emerald-200' 
+                        : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
+                    }"
+                >
+                    View All Days
+                </button>
             `;
 
-            daysList.forEach(day => {
-                let scheduleHtml = '';
-                (day.schedule || []).forEach(item => {
-                    scheduleHtml += `
-                        <div class="bg-[#161a26] hover:bg-[#1c2130] p-5 rounded-2xl border border-white/5 flex flex-col justify-between transition-all">
-                            <div>
-                                <div class="flex items-center justify-between text-xs mb-2">
-                                    <span class="text-blue-400 font-semibold">${item.time || ''}</span>
-                                    <span class="px-2.5 py-0.5 rounded-md bg-white/5 text-white/60 uppercase text-[10px] tracking-wider font-semibold">${item.category || 'Plan'}</span>
-                                </div>
-                                <h4 class="text-base font-semibold text-white mb-1">${item.title || ''}</h4>
-                                <p class="text-xs text-blue-200/60 mb-2">📍 ${item.location || ''} &nbsp;•&nbsp; 🚕 ${item.transport || ''}</p>
-                                ${item.costNote ? `<p class="text-[11px] text-emerald-300/90 mb-2">💳 ${item.costNote}</p>` : ''}
-                            </div>
-                            <p class="text-xs text-white/80 leading-relaxed border-t border-white/5 pt-3">${item.description || ''}</p>
+            tabsBar.innerHTML = html;
+        }
+
+        function selectDayTab(target) {
+            activeDayView = target;
+            renderDayTabs();
+            renderTimelineStage();
+        }
+
+        function setCategoryFilter(filter) {
+            activeCategoryFilter = filter;
+            updateFilterButtonsUI();
+            renderTimelineStage();
+        }
+
+        function updateFilterButtonsUI() {
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                const isMatch = btn.getAttribute('data-filter') === activeCategoryFilter;
+                if (isMatch) {
+                    btn.className = "filter-pill px-4 py-1.5 rounded-full text-xs font-semibold border transition-all bg-blue-600/30 border-blue-400 text-white shadow-[0_0_12px_rgba(59,130,246,0.3)]";
+                } else {
+                    btn.className = "filter-pill px-4 py-1.5 rounded-full text-xs font-medium border transition-all bg-white/5 border-white/10 text-white/60 hover:text-white";
+                }
+            });
+        }
+
+        function renderTimelineStage() {
+            const stage = document.getElementById('timeline-stage');
+            const daysList = currentTripData.days || [];
+
+            const daysToRender = activeDayView === 'ALL'
+                ? daysList.map((d, i) => ({ day: d, dayIdx: i }))
+                : (daysList[activeDayView] ? [{ day: daysList[activeDayView], dayIdx: activeDayView }] : []);
+
+            let html = '';
+
+            daysToRender.forEach(({ day, dayIdx }) => {
+                const schedule = day.schedule || [];
+                const filteredItems = schedule
+                    .map((item, itemIdx) => ({ item, itemIdx, key: `${dayIdx}-${itemIdx}` }))
+                    .filter(({ item, key }) => {
+                        if (activeCategoryFilter === 'ALL') return true;
+                        if (activeCategoryFilter === 'FAVORITES') return favoriteStops.has(key);
+                        return (item.category || '').toLowerCase().includes(activeCategoryFilter.toLowerCase());
+                    });
+
+                let itemsHtml = '';
+                if (filteredItems.length === 0) {
+                    itemsHtml = `
+                        <div class="bg-[#0d111b] border border-white/10 rounded-2xl p-8 text-center text-sm text-white/50">
+                            No stops match the <strong class="text-white">${escapeHtml(activeCategoryFilter)}</strong> filter on Day ${day.dayNumber}.
                         </div>
                     `;
-                });
+                } else {
+                    itemsHtml = `<div class="timeline-track space-y-5">` + filteredItems.map(({ item, itemIdx, key }) => {
+                        const isChecked = checkedStops.has(key);
+                        const isFav = favoriteStops.has(key);
+                        const savedNote = stopNotes[key] || '';
+                        const style = getCategoryStyle(item.category);
 
+                        return `
+                            <div class="relative pl-12 panel-animate">
+                                <!-- Glowing Timeline Node -->
+                                <div class="absolute left-0 top-5 w-10 h-10 rounded-2xl ${style.nodeBg} border ${style.nodeBorder} flex items-center justify-center text-base shadow-lg z-10">
+                                    ${style.icon}
+                                </div>
+
+                                <!-- Interactive Stop Card -->
+                                <div class="print-card group bg-[#0e1320] hover:bg-[#131929] border ${isChecked ? 'border-emerald-500/40 opacity-85' : 'border-white/10 hover:border-blue-400/40'} rounded-2xl p-5 transition-all shadow-lg">
+                                    
+                                    <!-- Top Meta Row -->
+                                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="text-xs font-mono font-bold ${style.timeColor} bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                                                ${escapeHtml(item.time || '')}
+                                            </span>
+                                            <span class="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-lg border ${style.badgeClass}">
+                                                ${escapeHtml(item.category || 'Stop')}
+                                            </span>
+                                        </div>
+
+                                        <!-- Interactive Action Buttons -->
+                                        <div class="no-print flex items-center gap-1.5">
+                                            <button onclick="openStopInMaps(${dayIdx}, ${itemIdx})" title="Open in Google Maps" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-blue-600/30 border border-white/10 hover:border-blue-400/50 text-[11px] text-white/75 hover:text-white transition-all">
+                                                📍 Maps ↗
+                                            </button>
+                                            <button onclick="toggleFavoriteStop('${key}')" title="Save to Favorites" class="w-8 h-7 rounded-lg border transition-all flex items-center justify-center text-xs ${isFav ? 'bg-amber-500/25 border-amber-400 text-amber-300' : 'bg-white/5 border-white/10 text-white/40 hover:text-amber-300'}">
+                                                ${isFav ? '★' : '☆'}
+                                            </button>
+                                            <button onclick="toggleCheckedStop('${key}')" title="Mark as Ready / Done" class="w-8 h-7 rounded-lg border transition-all flex items-center justify-center text-xs font-bold ${isChecked ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300' : 'bg-white/5 border-white/10 text-white/40 hover:text-emerald-300'}">
+                                                ✓
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Title & Location -->
+                                    <h4 class="text-lg font-bold ${isChecked ? 'line-through text-white/60' : 'text-white'} mb-1.5">
+                                        ${escapeHtml(item.title || '')}
+                                    </h4>
+
+                                    <!-- Location + Transit + Cost Pills -->
+                                    <div class="flex flex-wrap items-center gap-2 text-xs mb-3">
+                                        ${item.location ? `<span class="text-blue-200/80 bg-blue-500/10 px-2.5 py-1 rounded-lg">📍 ${escapeHtml(item.location)}</span>` : ''}
+                                        ${item.transport ? `<span class="text-cyan-200/80 bg-cyan-500/10 px-2.5 py-1 rounded-lg">🚆 ${escapeHtml(item.transport)}</span>` : ''}
+                                        ${item.costNote ? `<span class="text-emerald-300/90 bg-emerald-500/10 px-2.5 py-1 rounded-lg">💳 ${escapeHtml(item.costNote)}</span>` : ''}
+                                    </div>
+
+                                    <!-- Description -->
+                                    <p class="text-sm text-white/80 leading-relaxed">
+                                        ${escapeHtml(item.description || '')}
+                                    </p>
+
+                                    <!-- Interactive Personal Note Area -->
+                                    <div class="no-print mt-3 pt-3 border-t border-white/5">
+                                        ${savedNote ? `
+                                            <div class="flex items-start justify-between gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3.5 py-2 mb-2">
+                                                <p class="text-xs text-amber-200"><strong>📝 Note:</strong> ${escapeHtml(savedNote)}</p>
+                                                <button onclick="toggleNoteEditor('${key}')" class="text-[11px] text-amber-300 hover:underline flex-shrink-0">Edit</button>
+                                            </div>
+                                        ` : `
+                                            <button onclick="toggleNoteEditor('${key}')" class="text-[11px] text-white/40 hover:text-blue-300 transition-colors">
+                                                + Add personal reminder or booking note
+                                            </button>
+                                        `}
+                                        <div id="note-editor-${key}" class="hidden mt-2 flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                id="note-input-${key}" 
+                                                value="${escapeHtml(savedNote)}" 
+                                                placeholder="e.g., Book tickets 2 days early, ask for window seat..." 
+                                                onkeydown="if(event.key === 'Enter') saveStopNote('${key}')"
+                                                class="flex-1 bg-[#090c14] border border-blue-400/40 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none"
+                                            >
+                                            <button onclick="saveStopNote('${key}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg">Save</button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        `;
+                    }).join('') + `</div>`;
+                }
+
+                // Day Wrapper Header + Timeline
                 html += `
-                    <div class="bg-[#10131c] border border-white/10 rounded-3xl p-8 shadow-xl">
-                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-6">
+                    <div class="space-y-5">
+                        <div class="print-card bg-gradient-to-r from-[#111726] to-[#0c101a] border border-white/10 rounded-3xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xl">
                             <div>
-                                <span class="text-xs uppercase tracking-widest text-blue-400 font-semibold">Day ${day.dayNumber}</span>
-                                <h3 class="text-2xl font-bold text-white mt-0.5">${day.dayTitle || ''}</h3>
+                                <span class="text-xs uppercase tracking-widest text-blue-400 font-bold">Day ${day.dayNumber || dayIdx + 1}</span>
+                                <h2 class="text-2xl font-extrabold text-white mt-0.5">${escapeHtml(day.dayTitle || '')}</h2>
                             </div>
-                            <div class="flex items-center gap-4 text-xs">
-                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">☀️ Wake Up: <strong>${day.wakeUpTime || '07:00 AM'}</strong></span>
-                                <span class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white/90">🌙 Sleep: <strong>${day.sleepTime || '10:30 PM'}</strong></span>
+                            <div class="flex items-center gap-3 text-xs">
+                                <div class="bg-amber-500/10 border border-amber-400/30 text-amber-200 px-4 py-2 rounded-xl flex items-center gap-2">
+                                    <span>☀️</span>
+                                    <span>Wake: <strong>${escapeHtml(day.wakeUpTime || '07:00 AM')}</strong></span>
+                                </div>
+                                <div class="bg-indigo-500/10 border border-indigo-400/30 text-indigo-200 px-4 py-2 rounded-xl flex items-center gap-2">
+                                    <span>🌙</span>
+                                    <span>Sleep: <strong>${escapeHtml(day.sleepTime || '10:30 PM')}</strong></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${scheduleHtml}
-                        </div>
+
+                        ${itemsHtml}
                     </div>
                 `;
             });
 
-            resultDiv.innerHTML = html;
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
+            // Next / Previous Day Footer Navigation when viewing a single day
+            if (activeDayView !== 'ALL' && daysList.length > 1) {
+                const hasPrev = activeDayView > 0;
+                const hasNext = activeDayView < daysList.length - 1;
+                html += `
+                    <div class="no-print flex items-center justify-between pt-4 border-t border-white/10">
+                        <button 
+                            onclick="${hasPrev ? `selectDayTab(${activeDayView - 1}); window.scrollTo({top: 280, behavior: 'smooth'})` : ''}" 
+                            class="px-5 py-3 rounded-xl text-xs font-semibold border transition-all ${hasPrev ? 'bg-white/5 hover:bg-white/15 border-white/15 text-white' : 'opacity-30 border-white/5 text-white/40 cursor-not-allowed'}"
+                        >
+                            ← Previous Day
+                        </button>
+                        <span class="text-xs text-white/45">Day ${activeDayView + 1} of ${daysList.length}</span>
+                        <button 
+                            onclick="${hasNext ? `selectDayTab(${activeDayView + 1}); window.scrollTo({top: 280, behavior: 'smooth'})` : ''}" 
+                            class="px-5 py-3 rounded-xl text-xs font-semibold border transition-all ${hasNext ? 'bg-blue-600 hover:bg-blue-500 border-blue-400 text-white shadow-lg' : 'opacity-30 border-white/5 text-white/40 cursor-not-allowed'}"
+                        >
+                            Next Day →
+                        </button>
+                    </div>
+                `;
+            }
+
+            stage.innerHTML = html;
+        }
+
+        // =========================================================================
+        // 7. INTERACTIVE HANDLERS & HELPERS
+        // =========================================================================
+        function getCategoryStyle(category) {
+            const cat = (category || '').toLowerCase();
+            if (cat.includes('meal') || cat.includes('food') || cat.includes('dining')) {
+                return {
+                    icon: '🍜',
+                    nodeBg: 'bg-emerald-950',
+                    nodeBorder: 'border-emerald-400/60',
+                    timeColor: 'text-emerald-300',
+                    badgeClass: 'bg-emerald-500/15 border-emerald-400/35 text-emerald-300'
+                };
+            }
+            if (cat.includes('transit') || cat.includes('flight') || cat.includes('train')) {
+                return {
+                    icon: '🚆',
+                    nodeBg: 'bg-cyan-950',
+                    nodeBorder: 'border-cyan-400/60',
+                    timeColor: 'text-cyan-300',
+                    badgeClass: 'bg-cyan-500/15 border-cyan-400/35 text-cyan-300'
+                };
+            }
+            if (cat.includes('stay') || cat.includes('hotel')) {
+                return {
+                    icon: '🏨',
+                    nodeBg: 'bg-amber-950',
+                    nodeBorder: 'border-amber-400/60',
+                    timeColor: 'text-amber-300',
+                    badgeClass: 'bg-amber-500/15 border-amber-400/35 text-amber-300'
+                };
+            }
+            return {
+                icon: '🧭',
+                nodeBg: 'bg-blue-950',
+                nodeBorder: 'border-blue-400/60',
+                timeColor: 'text-blue-300',
+                badgeClass: 'bg-blue-500/15 border-blue-400/35 text-blue-300'
+            };
+        }
+
+        function toggleCheckedStop(key) {
+            if (checkedStops.has(key)) checkedStops.delete(key);
+            else checkedStops.add(key);
+            saveStateToStorage();
+            updateProgressWidget();
+            renderTimelineStage();
+        }
+
+        function toggleFavoriteStop(key) {
+            if (favoriteStops.has(key)) favoriteStops.delete(key);
+            else favoriteStops.add(key);
+            saveStateToStorage();
+            updateProgressWidget();
+            renderTimelineStage();
+        }
+
+        function toggleNoteEditor(key) {
+            const editor = document.getElementById(`note-editor-${key}`);
+            if (editor) {
+                editor.classList.toggle('hidden');
+                const input = document.getElementById(`note-input-${key}`);
+                if (input && !editor.classList.contains('hidden')) input.focus();
+            }
+        }
+
+        function saveStopNote(key) {
+            const input = document.getElementById(`note-input-${key}`);
+            if (!input) return;
+            const val = input.value.trim();
+            if (val) stopNotes[key] = val;
+            else delete stopNotes[key];
+            saveStateToStorage();
+            renderTimelineStage();
+        }
+
+        function openStopInMaps(dayIdx, itemIdx) {
+            const item = currentTripData?.days?.[dayIdx]?.schedule?.[itemIdx];
+            if (!item) return;
+            const query = encodeURIComponent(`${item.title || ''} ${item.location || ''} ${currentTripMeta?.destinationCountry || ''}`);
+            window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer');
+        }
+
+        function updateProgressWidget() {
+            const daysList = currentTripData?.days || [];
+            let totalStops = 0;
+            daysList.forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
+
+            const doneCount = checkedStops.size;
+            const pct = totalStops > 0 ? Math.round((doneCount / totalStops) * 100) : 0;
+
+            document.getElementById('progress-percent').innerText = `${pct}%`;
+            document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+            document.getElementById('progress-stops-label').innerText = `${doneCount} / ${totalStops} stops checked`;
+            document.getElementById('progress-favs-label').innerText = `★ ${favoriteStops.size} saved`;
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
     </script>
 </body>

@@ -9,6 +9,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Password Protection Middleware
 const checkPassword = (req, res, next) => {
     if (req.headers['x-site-password'] === 'mysecretpassword') {
@@ -27,7 +29,7 @@ function getGeminiClient() {
     return new GoogleGenAI({ apiKey });
 }
 
-// Smart Gemini caller: uses the latest Flash model and auto-switches if Google updates model names
+// Smart Gemini caller: auto-retries on 503 high-demand spikes and falls back across active Flash models
 async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 8192) {
     const candidateModels = [
         'gemini-3.8-flash',
@@ -36,38 +38,73 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 8192) {
         'gemini-flash-latest'
     ];
     let lastError = null;
+    let sawHighDemand = false;
 
-    for (const modelName of candidateModels) {
-        try {
-            const response = await ai.models.generateContent({
-                model: modelName,
-                contents: prompt,
-                config: {
-                    responseMimeType: "application/json",
-                    maxOutputTokens
+    for (let i = 0; i < candidateModels.length; i++) {
+        const modelName = candidateModels[i];
+
+        // Up to 2 attempts per model if it hits a temporary 503 high-demand spike
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                const response = await ai.models.generateContent({
+                    model: modelName,
+                    contents: prompt,
+                    config: {
+                        responseMimeType: "application/json",
+                        maxOutputTokens
+                    }
+                });
+                return response;
+            } catch (err) {
+                lastError = err;
+                const msg = err && err.message ? err.message : JSON.stringify(err);
+
+                // If Google recommends a specific newer model in the error, add it to the queue
+                const matches = msg.match(/models\/([a-zA-Z0-9._-]+)/g);
+                if (matches && matches.length > 1) {
+                    const suggestedModel = matches[1].replace('models/', '');
+                    if (!candidateModels.includes(suggestedModel)) {
+                        candidateModels.push(suggestedModel);
+                    }
                 }
-            });
-            return response;
-        } catch (err) {
-            lastError = err;
-            const msg = err && err.message ? err.message : JSON.stringify(err);
 
-            // If the API error recommends a specific model name, add it to the list automatically
-            const matches = msg.match(/models\/([a-zA-Z0-9._-]+)/g);
-            if (matches && matches.length > 1) {
-                const suggestedModel = matches[1].replace('models/', '');
-                if (!candidateModels.includes(suggestedModel)) {
-                    candidateModels.push(suggestedModel);
+                // Temporary traffic spike (503 / UNAVAILABLE / overloaded)
+                const isBusy =
+                    msg.includes('503') ||
+                    msg.includes('UNAVAILABLE') ||
+                    msg.toLowerCase().includes('high demand') ||
+                    msg.toLowerCase().includes('overloaded');
+
+                if (isBusy) {
+                    sawHighDemand = true;
+                    if (attempt === 1) {
+                        console.warn(`Model ${modelName} busy (503). Retrying in 2s...`);
+                        await sleep(2000);
+                        continue; // Retry same model once
+                    }
+                    console.warn(`Model ${modelName} still busy. Trying next model...`);
+                    break; // Move to next fallback model
                 }
-            }
 
-            // If it's a 404 / model availability issue, try the next model in the list
-            if (msg.includes('404') || msg.includes('NOT_FOUND') || msg.includes('no longer available')) {
-                continue;
+                // Retired or unavailable model name (404 / NOT_FOUND)
+                if (msg.includes('404') || msg.includes('NOT_FOUND') || msg.includes('no longer available')) {
+                    break; // Move to next fallback model
+                }
+
+                // Rate limit (429)
+                if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+                    throw new Error('Free-tier API rate limit reached. Please wait 30–60 seconds and try again.');
+                }
+
+                throw err;
             }
-            throw err;
         }
     }
+
+    if (sawHighDemand) {
+        throw new Error('Google Gemini servers are temporarily experiencing heavy traffic across models. Please wait 15–30 seconds and click Generate again.');
+    }
+
     throw lastError;
 }
 
@@ -95,19 +132,19 @@ app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {
         const ai = getGeminiClient();
 
-        const { 
-            homeCity, 
-            departureCity, 
+        const {
+            homeCity,
+            departureCity,
             destinationCountry,
             destination,
             selectedPlaces,
-            days, 
+            days,
             hotelBudget,
             dailySpendingBudget,
             transitStyle,
             customBudgetNote,
-            isFirstTime, 
-            visitedPlaces 
+            isFirstTime,
+            visitedPlaces
         } = req.body;
 
         const targetCountry = destinationCountry || destination || 'Destination';
@@ -117,8 +154,8 @@ app.post('/api/plan-trip', checkPassword, async (req, res) => {
             ? `The user specifically wants to visit these places in ${targetCountry}: ${selectedPlaces.join(', ')}. Structure the route logically around these locations.`
             : `Select the best cities and regions in ${targetCountry} for a ${numDays}-day trip.`;
 
-        const exclusionRule = (isFirstTime === 'no' && visitedPlaces) 
-            ? `CRITICAL RULE: The user has visited ${targetCountry} before and already saw: ${visitedPlaces}. DO NOT include any of these already-visited places. Suggest fresh attractions and areas.` 
+        const exclusionRule = (isFirstTime === 'no' && visitedPlaces)
+            ? `CRITICAL RULE: The user has visited ${targetCountry} before and already saw: ${visitedPlaces}. DO NOT include any of these already-visited places. Suggest fresh attractions and areas.`
             : `This is the user's first time visiting ${targetCountry}.`;
 
         const prompt = `Act as an elite travel architect. Build a complete, day-by-day travel plan based on these parameters:
@@ -184,9 +221,9 @@ Return ONLY valid JSON matching this exact structure:
 
     } catch (error) {
         console.error("AI Generation Error:", error);
-        res.status(500).json({ 
-            error: "Failed to generate itinerary", 
-            details: error.message || "Unknown server error" 
+        res.status(500).json({
+            error: "Failed to generate itinerary",
+            details: error.message || "Unknown server error"
         });
     }
 });

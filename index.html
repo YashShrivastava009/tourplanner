@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Your Next Adventure — Desktop AI Travel Architect</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.1/dist/globe.gl.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -105,6 +107,15 @@
             box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.75), 0 14px 35px rgba(245, 158, 11, 0.4) !important;
         }
 
+        /* --- 3D GLOBE CURSOR POPUP --- */
+        #globe-country-tooltip {
+            position: fixed;
+            pointer-events: none;
+            z-index: 200;
+            transform: translate(16px, -50%);
+            transition: opacity 0.12s ease;
+        }
+
         /* --- AUTOCOMPLETE DROPDOWN --- */
         .autocomplete-menu {
             position: absolute;
@@ -168,7 +179,7 @@
         @media print {
             body { background: #ffffff !important; color: #111827 !important; }
             .no-print { display: none !important; }
-            #home-page { display: none !important; }
+            #home-page, #globe-page { display: none !important; }
             #itinerary-page { display: block !important; background: #ffffff !important; }
             .print-card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
             .print-card * { color: #0f172a !important; }
@@ -418,11 +429,11 @@
         </section>
 
         <!-- ================================================================= -->
-        <!-- MAIN DESKTOP DASHBOARD: SAVED PLAN + LIVE WORLD PORTALS + BATTLE  -->
+        <!-- MAIN DESKTOP DASHBOARD: SAVED PLANS + LIVE PORTALS + BATTLE       -->
         <!-- ================================================================= -->
         <section id="portals-section" class="border-t border-white/10 pt-8">
 
-            <!-- RESUME ACTIVE GENERATED PLAN BANNER -->
+            <!-- SAVED GENERATED PLANS LIST WITH DELETE BAR -->
             <div id="saved-plan-banner" class="hidden mb-8"></div>
 
             <!-- LIVE PORTALS & COUNTRY BATTLE HEADER BAR -->
@@ -453,11 +464,10 @@
                 </div>
             </div>
 
-            <!-- COUNTRY BATTLE SELECTION CONSOLE (Visible when Battle Mode is ON) -->
+            <!-- COUNTRY BATTLE SELECTION CONSOLE -->
             <div id="battle-command-bar" class="hidden panel-animate bg-gradient-to-r from-[#141a2b] via-[#121624] to-[#1b1612] border border-amber-400/40 rounded-3xl p-5 mb-6 shadow-[0_15px_45px_rgba(0,0,0,0.85)]">
                 <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
                     <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                        <!-- Fighter A Slot -->
                         <div class="flex-1 min-w-[170px] bg-blue-950/50 border border-blue-400/50 rounded-2xl px-4 py-2.5">
                             <span class="block text-[10px] uppercase tracking-widest text-blue-300 font-bold mb-1">Fighter 1 (Blue)</span>
                             <select id="battle-select-a" onchange="syncBattleDropdowns()" class="w-full bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer"></select>
@@ -467,7 +477,6 @@
                             VS
                         </div>
 
-                        <!-- Fighter B Slot -->
                         <div class="flex-1 min-w-[170px] bg-amber-950/50 border border-amber-400/50 rounded-2xl px-4 py-2.5">
                             <span class="block text-[10px] uppercase tracking-widest text-amber-300 font-bold mb-1">Fighter 2 (Gold)</span>
                             <select id="battle-select-b" onchange="syncBattleDropdowns()" class="w-full bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer"></select>
@@ -487,9 +496,7 @@
             </div>
 
             <!-- 6-COLUMN LIVE WORLD PORTAL CARDS -->
-            <div id="live-portals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
-                <!-- Populated dynamically with live clocks, Open-Meteo weather & seasonal pulse -->
-            </div>
+            <div id="live-portals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-8"></div>
 
             <!-- 3-COLUMN WIDESCREEN FEATURED TEMPLATES -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -530,30 +537,68 @@
                 </div>
             </div>
         </section>
+    </div>
 
-        <!-- FLOATING GLASS DOCK (Home Page only) -->
-        <div id="home-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-            <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
-                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
-                    </svg>
-                </button>
-                <button onclick="openWizard()" title="Configure Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="9"/>
-                        <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
-                    </svg>
-                </button>
-                <button onclick="toggleBattleMode(true); document.getElementById('portals-section').scrollIntoView({behavior:'smooth'});" title="Country Battle Mode" class="w-11 h-11 rounded-full flex items-center justify-center text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-base">
-                    ⚔️
-                </button>
-                <button onclick="if(currentTripData) openItineraryPage(); else openWizard();" title="Active Itinerary" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                    </svg>
-                </button>
+    <!-- ===================================================================== -->
+    <!-- VIEW 3: INTERACTIVE 3D ROTATABLE EARTH (2ND DOCK BUTTON)              -->
+    <!-- ===================================================================== -->
+    <div id="globe-page" class="hidden fixed inset-0 z-40 bg-[#02040a] overflow-hidden">
+        <!-- Top Overlay Controls -->
+        <div class="fixed top-6 left-6 right-6 z-50 flex items-center justify-between pointer-events-none">
+            <button onclick="closeGlobeView()" class="pointer-events-auto flex items-center gap-2 bg-[#0d121d]/85 hover:bg-blue-600 backdrop-blur-xl border border-white/15 hover:border-blue-400 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                <span>Back to Home</span>
+            </button>
+
+            <div class="bg-[#0d121d]/80 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 text-xs text-white/70 hidden sm:flex items-center gap-2 shadow-xl">
+                <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                <span>Drag to rotate • Scroll to zoom • Hover any country</span>
             </div>
+        </div>
+
+        <!-- 3D Globe Loading Indicator -->
+        <div id="globe-loader" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#02040a] pointer-events-none">
+            <div class="w-12 h-12 rounded-full border-2 border-blue-500/25 border-t-blue-400 animate-spin mb-4"></div>
+            <p class="text-xs uppercase tracking-widest text-blue-300 font-semibold">Loading 3D Interactive Earth...</p>
+        </div>
+
+        <!-- Full-Screen WebGL 3D Earth Canvas -->
+        <div id="globe-canvas-container" class="w-screen h-screen cursor-grab active:cursor-grabbing"></div>
+
+        <!-- Minimal Cursor-Following Country Name Popup (Strictly Country Name Only) -->
+        <div id="globe-country-tooltip" class="hidden bg-[#0c111d]/95 backdrop-blur-xl border border-blue-400/60 text-white text-sm font-semibold px-3.5 py-1.5 rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.85)]"></div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- SHARED FLOATING GLASS DOCK (4 BUTTONS)                                -->
+    <!-- ===================================================================== -->
+    <div id="main-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 no-print">
+        <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
+            <!-- Button 1: Home -->
+            <button id="dock-btn-home" onclick="navigateDock('home')" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
+                </svg>
+            </button>
+            <!-- Button 2: 3D Interactive Earth -->
+            <button id="dock-btn-globe" onclick="navigateDock('globe')" title="3D Interactive Earth" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
+                </svg>
+            </button>
+            <!-- Button 3: Country Battle Mode -->
+            <button id="dock-btn-battle" onclick="navigateDock('battle')" title="Country Battle Mode" class="w-11 h-11 rounded-full flex items-center justify-center text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-base">
+                ⚔️
+            </button>
+            <!-- Button 4: Active Itinerary Map -->
+            <button id="dock-btn-plan" onclick="navigateDock('plan')" title="Active Itinerary" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -562,7 +607,6 @@
     <!-- ===================================================================== -->
     <div id="dossier-modal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 md:p-8 overflow-y-auto" onclick="if(event.target === this) closeDossierModal()">
         <div class="panel-animate bg-[#0d111b] border border-blue-500/35 rounded-3xl w-full max-w-2xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] my-auto">
-            <!-- Portal Visual Header -->
             <div class="relative h-48 overflow-hidden">
                 <img id="dossier-bg" src="" alt="Portal" class="w-full h-full object-cover opacity-75">
                 <div class="absolute inset-0 bg-gradient-to-t from-[#0d111b] via-[#0d111b]/50 to-transparent"></div>
@@ -579,12 +623,8 @@
                 </div>
             </div>
 
-            <!-- AI Intel Body -->
-            <div id="dossier-body" class="p-6 space-y-4">
-                <!-- Dynamically filled -->
-            </div>
+            <div id="dossier-body" class="p-6 space-y-4"></div>
 
-            <!-- Action Footer -->
             <div class="px-6 py-4 bg-[#080b12] border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
                 <button id="dossier-battle-btn" class="px-5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition-all">
                     ⚔️ Battle Against Another Country
@@ -601,7 +641,6 @@
     <!-- ===================================================================== -->
     <div id="battle-arena-modal" class="hidden fixed inset-0 z-[115] bg-[#030508]/95 backdrop-blur-2xl overflow-y-auto">
         <div class="max-w-6xl mx-auto px-6 py-8">
-            <!-- Sticky Top Bar -->
             <div class="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
                 <div class="flex items-center gap-3">
                     <span class="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-widest">⚔️ Head-to-Head Showdown</span>
@@ -612,10 +651,7 @@
                 </button>
             </div>
 
-            <!-- Arena Content Stage -->
-            <div id="battle-arena-stage">
-                <!-- Populated dynamically with loading state or full showdown results -->
-            </div>
+            <div id="battle-arena-stage"></div>
         </div>
     </div>
 
@@ -688,7 +724,6 @@
                         <p id="hero-budget-summary" class="text-sm text-white/75 mt-2.5 leading-relaxed max-w-2xl"></p>
                     </div>
 
-                    <!-- LIVE INTERACTIVE READINESS WIDGET -->
                     <div class="bg-[#0d121d]/85 backdrop-blur-xl border border-white/15 rounded-2xl p-4 w-full sm:w-64 shadow-2xl no-print">
                         <div class="flex items-center justify-between text-xs mb-2">
                             <span class="text-white/60 font-medium">Trip Checklist Progress</span>
@@ -886,7 +921,6 @@
             }
         ];
 
-        // Store fetched live weather per portal
         const portalWeatherMap = {};
 
         const QUICK_CITIES = [
@@ -978,7 +1012,7 @@
         const ALL_COUNTRIES = Object.keys(COUNTRY_ISO_MAP);
 
         // =========================================================================
-        // 2. APPLICATION STATE
+        // 2. APPLICATION STATE & SAVED PLANS STORAGE
         // =========================================================================
         let activePlacesList = [];
         let selectedPlacesSet = new Set();
@@ -991,7 +1025,11 @@
         let battleNextSlot = "A";
         const dossierCache = {};
 
-        // Itinerary Interactive State
+        // Multi-Plan Storage State
+        let savedPlans = [];
+        let activePlanId = null;
+
+        // Active Itinerary Interactive State
         let currentTripData = null;
         let currentTripMeta = null;
         let activeDayView = 0;
@@ -999,6 +1037,11 @@
         let checkedStops = new Set();
         let favoriteStops = new Set();
         let stopNotes = {};
+
+        // 3D Globe State
+        let worldGlobe = null;
+        let globeInitialized = false;
+        let hoveredCountryFeature = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             const monthLabel = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
@@ -1009,37 +1052,264 @@
             fetchAllPortalWeather();
             setInterval(updatePortalClocks, 30000);
 
-            try {
-                const saved = localStorage.getItem('ai_travel_last_trip');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed && parsed.data && parsed.meta) {
-                        currentTripData = parsed.data;
-                        currentTripMeta = parsed.meta;
-                        checkedStops = new Set(parsed.checked || []);
-                        favoriteStops = new Set(parsed.favorites || []);
-                        stopNotes = parsed.notes || {};
-                        updateHomeActivePlanBanner();
-                    }
-                }
-            } catch (e) {}
+            loadSavedPlansFromStorage();
+            updateHomeActivePlanBanner();
         });
 
-        function saveStateToStorage() {
-            if (!currentTripData || !currentTripMeta) return;
+        function loadSavedPlansFromStorage() {
             try {
-                localStorage.setItem('ai_travel_last_trip', JSON.stringify({
-                    data: currentTripData,
-                    meta: currentTripMeta,
-                    checked: Array.from(checkedStops),
-                    favorites: Array.from(favoriteStops),
-                    notes: stopNotes
-                }));
+                const rawList = localStorage.getItem('ai_travel_saved_plans');
+                if (rawList) {
+                    const parsedList = JSON.parse(rawList);
+                    if (Array.isArray(parsedList)) savedPlans = parsedList;
+                } else {
+                    // Migrate single legacy saved plan if present
+                    const legacy = localStorage.getItem('ai_travel_last_trip');
+                    if (legacy) {
+                        const parsed = JSON.parse(legacy);
+                        if (parsed && parsed.data && parsed.meta) {
+                            savedPlans = [{
+                                id: 'plan_' + Date.now(),
+                                data: parsed.data,
+                                meta: parsed.meta,
+                                checked: parsed.checked || [],
+                                favorites: parsed.favorites || [],
+                                notes: parsed.notes || {},
+                                createdAt: Date.now()
+                            }];
+                            persistPlansToStorage();
+                        }
+                    }
+                }
+
+                if (savedPlans.length > 0) {
+                    setActivePlanById(savedPlans[0].id);
+                }
             } catch (e) {}
         }
 
+        function persistPlansToStorage() {
+            try {
+                localStorage.setItem('ai_travel_saved_plans', JSON.stringify(savedPlans));
+                localStorage.removeItem('ai_travel_last_trip');
+            } catch (e) {}
+        }
+
+        function setActivePlanById(planId) {
+            const found = savedPlans.find(p => p.id === planId);
+            if (!found) {
+                activePlanId = null;
+                currentTripData = null;
+                currentTripMeta = null;
+                checkedStops = new Set();
+                favoriteStops = new Set();
+                stopNotes = {};
+                return;
+            }
+            activePlanId = found.id;
+            currentTripData = found.data;
+            currentTripMeta = found.meta;
+            checkedStops = new Set(found.checked || []);
+            favoriteStops = new Set(found.favorites || []);
+            stopNotes = found.notes || {};
+        }
+
+        function syncActivePlanChanges() {
+            if (!activePlanId) return;
+            const idx = savedPlans.findIndex(p => p.id === activePlanId);
+            if (idx !== -1) {
+                savedPlans[idx].checked = Array.from(checkedStops);
+                savedPlans[idx].favorites = Array.from(favoriteStops);
+                savedPlans[idx].notes = stopNotes;
+                persistPlansToStorage();
+            }
+        }
+
+        function deleteSavedPlan(planId, event) {
+            if (event) event.stopPropagation();
+            savedPlans = savedPlans.filter(p => p.id !== planId);
+            if (activePlanId === planId) {
+                if (savedPlans.length > 0) setActivePlanById(savedPlans[0].id);
+                else setActivePlanById(null);
+            }
+            persistPlansToStorage();
+            updateHomeActivePlanBanner();
+        }
+
+        function clearAllSavedPlans() {
+            if (savedPlans.length === 0) return;
+            savedPlans = [];
+            setActivePlanById(null);
+            persistPlansToStorage();
+            updateHomeActivePlanBanner();
+        }
+
         // =========================================================================
-        // 3. LIVE WORLD PORTALS ENGINE (CLOCKS + OPEN-METEO WEATHER + DOSSIER)
+        // 3. FLOATING 4-BUTTON DOCK & INTERACTIVE 3D ROTATABLE EARTH
+        // =========================================================================
+        function setActiveDockButton(activeTab) {
+            const activeStyle = "w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner transition-all";
+            const inactiveStyle = "w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all";
+            const battleInactive = "w-11 h-11 rounded-full flex items-center justify-center text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-base";
+
+            document.getElementById('dock-btn-home').className = activeTab === 'home' ? activeStyle : inactiveStyle;
+            document.getElementById('dock-btn-globe').className = activeTab === 'globe' ? activeStyle : inactiveStyle;
+            document.getElementById('dock-btn-battle').className = activeTab === 'battle' ? activeStyle + " text-amber-300" : battleInactive;
+            document.getElementById('dock-btn-plan').className = activeTab === 'plan' ? activeStyle : inactiveStyle;
+        }
+
+        function navigateDock(tab) {
+            if (tab === 'home') {
+                closeGlobeView();
+                goBackHome();
+                setActiveDockButton('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (tab === 'globe') {
+                openGlobeView();
+            } else if (tab === 'battle') {
+                closeGlobeView();
+                document.getElementById('itinerary-page').classList.add('hidden');
+                document.getElementById('home-page').classList.remove('hidden');
+                document.getElementById('main-dock').classList.remove('hidden');
+                toggleBattleMode(true);
+                setActiveDockButton('battle');
+                document.getElementById('portals-section').scrollIntoView({ behavior: 'smooth' });
+            } else if (tab === 'plan') {
+                closeGlobeView();
+                if (currentTripData) openItineraryPage();
+                else openWizard();
+            }
+        }
+
+        function openGlobeView() {
+            document.getElementById('itinerary-page').classList.add('hidden');
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('globe-page').classList.remove('hidden');
+            document.getElementById('main-dock').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            setActiveDockButton('globe');
+
+            if (!globeInitialized) {
+                initInteractive3DGlobe();
+            } else if (worldGlobe) {
+                worldGlobe.width(window.innerWidth).height(window.innerHeight);
+            }
+        }
+
+        function closeGlobeView() {
+            const globePage = document.getElementById('globe-page');
+            if (!globePage.classList.contains('hidden')) {
+                globePage.classList.add('hidden');
+                document.getElementById('globe-country-tooltip').classList.add('hidden');
+                document.getElementById('home-page').classList.remove('hidden');
+                document.body.style.overflow = '';
+                setActiveDockButton('home');
+            }
+        }
+
+        async function initInteractive3DGlobe() {
+            globeInitialized = true;
+            const container = document.getElementById('globe-canvas-container');
+            const tooltip = document.getElementById('globe-country-tooltip');
+            const loader = document.getElementById('globe-loader');
+
+            // Track cursor position cleanly for the country-name popup
+            container.addEventListener('mousemove', (e) => {
+                if (hoveredCountryFeature) {
+                    tooltip.style.left = `${e.clientX}px`;
+                    tooltip.style.top = `${e.clientY}px`;
+                }
+            });
+
+            container.addEventListener('mouseleave', () => {
+                hoveredCountryFeature = null;
+                tooltip.classList.add('hidden');
+            });
+
+            try {
+                // Load world country borders TopoJSON
+                let worldTopo = null;
+                try {
+                    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+                    worldTopo = await res.json();
+                } catch (err) {
+                    const resFallback = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json');
+                    worldTopo = await resFallback.json();
+                }
+
+                const countries = topojson.feature(worldTopo, worldTopo.objects.countries).features;
+
+                worldGlobe = Globe()(container)
+                    .width(window.innerWidth)
+                    .height(window.innerHeight)
+                    .globeImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg')
+                    .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
+                    .backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png')
+                    .showAtmosphere(true)
+                    .atmosphereColor('#60a5fa')
+                    .atmosphereAltitude(0.18)
+                    .polygonsData(countries)
+                    .polygonAltitude(d => d === hoveredCountryFeature ? 0.025 : 0.006)
+                    .polygonCapColor(d => d === hoveredCountryFeature ? 'rgba(59, 130, 246, 0.45)' : 'rgba(255, 255, 255, 0.02)')
+                    .polygonSideColor(() => 'rgba(96, 165, 250, 0.25)')
+                    .polygonStrokeColor(d => d === hoveredCountryFeature ? '#93c5fd' : 'rgba(255, 255, 255, 0.22)')
+                    .polygonsTransitionDuration(150)
+                    .onPolygonHover((hoverD) => {
+                        hoveredCountryFeature = hoverD || null;
+                        worldGlobe
+                            .polygonAltitude(d => d === hoveredCountryFeature ? 0.025 : 0.006)
+                            .polygonCapColor(d => d === hoveredCountryFeature ? 'rgba(59, 130, 246, 0.45)' : 'rgba(255, 255, 255, 0.02)')
+                            .polygonStrokeColor(d => d === hoveredCountryFeature ? '#93c5fd' : 'rgba(255, 255, 255, 0.22)');
+
+                        const controls = worldGlobe.controls();
+                        if (hoverD && hoverD.properties) {
+                            const name = hoverD.properties.name || hoverD.properties.ADMIN || '';
+                            if (name) {
+                                tooltip.innerText = name;
+                                tooltip.classList.remove('hidden');
+                                container.style.cursor = 'pointer';
+                                if (controls) controls.autoRotate = false;
+                            }
+                        } else {
+                            tooltip.classList.add('hidden');
+                            container.style.cursor = 'grab';
+                            if (controls) controls.autoRotate = true;
+                        }
+                    })
+                    .onPolygonClick((clickD) => {
+                        if (clickD && clickD.properties) {
+                            const name = clickD.properties.name || clickD.properties.ADMIN || '';
+                            if (name) {
+                                tooltip.innerText = name;
+                                tooltip.classList.remove('hidden');
+                            }
+                        }
+                    });
+
+                // Smooth camera & gentle idle auto-rotation
+                worldGlobe.pointOfView({ lat: 22, lng: 78, altitude: 2.2 });
+                const controls = worldGlobe.controls();
+                controls.autoRotate = true;
+                controls.autoRotateSpeed = 0.45;
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.08;
+                controls.minDistance = 140;
+                controls.maxDistance = 520;
+
+                loader.classList.add('hidden');
+
+                window.addEventListener('resize', () => {
+                    if (worldGlobe && !document.getElementById('globe-page').classList.contains('hidden')) {
+                        worldGlobe.width(window.innerWidth).height(window.innerHeight);
+                    }
+                });
+            } catch (error) {
+                loader.innerHTML = `<p class="text-sm text-red-300">Failed to load 3D Earth textures. Please refresh and try again.</p>`;
+            }
+        }
+
+        // =========================================================================
+        // 4. LIVE WORLD PORTALS ENGINE (CLOCKS + OPEN-METEO WEATHER + DOSSIER)
         // =========================================================================
         function getWeatherMeta(code) {
             if (code === 0) return { icon: "☀️", desc: "Clear" };
@@ -1096,7 +1366,6 @@
                         <img src="${portal.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="${escapeHtml(portal.country)}">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/45"></div>
 
-                        <!-- Top Live Telemetry Bar -->
                         <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-1.5">
                             <span id="portal-weather-${portal.id}" class="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white">
                                 ${weatherText}
@@ -1104,7 +1373,6 @@
                             ${battleBadge || `<span id="portal-clock-${portal.id}" class="px-2 py-1 rounded-full bg-black/55 backdrop-blur-md text-[10px] font-mono text-blue-200 border border-white/10">${liveTime}</span>`}
                         </div>
 
-                        <!-- Bottom Identity & Season Pulse -->
                         <div class="absolute bottom-3 left-3.5 right-3.5">
                             <span class="inline-block px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide mb-2 backdrop-blur-md ${season.color}">
                                 ${season.label}
@@ -1153,9 +1421,7 @@
                         if (el) el.innerText = `${meta.icon} ${Math.round(item.current.temperature_2m)}°C`;
                     }
                 });
-            } catch (err) {
-                console.warn("Live weather fetch skipped:", err);
-            }
+            } catch (err) {}
         }
 
         function handlePortalCardClick(portalId) {
@@ -1163,9 +1429,7 @@
             if (!portal) return;
 
             if (isBattleMode) {
-                if (battleCountryA === portal.country || battleCountryB === portal.country) {
-                    return;
-                }
+                if (battleCountryA === portal.country || battleCountryB === portal.country) return;
                 if (battleNextSlot === "A") {
                     battleCountryA = portal.country;
                     battleNextSlot = "B";
@@ -1195,7 +1459,6 @@
             document.getElementById('dossier-live-weather').innerText = weatherStr;
             document.getElementById('dossier-live-clock').innerText = `${getFormattedLocalTime(portal.tz)} (${portal.hubCity})`;
 
-            // Wire action buttons
             document.getElementById('dossier-plan-btn').onclick = () => {
                 closeDossierModal();
                 quickSelectCountry(portal.country, portal.defaultPlaces);
@@ -1212,7 +1475,6 @@
 
             modal.classList.remove('hidden');
 
-            // Serve from cache if already fetched this session
             const homeCity = document.getElementById('homeCity').value.trim();
             const cacheKey = `${portal.country}|${homeCity}`;
             if (dossierCache[cacheKey]) {
@@ -1264,7 +1526,6 @@
 
             const spots = Array.isArray(data.topHighlights) ? data.topHighlights : portal.defaultPlaces;
 
-            // Update Plan button to pre-select AI's recommended highlights
             document.getElementById('dossier-plan-btn').onclick = () => {
                 closeDossierModal();
                 quickSelectCountry(portal.country, spots);
@@ -1305,7 +1566,7 @@
         }
 
         // =========================================================================
-        // 4. COUNTRY BATTLE MODE (HEAD-TO-HEAD AI SHOWDOWN)
+        // 5. COUNTRY BATTLE MODE (HEAD-TO-HEAD AI SHOWDOWN)
         // =========================================================================
         function initBattleSelectors() {
             const selectA = document.getElementById('battle-select-a');
@@ -1340,6 +1601,7 @@
                 label.innerText = "Country Battle Mode";
                 toggleBtn.className = "flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold border transition-all bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/35 hover:to-orange-500/35 border-amber-400/50 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.18)]";
                 subtitle.innerText = "Real-time local clocks, live weather & seasonal intel. Click any portal for an AI Dossier, or activate Battle Mode to pit 2 countries head-to-head.";
+                setActiveDockButton('home');
             }
             renderLivePortals();
         }
@@ -1417,7 +1679,6 @@
 
             const bgA = COUNTRY_BACKDROPS[a.name] || DEFAULT_BACKDROP;
             const bgB = COUNTRY_BACKDROPS[b.name] || DEFAULT_BACKDROP;
-
             const isAWinner = winner.toLowerCase() === a.name.toLowerCase();
 
             const scoresHtml = scores.map(row => {
@@ -1447,7 +1708,6 @@
 
             stage.innerHTML = `
                 <div class="panel-animate space-y-6 pb-12">
-                    <!-- Showdown Headline & AI Verdict Banner -->
                     <div class="text-center max-w-3xl mx-auto">
                         <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">${escapeHtml(data.headline || `${a.name} vs. ${b.name}`)}</h2>
                     </div>
@@ -1464,7 +1724,6 @@
                         </div>
                     </div>
 
-                    <!-- HEAD-TO-HEAD VISUAL SCOREBOARD -->
                     ${scores.length ? `
                         <div class="bg-[#0d111b] border border-white/10 rounded-3xl p-6 space-y-4">
                             <div class="flex items-center justify-between text-xs uppercase tracking-widest font-bold border-b border-white/10 pb-3">
@@ -1478,7 +1737,6 @@
                         </div>
                     ` : ''}
 
-                    <!-- SIDE-BY-SIDE FIGHTER CARDS -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         ${renderFighterCard(a, bgA, 'blue', isAWinner, placesAJson)}
                         ${renderFighterCard(b, bgB, 'amber', !isAWinner, placesBJson)}
@@ -1490,14 +1748,11 @@
         function renderFighterCard(fighter, bg, theme, isWinner, placesAttr) {
             const borderClass = theme === 'blue' ? 'border-blue-500/40' : 'border-amber-500/40';
             const accentText = theme === 'blue' ? 'text-blue-300' : 'text-amber-300';
-            const btnClass = theme === 'blue'
-                ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                : 'bg-amber-500 hover:bg-amber-400 text-black';
+            const btnClass = theme === 'blue' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-amber-500 hover:bg-amber-400 text-black';
 
             return `
                 <div class="bg-[#0d111b] border ${borderClass} rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between">
                     <div>
-                        <!-- Fighter Hero -->
                         <div class="relative h-44 overflow-hidden">
                             <img src="${bg}" class="w-full h-full object-cover opacity-75" alt="${escapeHtml(fighter.name)}">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#0d111b] via-[#0d111b]/45 to-transparent"></div>
@@ -1508,7 +1763,6 @@
                             </div>
                         </div>
 
-                        <!-- Detailed Breakdown -->
                         <div class="p-6 space-y-3.5 text-xs">
                             <div class="bg-white/5 rounded-2xl p-3.5 border border-white/5">
                                 <span class="text-white/50 uppercase tracking-wider text-[10px] font-bold block mb-1">✈️ Flight Reality</span>
@@ -1565,7 +1819,7 @@
         }
 
         // =========================================================================
-        // 5. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
+        // 6. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
         // =========================================================================
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
@@ -1840,7 +2094,7 @@
         }
 
         // =========================================================================
-        // 6. HOME WIZARD & PAGE NAVIGATION
+        // 7. HOME WIZARD, SAVED PLANS DELETE BAR & PAGE NAVIGATION
         // =========================================================================
         function openWizard() {
             const quickInput = document.getElementById('quickDestinationInput').value.trim();
@@ -1881,7 +2135,11 @@
 
         function goBackHome() {
             document.getElementById('itinerary-page').classList.add('hidden');
+            document.getElementById('globe-page').classList.add('hidden');
             document.getElementById('home-page').classList.remove('hidden');
+            document.getElementById('main-dock').classList.remove('hidden');
+            document.body.style.overflow = '';
+            setActiveDockButton('home');
             updateHomeActivePlanBanner();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1891,10 +2149,16 @@
             setTimeout(() => openWizard(), 150);
         }
 
-        function openItineraryPage() {
+        function openItineraryPage(planId = null) {
+            if (planId) setActivePlanById(planId);
             if (!currentTripData) return;
             document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('globe-page').classList.add('hidden');
+            document.getElementById('main-dock').classList.add('hidden');
             document.getElementById('itinerary-page').classList.remove('hidden');
+            document.body.style.overflow = '';
+            activeDayView = 0;
+            activeCategoryFilter = 'ALL';
             renderDedicatedItineraryPage();
             window.scrollTo({ top: 0, behavior: 'instant' });
         }
@@ -1902,44 +2166,77 @@
         function updateHomeActivePlanBanner() {
             const banner = document.getElementById('saved-plan-banner');
             const headerBtn = document.getElementById('header-resume-btn');
-            if (!currentTripData || !currentTripMeta) {
+            const countPill = document.getElementById('places-count');
+
+            if (!savedPlans || savedPlans.length === 0) {
                 banner.classList.add('hidden');
+                banner.innerHTML = '';
                 headerBtn.classList.add('hidden');
+                headerBtn.classList.remove('flex');
+                countPill.innerText = '6 live portals';
                 return;
             }
 
-            const summary = currentTripData.summary || {};
-            const daysCount = (currentTripData.days || []).length;
-            let totalStops = 0;
-            (currentTripData.days || []).forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
-
-            document.getElementById('places-count').innerText = `${totalStops} saved stops`;
             headerBtn.classList.remove('hidden');
             headerBtn.classList.add('flex');
+            countPill.innerText = `${savedPlans.length} saved plan${savedPlans.length > 1 ? 's' : ''}`;
 
-            const bg = COUNTRY_BACKDROPS[currentTripMeta.destinationCountry] || DEFAULT_BACKDROP;
-            banner.innerHTML = `
-                <div onclick="openItineraryPage()" class="bg-gradient-to-r from-[#121a2d] via-[#101625] to-[#0d121d] hover:border-blue-400 border border-blue-500/40 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 cursor-pointer transition-all shadow-[0_10px_40px_rgba(37,99,235,0.2)]">
-                    <div class="flex items-center gap-4 min-w-0">
-                        <img src="${bg}" class="w-20 h-20 rounded-2xl object-cover flex-shrink-0 border border-white/15">
-                        <div class="min-w-0">
-                            <span class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">● Your Generated Master Plan Ready</span>
-                            <h3 class="text-lg font-bold text-white truncate mt-0.5">${escapeHtml(summary.tripTitle || currentTripMeta.destinationCountry)}</h3>
-                            <p class="text-xs text-white/60 mt-1">
-                                ✈️ ${escapeHtml(currentTripMeta.departureCity)} → ${escapeHtml(currentTripMeta.destinationCountry)} &nbsp;•&nbsp; ${daysCount} Days &nbsp;•&nbsp; ${totalStops} Stops
-                            </p>
+            const cardsHtml = savedPlans.map(plan => {
+                const summary = plan.data?.summary || {};
+                const meta = plan.meta || {};
+                const daysCount = (plan.data?.days || []).length;
+                let totalStops = 0;
+                (plan.data?.days || []).forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
+                const bg = COUNTRY_BACKDROPS[meta.destinationCountry] || DEFAULT_BACKDROP;
+
+                return `
+                    <div onclick="openItineraryPage('${plan.id}')" class="bg-gradient-to-r from-[#121a2d] via-[#101625] to-[#0d121d] hover:border-blue-400 border border-blue-500/35 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer transition-all shadow-[0_10px_35px_rgba(0,0,0,0.6)]">
+                        <div class="flex items-center gap-4 min-w-0 w-full sm:w-auto">
+                            <img src="${bg}" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover flex-shrink-0 border border-white/15">
+                            <div class="min-w-0">
+                                <span class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">● Generated Master Plan Ready</span>
+                                <h3 class="text-base sm:text-lg font-bold text-white truncate mt-0.5">${escapeHtml(summary.tripTitle || meta.destinationCountry || 'Saved Expedition')}</h3>
+                                <p class="text-xs text-white/60 mt-1 truncate">
+                                    ✈️ ${escapeHtml(meta.departureCity || '')} → ${escapeHtml(meta.destinationCountry || '')} &nbsp;•&nbsp; ${daysCount} Days &nbsp;•&nbsp; ${totalStops} Stops
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2.5 flex-shrink-0 w-full sm:w-auto justify-end">
+                            <button onclick="event.stopPropagation(); openItineraryPage('${plan.id}')" class="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-3 rounded-xl shadow-lg transition-all">
+                                Open Interactive Plan →
+                            </button>
+                            <button onclick="deleteSavedPlan('${plan.id}', event)" title="Delete this saved plan" class="flex items-center gap-1.5 bg-red-500/15 hover:bg-red-600 border border-red-500/35 hover:border-red-400 text-red-300 hover:text-white text-xs font-semibold px-3.5 py-3 rounded-xl transition-all">
+                                <span>🗑️</span>
+                                <span class="hidden md:inline">Delete</span>
+                            </button>
                         </div>
                     </div>
-                    <button class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-6 py-3 rounded-xl flex-shrink-0 shadow-lg transition-all">
-                        Open Interactive Plan →
-                    </button>
+                `;
+            }).join('');
+
+            banner.innerHTML = `
+                <div class="space-y-3">
+                    <!-- Delete Management Bar -->
+                    <div class="flex items-center justify-between bg-[#0d111b] border border-white/10 rounded-2xl px-4 py-2.5">
+                        <div class="flex items-center gap-2.5 text-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="font-semibold text-white/90">Your Saved Master Plans</span>
+                            <span class="px-2 py-0.5 rounded-md bg-white/10 text-white/60 text-[11px] font-bold">${savedPlans.length}</span>
+                        </div>
+                        <button onclick="clearAllSavedPlans()" class="flex items-center gap-1.5 text-xs font-semibold text-red-300 hover:text-white bg-red-500/10 hover:bg-red-600/80 border border-red-500/30 px-3.5 py-1.5 rounded-xl transition-all">
+                            <span>🗑️</span>
+                            <span>Delete All Saved Plans</span>
+                        </button>
+                    </div>
+                    ${cardsHtml}
                 </div>
             `;
             banner.classList.remove('hidden');
         }
 
         // =========================================================================
-        // 7. CALL BACKEND API TO GENERATE TRIP
+        // 8. CALL BACKEND API TO GENERATE TRIP
         // =========================================================================
         async function planTrip() {
             const homeCity = document.getElementById('homeCity').value.trim();
@@ -2015,24 +2312,30 @@
                     throw new Error(data.details || data.error || `Server error (${response.status})`);
                 }
 
-                currentTripData = data;
-                currentTripMeta = {
-                    homeCity,
-                    departureCity,
-                    destinationCountry,
-                    days,
-                    hotelBudget,
-                    dailySpendingBudget
+                const newPlan = {
+                    id: 'plan_' + Date.now(),
+                    data,
+                    meta: {
+                        homeCity,
+                        departureCity,
+                        destinationCountry,
+                        days,
+                        hotelBudget,
+                        dailySpendingBudget
+                    },
+                    checked: [],
+                    favorites: [],
+                    notes: {},
+                    createdAt: Date.now()
                 };
-                activeDayView = 0;
-                activeCategoryFilter = 'ALL';
-                checkedStops = new Set();
-                favoriteStops = new Set();
-                stopNotes = {};
+
+                // Add newest plan at top (cap at 8 to stay neat)
+                savedPlans.unshift(newPlan);
+                if (savedPlans.length > 8) savedPlans = savedPlans.slice(0, 8);
+                persistPlansToStorage();
 
                 closeWizard();
-                saveStateToStorage();
-                openItineraryPage();
+                openItineraryPage(newPlan.id);
 
             } catch (error) {
                 clearInterval(statusTimer);
@@ -2048,7 +2351,7 @@
         }
 
         // =========================================================================
-        // 8. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
+        // 9. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
         // =========================================================================
         function renderDedicatedItineraryPage() {
             const summary = currentTripData.summary || {};
@@ -2310,7 +2613,7 @@
         }
 
         // =========================================================================
-        // 9. INTERACTIVE HANDLERS & HELPERS
+        // 10. INTERACTIVE HANDLERS & HELPERS
         // =========================================================================
         function getCategoryStyle(category) {
             const cat = (category || '').toLowerCase();
@@ -2353,7 +2656,7 @@
         function toggleCheckedStop(key) {
             if (checkedStops.has(key)) checkedStops.delete(key);
             else checkedStops.add(key);
-            saveStateToStorage();
+            syncActivePlanChanges();
             updateProgressWidget();
             renderTimelineStage();
         }
@@ -2361,7 +2664,7 @@
         function toggleFavoriteStop(key) {
             if (favoriteStops.has(key)) favoriteStops.delete(key);
             else favoriteStops.add(key);
-            saveStateToStorage();
+            syncActivePlanChanges();
             updateProgressWidget();
             renderTimelineStage();
         }
@@ -2381,7 +2684,7 @@
             const val = input.value.trim();
             if (val) stopNotes[key] = val;
             else delete stopNotes[key];
-            saveStateToStorage();
+            syncActivePlanChanges();
             renderTimelineStage();
         }
 

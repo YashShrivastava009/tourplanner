@@ -89,6 +89,22 @@
             flex-shrink: 0;
         }
 
+        /* --- LIVE PORTAL CARD EFFECTS --- */
+        .portal-card {
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s;
+        }
+        .portal-card:hover {
+            transform: translateY(-4px);
+        }
+        .battle-selected-a {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7), 0 14px 35px rgba(37, 99, 235, 0.45) !important;
+        }
+        .battle-selected-b {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.75), 0 14px 35px rgba(245, 158, 11, 0.4) !important;
+        }
+
         /* --- AUTOCOMPLETE DROPDOWN --- */
         .autocomplete-menu {
             position: absolute;
@@ -162,7 +178,7 @@
 <body class="min-h-screen bg-[#030508] text-white">
 
     <!-- ===================================================================== -->
-    <!-- VIEW 1: HOME PAGE (EARTH HERO, CONFIG CONSOLE, GALLERY)               -->
+    <!-- VIEW 1: HOME PAGE (EARTH HERO, CONFIG CONSOLE, LIVE PORTALS & BATTLE) -->
     <!-- ===================================================================== -->
     <div id="home-page" class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-32">
 
@@ -178,9 +194,12 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <button id="header-resume-btn" onclick="openItineraryPage()" class="hidden items-center gap-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/50 rounded-full px-4 py-2 text-xs font-semibold text-blue-200 transition-all">
                     <span>🗺️ View Active Plan →</span>
+                </button>
+                <button onclick="toggleBattleMode(true); document.getElementById('portals-section').scrollIntoView({behavior:'smooth'});" class="hidden md:flex items-center gap-2 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-400/40 rounded-full px-4 py-2 text-xs font-semibold text-amber-200 transition-all">
+                    <span>⚔️ Country Battle</span>
                 </button>
                 <div class="hidden sm:flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-2 text-xs font-medium text-emerald-300">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -218,12 +237,12 @@
                     <svg class="w-4 h-4 text-blue-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 3v18M8 7v10M16 7v10M4 11v2M20 11v2" stroke-linecap="round"/>
                     </svg>
-                    <span>Just type your dream destination, we'll handle the complete hour-by-hour plan</span>
+                    <span>Just type your dream destination, or click a Live World Portal below</span>
                 </div>
             </div>
         </section>
 
-        <!-- DIAGNOSTIC ERROR CONTAINER (Only shown if backend fails) -->
+        <!-- DIAGNOSTIC ERROR CONTAINER -->
         <div id="error-banner" class="hidden mb-8 max-w-3xl mx-auto"></div>
 
         <!-- EXPANDABLE DESKTOP AI QUESTIONNAIRE PANEL -->
@@ -398,62 +417,78 @@
             </div>
         </section>
 
-        <!-- MAIN DESKTOP CONTENT AREA: My Plan & Explore -->
-        <section class="border-t border-white/10 pt-8">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-8">
-                    <button class="text-white font-semibold text-xl border-b-2 border-blue-400 pb-1">My Plan</button>
-                    <button onclick="openWizard()" class="text-white/40 hover:text-white/80 font-medium text-xl pb-1 transition-colors">Explore</button>
+        <!-- ================================================================= -->
+        <!-- MAIN DESKTOP DASHBOARD: SAVED PLAN + LIVE WORLD PORTALS + BATTLE  -->
+        <!-- ================================================================= -->
+        <section id="portals-section" class="border-t border-white/10 pt-8">
+
+            <!-- RESUME ACTIVE GENERATED PLAN BANNER -->
+            <div id="saved-plan-banner" class="hidden mb-8"></div>
+
+            <!-- LIVE PORTALS & COUNTRY BATTLE HEADER BAR -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_#34d399]"></span>
+                        <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">Live World Portals</h2>
+                        <span id="live-month-tag" class="text-[11px] uppercase tracking-widest bg-white/5 border border-white/10 text-blue-300 px-3 py-1 rounded-full font-semibold"></span>
+                    </div>
+                    <p id="portals-subtitle" class="text-xs text-white/50 mt-1">
+                        Real-time local clocks, live weather & seasonal intel. Click any portal for an AI Dossier, or activate Battle Mode to pit 2 countries head-to-head.
+                    </p>
                 </div>
-                <div class="flex items-center gap-2 text-white/50 text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
-                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                    </svg>
-                    <span id="places-count">12 places</span>
+
+                <div class="flex items-center gap-3">
+                    <button 
+                        id="battle-mode-toggle" 
+                        onclick="toggleBattleMode()" 
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold border transition-all bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/35 hover:to-orange-500/35 border-amber-400/50 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.18)]"
+                    >
+                        <span>⚔️</span>
+                        <span id="battle-toggle-label">Country Battle Mode</span>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-2 text-white/50 text-xs bg-white/5 px-4 py-2.5 rounded-full border border-white/10">
+                        <span id="places-count">6 live portals</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- RESUME ACTIVE GENERATED PLAN BANNER (Appears after generating a trip) -->
-            <div id="saved-plan-banner" class="hidden mb-8"></div>
+            <!-- COUNTRY BATTLE SELECTION CONSOLE (Visible when Battle Mode is ON) -->
+            <div id="battle-command-bar" class="hidden panel-animate bg-gradient-to-r from-[#141a2b] via-[#121624] to-[#1b1612] border border-amber-400/40 rounded-3xl p-5 mb-6 shadow-[0_15px_45px_rgba(0,0,0,0.85)]">
+                <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                        <!-- Fighter A Slot -->
+                        <div class="flex-1 min-w-[170px] bg-blue-950/50 border border-blue-400/50 rounded-2xl px-4 py-2.5">
+                            <span class="block text-[10px] uppercase tracking-widest text-blue-300 font-bold mb-1">Fighter 1 (Blue)</span>
+                            <select id="battle-select-a" onchange="syncBattleDropdowns()" class="w-full bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer"></select>
+                        </div>
 
-            <!-- 6-COLUMN WIDESCREEN DESTINATION GALLERY -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                <div onclick="quickSelectCountry('Japan', ['Tokyo', 'Mount Fuji (Hakone)', 'Kyoto'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Mount Fuji">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Japan</span>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-black font-black text-xs flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.6)] flex-shrink-0">
+                            VS
+                        </div>
+
+                        <!-- Fighter B Slot -->
+                        <div class="flex-1 min-w-[170px] bg-amber-950/50 border border-amber-400/50 rounded-2xl px-4 py-2.5">
+                            <span class="block text-[10px] uppercase tracking-widest text-amber-300 font-bold mb-1">Fighter 2 (Gold)</span>
+                            <select id="battle-select-b" onchange="syncBattleDropdowns()" class="w-full bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer"></select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
+                        <span class="hidden xl:inline text-xs text-white/50">Click any 2 portal cards below or pick any countries above</span>
+                        <button onclick="launchCountryBattle()" class="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold text-xs uppercase tracking-wider px-7 py-3.5 rounded-xl shadow-[0_0_25px_rgba(245,158,11,0.45)] transition-all">
+                            ⚔️ Fight! Compare Both →
+                        </button>
+                        <button onclick="toggleBattleMode(false)" class="px-3.5 py-3.5 rounded-xl bg-white/5 hover:bg-white/15 text-xs text-white/60 hover:text-white transition-all">
+                            Exit
+                        </button>
                     </div>
                 </div>
-                <div onclick="quickSelectCountry('Norway', ['Tromsø (Northern Lights)', 'Lofoten Islands', 'Oslo'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Aurora">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Norway</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectCountry('Switzerland', ['Interlaken', 'Zermatt (Matterhorn)', 'Lucerne'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Switzerland">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Switzerland</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectCountry('South Korea', ['Seoul', 'Busan', 'Jeju Island'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="City Lights">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">South Korea</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectCountry('Greece', ['Santorini', 'Athens', 'Mykonos'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Greece">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Greece</span>
-                    </div>
-                </div>
-                <div onclick="quickSelectCountry('Indonesia', ['Ubud (Bali)', 'Uluwatu & Seminyak', 'Nusa Penida'])" class="h-44 rounded-2xl overflow-hidden border border-white/10 cursor-pointer relative group">
-                    <img src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=500&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Bali">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex items-end p-3.5">
-                        <span class="text-xs font-medium text-white">Indonesia (Bali)</span>
-                    </div>
-                </div>
+            </div>
+
+            <!-- 6-COLUMN LIVE WORLD PORTAL CARDS -->
+            <div id="live-portals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+                <!-- Populated dynamically with live clocks, Open-Meteo weather & seasonal pulse -->
             </div>
 
             <!-- 3-COLUMN WIDESCREEN FEATURED TEMPLATES -->
@@ -496,7 +531,7 @@
             </div>
         </section>
 
-        <!-- FLOATING GLASS DOCK (Only visible on Home Page so it never covers itinerary cards) -->
+        <!-- FLOATING GLASS DOCK (Home Page only) -->
         <div id="home-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
             <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
                 <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner">
@@ -504,16 +539,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>
                     </svg>
                 </button>
-                <button onclick="openWizard()" title="Explore & Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                <button onclick="openWizard()" title="Configure Plan" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="9"/>
                         <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
                     </svg>
                 </button>
-                <button onclick="openWizard()" title="Custom Budget" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                <button onclick="toggleBattleMode(true); document.getElementById('portals-section').scrollIntoView({behavior:'smooth'});" title="Country Battle Mode" class="w-11 h-11 rounded-full flex items-center justify-center text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-base">
+                    ⚔️
                 </button>
                 <button onclick="if(currentTripData) openItineraryPage(); else openWizard();" title="Active Itinerary" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -525,7 +558,69 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- FULL-SCREEN CINEMATIC LOADING OVERLAY                                 -->
+    <!-- MODAL 1: LIVE WORLD PORTAL AI DOSSIER                                 -->
+    <!-- ===================================================================== -->
+    <div id="dossier-modal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 md:p-8 overflow-y-auto" onclick="if(event.target === this) closeDossierModal()">
+        <div class="panel-animate bg-[#0d111b] border border-blue-500/35 rounded-3xl w-full max-w-2xl overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.95)] my-auto">
+            <!-- Portal Visual Header -->
+            <div class="relative h-48 overflow-hidden">
+                <img id="dossier-bg" src="" alt="Portal" class="w-full h-full object-cover opacity-75">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#0d111b] via-[#0d111b]/50 to-transparent"></div>
+                <button onclick="closeDossierModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white text-sm transition-all">✕</button>
+                <div class="absolute bottom-4 left-6 right-6 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                        <span id="dossier-pulse-badge" class="inline-block text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full bg-blue-500/25 border border-blue-400/40 text-blue-200 mb-2"></span>
+                        <h3 id="dossier-country-title" class="text-3xl font-extrabold text-white tracking-tight"></h3>
+                    </div>
+                    <div class="text-right bg-black/55 backdrop-blur-md border border-white/15 rounded-2xl px-4 py-2">
+                        <div id="dossier-live-weather" class="text-sm font-bold text-white">--°C</div>
+                        <div id="dossier-live-clock" class="text-[11px] text-blue-300 font-mono">--:--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Intel Body -->
+            <div id="dossier-body" class="p-6 space-y-4">
+                <!-- Dynamically filled -->
+            </div>
+
+            <!-- Action Footer -->
+            <div class="px-6 py-4 bg-[#080b12] border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+                <button id="dossier-battle-btn" class="px-5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold transition-all">
+                    ⚔️ Battle Against Another Country
+                </button>
+                <button id="dossier-plan-btn" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg transition-all">
+                    Plan Full Itinerary Here →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: COUNTRY BATTLE ARENA (HEAD-TO-HEAD SHOWDOWN)                 -->
+    <!-- ===================================================================== -->
+    <div id="battle-arena-modal" class="hidden fixed inset-0 z-[115] bg-[#030508]/95 backdrop-blur-2xl overflow-y-auto">
+        <div class="max-w-6xl mx-auto px-6 py-8">
+            <!-- Sticky Top Bar -->
+            <div class="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-widest">⚔️ Head-to-Head Showdown</span>
+                    <span id="battle-arena-context" class="text-xs text-white/50 hidden sm:inline"></span>
+                </div>
+                <button onclick="closeBattleArena()" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white transition-all">
+                    ← Back to Portals
+                </button>
+            </div>
+
+            <!-- Arena Content Stage -->
+            <div id="battle-arena-stage">
+                <!-- Populated dynamically with loading state or full showdown results -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- FULL-SCREEN CINEMATIC LOADING OVERLAY (FOR FULL ITINERARY)            -->
     <!-- ===================================================================== -->
     <div id="loading-overlay" class="hidden fixed inset-0 z-[120] bg-[#030508]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center">
         <div class="relative mb-8">
@@ -615,10 +710,8 @@
         <main class="max-w-7xl mx-auto px-6 lg:px-10 pt-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                <!-- LEFT COLUMN (4 COLS): STICKY MISSION CONTROL & LOGISTICS SIDEBAR -->
+                <!-- LEFT COLUMN (4 COLS): STICKY MISSION CONTROL SIDEBAR -->
                 <aside class="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
-                    
-                    <!-- Assigned Stay Spotlight Card -->
                     <div class="print-card bg-gradient-to-br from-[#121a2d] via-[#0e1422] to-[#0a0e18] border border-blue-500/35 rounded-3xl p-6 shadow-xl">
                         <div class="flex items-center justify-between mb-3">
                             <span class="text-[11px] uppercase tracking-widest text-blue-300 font-bold">🏨 Assigned Stay</span>
@@ -631,7 +724,6 @@
                         <p id="sidebar-hotel-details" class="text-xs text-white/80 leading-relaxed"></p>
                     </div>
 
-                    <!-- Travel Logistics Accordion / Cards -->
                     <div class="print-card bg-[#0d111b] border border-white/10 rounded-3xl p-6 space-y-5 shadow-xl">
                         <h3 class="text-xs uppercase tracking-widest text-white/50 font-bold border-b border-white/10 pb-3">Travel Logistics Blueprint</h3>
 
@@ -657,7 +749,6 @@
                         </div>
                     </div>
 
-                    <!-- Quick Trip Breakdown Stats -->
                     <div class="no-print bg-[#0d111b] border border-white/10 rounded-3xl p-5 grid grid-cols-3 gap-3 text-center">
                         <div class="bg-white/5 rounded-2xl p-3">
                             <div id="stat-activities" class="text-xl font-bold text-blue-400">0</div>
@@ -672,18 +763,14 @@
                             <div class="text-[10px] uppercase tracking-wider text-white/50 mt-0.5">Transit</div>
                         </div>
                     </div>
-
                 </aside>
 
                 <!-- RIGHT COLUMN (8 COLS): INTERACTIVE DAY TABS & VISUAL TIMELINE -->
                 <section class="lg:col-span-8 space-y-6">
-
-                    <!-- INTERACTIVE DAY SELECTOR TABS -->
                     <div class="no-print bg-[#0d111b] border border-white/10 rounded-2xl p-3 shadow-lg">
                         <div id="day-tabs-bar" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
                     </div>
 
-                    <!-- CATEGORY FILTER PILLS -->
                     <div class="no-print flex flex-wrap items-center justify-between gap-3">
                         <div id="category-filter-bar" class="flex flex-wrap items-center gap-2">
                             <button onclick="setCategoryFilter('ALL')" data-filter="ALL" class="filter-pill px-4 py-1.5 rounded-full text-xs font-semibold border transition-all bg-blue-600/30 border-blue-400 text-white">All Stops</button>
@@ -695,9 +782,7 @@
                         <span class="text-[11px] text-white/40">Click any stop to check off, favorite, or open in Maps</span>
                     </div>
 
-                    <!-- ACTIVE TIMELINE CONTENT -->
                     <div id="timeline-stage" class="space-y-8"></div>
-
                 </section>
             </div>
         </main>
@@ -705,8 +790,105 @@
 
     <script>
         // =========================================================================
-        // 1. DATABASES & BACKDROP IMAGES
+        // 1. LIVE WORLD PORTALS CONFIG (COORDS, TIMEZONES, SEASON PULSE)
         // =========================================================================
+        const LIVE_PORTALS = [
+            {
+                id: "japan",
+                country: "Japan",
+                hubCity: "Tokyo",
+                lat: 35.6762,
+                lon: 139.6503,
+                tz: "Asia/Tokyo",
+                image: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=600&q=80",
+                defaultPlaces: ["Tokyo", "Mount Fuji (Hakone)", "Kyoto"],
+                seasonLogic: (m) => {
+                    if ([2, 3, 4].includes(m)) return { label: "🌸 Sakura Peak", color: "bg-pink-500/25 border-pink-400/50 text-pink-200" };
+                    if ([9, 10, 11].includes(m)) return { label: "🍁 Autumn Prime", color: "bg-amber-500/25 border-amber-400/50 text-amber-200" };
+                    if ([0, 1].includes(m)) return { label: "❄️ Crisp Winter", color: "bg-cyan-500/25 border-cyan-400/50 text-cyan-200" };
+                    return { label: "☀️ Festival Summer", color: "bg-blue-500/25 border-blue-400/50 text-blue-200" };
+                }
+            },
+            {
+                id: "norway",
+                country: "Norway",
+                hubCity: "Tromsø",
+                lat: 69.6492,
+                lon: 18.9553,
+                tz: "Europe/Oslo",
+                image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=600&q=80",
+                defaultPlaces: ["Tromsø (Northern Lights)", "Lofoten Islands", "Oslo"],
+                seasonLogic: (m) => {
+                    if ([9, 10, 11, 0, 1, 2].includes(m)) return { label: "🌌 Aurora Active", color: "bg-emerald-500/25 border-emerald-400/50 text-emerald-200" };
+                    if ([5, 6, 7].includes(m)) return { label: "☀️ Midnight Sun", color: "bg-amber-500/25 border-amber-400/50 text-amber-200" };
+                    return { label: "🌊 Fjord Shoulder", color: "bg-blue-500/25 border-blue-400/50 text-blue-200" };
+                }
+            },
+            {
+                id: "switzerland",
+                country: "Switzerland",
+                hubCity: "Zermatt",
+                lat: 46.0207,
+                lon: 7.7491,
+                tz: "Europe/Zurich",
+                image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=600&q=80",
+                defaultPlaces: ["Interlaken", "Zermatt (Matterhorn)", "Lucerne"],
+                seasonLogic: (m) => {
+                    if ([11, 0, 1, 2].includes(m)) return { label: "⛷️ Alpine Snow Peak", color: "bg-cyan-500/25 border-cyan-400/50 text-cyan-200" };
+                    if ([5, 6, 7, 8].includes(m)) return { label: "🏔️ Hiking Prime", color: "bg-emerald-500/25 border-emerald-400/50 text-emerald-200" };
+                    return { label: "🚂 Quiet Rail Season", color: "bg-indigo-500/25 border-indigo-400/50 text-indigo-200" };
+                }
+            },
+            {
+                id: "southkorea",
+                country: "South Korea",
+                hubCity: "Seoul",
+                lat: 37.5665,
+                lon: 126.9780,
+                tz: "Asia/Seoul",
+                image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80",
+                defaultPlaces: ["Seoul", "Busan", "Jeju Island"],
+                seasonLogic: (m) => {
+                    if ([8, 9, 10].includes(m)) return { label: "🍂 Golden Foliage", color: "bg-amber-500/25 border-amber-400/50 text-amber-200" };
+                    if ([3, 4].includes(m)) return { label: "🌸 Spring Bloom", color: "bg-pink-500/25 border-pink-400/50 text-pink-200" };
+                    if ([11, 0, 1].includes(m)) return { label: "🍜 Cozy Winter", color: "bg-cyan-500/25 border-cyan-400/50 text-cyan-200" };
+                    return { label: "🌃 Neon Nights", color: "bg-purple-500/25 border-purple-400/50 text-purple-200" };
+                }
+            },
+            {
+                id: "greece",
+                country: "Greece",
+                hubCity: "Santorini",
+                lat: 36.3932,
+                lon: 25.4615,
+                tz: "Europe/Athens",
+                image: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=600&q=80",
+                defaultPlaces: ["Santorini", "Athens", "Mykonos"],
+                seasonLogic: (m) => {
+                    if ([4, 5, 8, 9].includes(m)) return { label: "✨ Sweet Spot", color: "bg-emerald-500/25 border-emerald-400/50 text-emerald-200" };
+                    if ([6, 7].includes(m)) return { label: "🔥 Peak Crowds", color: "bg-orange-500/25 border-orange-400/50 text-orange-200" };
+                    return { label: "🏛️ Calm Off-Peak", color: "bg-slate-500/30 border-slate-400/40 text-slate-200" };
+                }
+            },
+            {
+                id: "indonesia",
+                country: "Indonesia",
+                hubCity: "Bali",
+                lat: -8.5069,
+                lon: 115.2625,
+                tz: "Asia/Makassar",
+                image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
+                defaultPlaces: ["Ubud (Bali)", "Uluwatu & Seminyak", "Nusa Penida"],
+                seasonLogic: (m) => {
+                    if ([4, 5, 6, 7, 8].includes(m)) return { label: "☀️ Dry Beach Prime", color: "bg-emerald-500/25 border-emerald-400/50 text-emerald-200" };
+                    return { label: "🌴 Lush Deals", color: "bg-teal-500/25 border-teal-400/50 text-teal-200" };
+                }
+            }
+        ];
+
+        // Store fetched live weather per portal
+        const portalWeatherMap = {};
+
         const QUICK_CITIES = [
             "Sagar, Madhya Pradesh, India", "Satna, Madhya Pradesh, India", "Saharanpur, Uttar Pradesh, India",
             "Sambalpur, Odisha, India", "Surat, Gujarat, India", "Shimla, Himachal Pradesh, India",
@@ -802,17 +984,31 @@
         let selectedPlacesSet = new Set();
         let searchTimeout = null;
 
+        // Live Portals & Battle Mode State
+        let isBattleMode = false;
+        let battleCountryA = "Japan";
+        let battleCountryB = "Switzerland";
+        let battleNextSlot = "A";
+        const dossierCache = {};
+
         // Itinerary Interactive State
         let currentTripData = null;
         let currentTripMeta = null;
-        let activeDayView = 0; // 0 = Day 1, 1 = Day 2..., 'ALL' = All Days
+        let activeDayView = 0;
         let activeCategoryFilter = 'ALL';
         let checkedStops = new Set();
         let favoriteStops = new Set();
         let stopNotes = {};
 
-        // Restore last generated trip from localStorage if available
         window.addEventListener('DOMContentLoaded', () => {
+            const monthLabel = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            document.getElementById('live-month-tag').innerText = `Live • ${monthLabel}`;
+
+            initBattleSelectors();
+            renderLivePortals();
+            fetchAllPortalWeather();
+            setInterval(updatePortalClocks, 30000);
+
             try {
                 const saved = localStorage.getItem('ai_travel_last_trip');
                 if (saved) {
@@ -843,7 +1039,533 @@
         }
 
         // =========================================================================
-        // 3. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
+        // 3. LIVE WORLD PORTALS ENGINE (CLOCKS + OPEN-METEO WEATHER + DOSSIER)
+        // =========================================================================
+        function getWeatherMeta(code) {
+            if (code === 0) return { icon: "☀️", desc: "Clear" };
+            if ([1, 2, 3].includes(code)) return { icon: "⛅", desc: "Partly Cloudy" };
+            if ([45, 48].includes(code)) return { icon: "🌫️", desc: "Misty" };
+            if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return { icon: "🌧️", desc: "Rain" };
+            if ([71, 73, 75, 77, 85, 86].includes(code)) return { icon: "❄️", desc: "Snow" };
+            if ([95, 96, 99].includes(code)) return { icon: "⛈️", desc: "Storm" };
+            return { icon: "🌤️", desc: "Mild" };
+        }
+
+        function getFormattedLocalTime(tz) {
+            try {
+                return new Intl.DateTimeFormat('en-US', {
+                    timeZone: tz,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                }).format(new Date());
+            } catch (e) {
+                return "--:--";
+            }
+        }
+
+        function renderLivePortals() {
+            const grid = document.getElementById('live-portals-grid');
+            const currentMonthIdx = new Date().getMonth();
+
+            grid.innerHTML = LIVE_PORTALS.map(portal => {
+                const season = portal.seasonLogic(currentMonthIdx);
+                const liveTime = getFormattedLocalTime(portal.tz);
+                const weather = portalWeatherMap[portal.id];
+                const weatherText = weather ? `${weather.icon} ${Math.round(weather.temp)}°C` : `🌡️ Live...`;
+
+                let battleClass = 'border-white/10';
+                let battleBadge = '';
+                if (isBattleMode) {
+                    if (battleCountryA === portal.country) {
+                        battleClass = 'battle-selected-a';
+                        battleBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">Fighter 1</span>`;
+                    } else if (battleCountryB === portal.country) {
+                        battleClass = 'battle-selected-b';
+                        battleBadge = `<span class="px-2.5 py-1 rounded-full bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider shadow-lg">Fighter 2</span>`;
+                    } else {
+                        battleBadge = `<span class="px-2.5 py-1 rounded-full bg-black/60 border border-white/20 text-white/70 text-[10px] font-semibold">Click to Pick</span>`;
+                    }
+                }
+
+                return `
+                    <div 
+                        onclick="handlePortalCardClick('${portal.id}')"
+                        class="portal-card h-64 rounded-3xl overflow-hidden border ${battleClass} cursor-pointer relative group bg-[#0d111b] shadow-xl"
+                    >
+                        <img src="${portal.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="${escapeHtml(portal.country)}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/45"></div>
+
+                        <!-- Top Live Telemetry Bar -->
+                        <div class="absolute top-3 left-3 right-3 flex items-center justify-between gap-1.5">
+                            <span id="portal-weather-${portal.id}" class="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white">
+                                ${weatherText}
+                            </span>
+                            ${battleBadge || `<span id="portal-clock-${portal.id}" class="px-2 py-1 rounded-full bg-black/55 backdrop-blur-md text-[10px] font-mono text-blue-200 border border-white/10">${liveTime}</span>`}
+                        </div>
+
+                        <!-- Bottom Identity & Season Pulse -->
+                        <div class="absolute bottom-3 left-3.5 right-3.5">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wide mb-2 backdrop-blur-md ${season.color}">
+                                ${season.label}
+                            </span>
+                            <div class="flex items-end justify-between gap-2">
+                                <div>
+                                    <h3 class="text-base font-extrabold text-white leading-tight">${escapeHtml(portal.country)}</h3>
+                                    <p class="text-[11px] text-white/60">${escapeHtml(portal.hubCity)} Live</p>
+                                </div>
+                                <span class="w-7 h-7 rounded-full bg-white/10 group-hover:bg-blue-600 border border-white/20 flex items-center justify-center text-xs text-white transition-all">
+                                    ${isBattleMode ? '⚔️' : '→'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updatePortalClocks() {
+            if (isBattleMode) return;
+            LIVE_PORTALS.forEach(portal => {
+                const el = document.getElementById(`portal-clock-${portal.id}`);
+                if (el) el.innerText = getFormattedLocalTime(portal.tz);
+            });
+        }
+
+        async function fetchAllPortalWeather() {
+            const lats = LIVE_PORTALS.map(p => p.lat).join(',');
+            const lons = LIVE_PORTALS.map(p => p.lon).join(',');
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,weather_code`);
+                const data = await res.json();
+                const list = Array.isArray(data) ? data : [data];
+
+                list.forEach((item, idx) => {
+                    const portal = LIVE_PORTALS[idx];
+                    if (portal && item && item.current) {
+                        const meta = getWeatherMeta(item.current.weather_code);
+                        portalWeatherMap[portal.id] = {
+                            temp: item.current.temperature_2m,
+                            icon: meta.icon,
+                            desc: meta.desc
+                        };
+                        const el = document.getElementById(`portal-weather-${portal.id}`);
+                        if (el) el.innerText = `${meta.icon} ${Math.round(item.current.temperature_2m)}°C`;
+                    }
+                });
+            } catch (err) {
+                console.warn("Live weather fetch skipped:", err);
+            }
+        }
+
+        function handlePortalCardClick(portalId) {
+            const portal = LIVE_PORTALS.find(p => p.id === portalId);
+            if (!portal) return;
+
+            if (isBattleMode) {
+                if (battleCountryA === portal.country || battleCountryB === portal.country) {
+                    return;
+                }
+                if (battleNextSlot === "A") {
+                    battleCountryA = portal.country;
+                    battleNextSlot = "B";
+                } else {
+                    battleCountryB = portal.country;
+                    battleNextSlot = "A";
+                }
+                document.getElementById('battle-select-a').value = battleCountryA;
+                document.getElementById('battle-select-b').value = battleCountryB;
+                renderLivePortals();
+            } else {
+                openPortalDossier(portal);
+            }
+        }
+
+        async function openPortalDossier(portal) {
+            const modal = document.getElementById('dossier-modal');
+            const body = document.getElementById('dossier-body');
+            const monthName = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+            const season = portal.seasonLogic(new Date().getMonth());
+            const weather = portalWeatherMap[portal.id];
+            const weatherStr = weather ? `${weather.icon} ${Math.round(weather.temp)}°C • ${weather.desc}` : `Live conditions`;
+
+            document.getElementById('dossier-bg').src = COUNTRY_BACKDROPS[portal.country] || portal.image;
+            document.getElementById('dossier-country-title').innerText = portal.country;
+            document.getElementById('dossier-pulse-badge').innerText = `${season.label} • ${monthName}`;
+            document.getElementById('dossier-live-weather').innerText = weatherStr;
+            document.getElementById('dossier-live-clock').innerText = `${getFormattedLocalTime(portal.tz)} (${portal.hubCity})`;
+
+            // Wire action buttons
+            document.getElementById('dossier-plan-btn').onclick = () => {
+                closeDossierModal();
+                quickSelectCountry(portal.country, portal.defaultPlaces);
+            };
+            document.getElementById('dossier-battle-btn').onclick = () => {
+                closeDossierModal();
+                battleCountryA = portal.country;
+                battleCountryB = portal.country === "Japan" ? "Switzerland" : "Japan";
+                document.getElementById('battle-select-a').value = battleCountryA;
+                document.getElementById('battle-select-b').value = battleCountryB;
+                toggleBattleMode(true);
+                document.getElementById('portals-section').scrollIntoView({ behavior: 'smooth' });
+            };
+
+            modal.classList.remove('hidden');
+
+            // Serve from cache if already fetched this session
+            const homeCity = document.getElementById('homeCity').value.trim();
+            const cacheKey = `${portal.country}|${homeCity}`;
+            if (dossierCache[cacheKey]) {
+                renderDossierBody(dossierCache[cacheKey], portal);
+                return;
+            }
+
+            body.innerHTML = `
+                <div class="py-10 text-center space-y-3">
+                    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400 mx-auto"></div>
+                    <p class="text-sm font-semibold text-white">Gemini is compiling live ${escapeHtml(monthName)} intel for ${escapeHtml(portal.country)}...</p>
+                    <p class="text-xs text-white/45">Checking seasonal verdict, currency feel, visa reality & traps to avoid</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/country-dossier', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-site-password': 'mysecretpassword'
+                    },
+                    body: JSON.stringify({
+                        country: portal.country,
+                        homeCity,
+                        currentMonth: monthName,
+                        liveWeather: weatherStr
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.details || data.error || 'Dossier failed');
+                dossierCache[cacheKey] = data;
+                renderDossierBody(data, portal);
+            } catch (err) {
+                body.innerHTML = `
+                    <div class="bg-red-950/60 border border-red-500/40 rounded-2xl p-5 text-xs text-red-200 text-center">
+                        Could not load AI Dossier: ${escapeHtml(err.message)}. You can still click "Plan Full Itinerary Here" below!
+                    </div>
+                `;
+            }
+        }
+
+        function renderDossierBody(data, portal) {
+            const body = document.getElementById('dossier-body');
+            const verdict = (data.goNowVerdict || 'GO NOW').toUpperCase();
+            let verdictStyle = 'bg-emerald-500/20 border-emerald-400/50 text-emerald-300';
+            if (verdict.includes('WAIT')) verdictStyle = 'bg-red-500/20 border-red-400/50 text-red-300';
+            else if (verdict.includes('CAVEAT')) verdictStyle = 'bg-amber-500/20 border-amber-400/50 text-amber-300';
+
+            const spots = Array.isArray(data.topHighlights) ? data.topHighlights : portal.defaultPlaces;
+
+            // Update Plan button to pre-select AI's recommended highlights
+            document.getElementById('dossier-plan-btn').onclick = () => {
+                closeDossierModal();
+                quickSelectCountry(portal.country, spots);
+            };
+
+            body.innerHTML = `
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-4">
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <span class="text-[11px] uppercase tracking-widest text-white/50 font-bold">Right-Now Travel Verdict</span>
+                        <span class="px-3 py-1 rounded-full border text-[11px] font-extrabold tracking-wider ${verdictStyle}">${escapeHtml(verdict)}</span>
+                    </div>
+                    <p class="text-sm text-white/85 leading-relaxed">${escapeHtml(data.goNowReason || '')}</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div class="bg-[#131826] border border-white/10 rounded-2xl p-4">
+                        <span class="text-[11px] uppercase tracking-wider text-emerald-300 font-bold block mb-1">💳 Currency & Spend Feel</span>
+                        <p class="text-xs text-white/80 leading-relaxed">${escapeHtml(data.currencyAndCost || '')}</p>
+                    </div>
+                    <div class="bg-[#131826] border border-white/10 rounded-2xl p-4">
+                        <span class="text-[11px] uppercase tracking-wider text-blue-300 font-bold block mb-1">🛂 Visa & Entry Reality</span>
+                        <p class="text-xs text-white/80 leading-relaxed">${escapeHtml(data.visaSnapshot || '')}</p>
+                    </div>
+                    <div class="bg-[#131826] border border-white/10 rounded-2xl p-4">
+                        <span class="text-[11px] uppercase tracking-wider text-cyan-300 font-bold block mb-1">💎 Best Spot Right Now</span>
+                        <p class="text-xs text-white/80 leading-relaxed">${escapeHtml(data.bestRightNowSpot || '')}</p>
+                    </div>
+                    <div class="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-4">
+                        <span class="text-[11px] uppercase tracking-wider text-amber-300 font-bold block mb-1">⚠️ Trap / Mistake to Dodge</span>
+                        <p class="text-xs text-amber-100/85 leading-relaxed">${escapeHtml(data.touristTrapToAvoid || '')}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeDossierModal() {
+            document.getElementById('dossier-modal').classList.add('hidden');
+        }
+
+        // =========================================================================
+        // 4. COUNTRY BATTLE MODE (HEAD-TO-HEAD AI SHOWDOWN)
+        // =========================================================================
+        function initBattleSelectors() {
+            const selectA = document.getElementById('battle-select-a');
+            const selectB = document.getElementById('battle-select-b');
+            const optionsHtml = ALL_COUNTRIES.map(c => `<option value="${escapeHtml(c)}" class="bg-[#10131c] text-white">${escapeHtml(c)}</option>`).join('');
+            selectA.innerHTML = optionsHtml;
+            selectB.innerHTML = optionsHtml;
+            selectA.value = battleCountryA;
+            selectB.value = battleCountryB;
+        }
+
+        function syncBattleDropdowns() {
+            battleCountryA = document.getElementById('battle-select-a').value;
+            battleCountryB = document.getElementById('battle-select-b').value;
+            renderLivePortals();
+        }
+
+        function toggleBattleMode(forceState = null) {
+            isBattleMode = forceState !== null ? forceState : !isBattleMode;
+            const bar = document.getElementById('battle-command-bar');
+            const toggleBtn = document.getElementById('battle-mode-toggle');
+            const label = document.getElementById('battle-toggle-label');
+            const subtitle = document.getElementById('portals-subtitle');
+
+            if (isBattleMode) {
+                bar.classList.remove('hidden');
+                label.innerText = "Battle Mode Active";
+                toggleBtn.className = "flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold border transition-all bg-amber-500 text-black border-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.6)]";
+                subtitle.innerText = "⚔️ Click any 2 Live World Portals below (or select any 2 countries in the battle bar) to run a Head-to-Head Gemini Showdown.";
+            } else {
+                bar.classList.add('hidden');
+                label.innerText = "Country Battle Mode";
+                toggleBtn.className = "flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold border transition-all bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/35 hover:to-orange-500/35 border-amber-400/50 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.18)]";
+                subtitle.innerText = "Real-time local clocks, live weather & seasonal intel. Click any portal for an AI Dossier, or activate Battle Mode to pit 2 countries head-to-head.";
+            }
+            renderLivePortals();
+        }
+
+        async function launchCountryBattle() {
+            battleCountryA = document.getElementById('battle-select-a').value;
+            battleCountryB = document.getElementById('battle-select-b').value;
+
+            if (battleCountryA === battleCountryB) {
+                alert("Pick two different countries to battle head-to-head!");
+                return;
+            }
+
+            const homeCity = document.getElementById('homeCity').value.trim() || document.getElementById('departureCity').value.trim();
+            const days = document.getElementById('days').value.trim() || "7";
+            const hotelBudget = document.getElementById('hotelBudget').value;
+            const dailySpendingBudget = document.getElementById('dailySpendingBudget').value;
+            const currentMonth = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+            const modal = document.getElementById('battle-arena-modal');
+            const stage = document.getElementById('battle-arena-stage');
+            document.getElementById('battle-arena-context').innerText = `${days} Days • ${currentMonth} • Split Budget Aware`;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            stage.innerHTML = `
+                <div class="py-24 text-center space-y-5">
+                    <div class="inline-flex items-center gap-6">
+                        <span class="text-2xl md:text-4xl font-extrabold text-blue-400">${escapeHtml(battleCountryA)}</span>
+                        <span class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-black font-black text-lg flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(245,158,11,0.7)]">VS</span>
+                        <span class="text-2xl md:text-4xl font-extrabold text-amber-400">${escapeHtml(battleCountryB)}</span>
+                    </div>
+                    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
+                    <p class="text-sm text-white/70">Gemini AI is judging flights, visa hassle, hotel value & ${escapeHtml(currentMonth)} weather...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/country-battle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-site-password': 'mysecretpassword'
+                    },
+                    body: JSON.stringify({
+                        countryA: battleCountryA,
+                        countryB: battleCountryB,
+                        homeCity,
+                        days,
+                        hotelBudget,
+                        dailySpendingBudget,
+                        currentMonth
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.details || data.error || 'Battle failed');
+                renderBattleResults(data);
+            } catch (err) {
+                stage.innerHTML = `
+                    <div class="bg-red-950/70 border border-red-500/50 rounded-3xl p-8 text-center max-w-xl mx-auto my-16 space-y-3">
+                        <div class="text-xs uppercase tracking-widest text-red-300 font-bold">Battle Interrupted</div>
+                        <p class="text-sm text-red-100">${escapeHtml(err.message)}</p>
+                        <button onclick="launchCountryBattle()" class="mt-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold">Retry Showdown</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderBattleResults(data) {
+            const stage = document.getElementById('battle-arena-stage');
+            const a = data.countryA || { name: battleCountryA };
+            const b = data.countryB || { name: battleCountryB };
+            const winner = data.verdictWinner || a.name;
+            const scores = Array.isArray(data.headToHeadScores) ? data.headToHeadScores : [];
+
+            const bgA = COUNTRY_BACKDROPS[a.name] || DEFAULT_BACKDROP;
+            const bgB = COUNTRY_BACKDROPS[b.name] || DEFAULT_BACKDROP;
+
+            const isAWinner = winner.toLowerCase() === a.name.toLowerCase();
+
+            const scoresHtml = scores.map(row => {
+                const sA = Math.min(Math.max(Number(row.scoreA) || 7, 1), 10);
+                const sB = Math.min(Math.max(Number(row.scoreB) || 7, 1), 10);
+                return `
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-blue-300 w-10">${sA}/10</span>
+                            <span class="text-white/75 font-medium text-center flex-1">${escapeHtml(row.category || '')}</span>
+                            <span class="font-bold text-amber-300 w-10 text-right">${sB}/10</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="h-2 bg-white/10 rounded-full overflow-hidden flex justify-end">
+                                <div class="h-full bg-gradient-to-l from-blue-400 to-indigo-600 rounded-full" style="width: ${sA * 10}%"></div>
+                            </div>
+                            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style="width: ${sB * 10}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const placesAJson = JSON.stringify(a.topPlaces || []).replace(/"/g, '&quot;');
+            const placesBJson = JSON.stringify(b.topPlaces || []).replace(/"/g, '&quot;');
+
+            stage.innerHTML = `
+                <div class="panel-animate space-y-6 pb-12">
+                    <!-- Showdown Headline & AI Verdict Banner -->
+                    <div class="text-center max-w-3xl mx-auto">
+                        <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">${escapeHtml(data.headline || `${a.name} vs. ${b.name}`)}</h2>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-blue-950/60 via-[#121829] to-amber-950/50 border border-amber-400/40 rounded-3xl p-6 shadow-2xl">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div class="space-y-1.5 max-w-3xl">
+                                <span class="text-[11px] uppercase tracking-widest text-amber-300 font-extrabold">🏆 Gemini Strategist Verdict • Winner: ${escapeHtml(winner)}</span>
+                                <p class="text-sm text-white/90 leading-relaxed">${escapeHtml(data.verdictReason || '')}</p>
+                            </div>
+                            <button onclick="crownBattleWinner('${(isAWinner ? a.name : b.name).replace(/'/g, "\\'")}', ${isAWinner ? placesAJson : placesBJson})" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold text-xs uppercase tracking-wider shadow-lg flex-shrink-0">
+                                Plan Winner (${escapeHtml(winner)}) →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- HEAD-TO-HEAD VISUAL SCOREBOARD -->
+                    ${scores.length ? `
+                        <div class="bg-[#0d111b] border border-white/10 rounded-3xl p-6 space-y-4">
+                            <div class="flex items-center justify-between text-xs uppercase tracking-widest font-bold border-b border-white/10 pb-3">
+                                <span class="text-blue-400">${escapeHtml(a.name)}</span>
+                                <span class="text-white/40">Tale of the Tape</span>
+                                <span class="text-amber-400">${escapeHtml(b.name)}</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
+                                ${scoresHtml}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- SIDE-BY-SIDE FIGHTER CARDS -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        ${renderFighterCard(a, bgA, 'blue', isAWinner, placesAJson)}
+                        ${renderFighterCard(b, bgB, 'amber', !isAWinner, placesBJson)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFighterCard(fighter, bg, theme, isWinner, placesAttr) {
+            const borderClass = theme === 'blue' ? 'border-blue-500/40' : 'border-amber-500/40';
+            const accentText = theme === 'blue' ? 'text-blue-300' : 'text-amber-300';
+            const btnClass = theme === 'blue'
+                ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                : 'bg-amber-500 hover:bg-amber-400 text-black';
+
+            return `
+                <div class="bg-[#0d111b] border ${borderClass} rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between">
+                    <div>
+                        <!-- Fighter Hero -->
+                        <div class="relative h-44 overflow-hidden">
+                            <img src="${bg}" class="w-full h-full object-cover opacity-75" alt="${escapeHtml(fighter.name)}">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0d111b] via-[#0d111b]/45 to-transparent"></div>
+                            ${isWinner ? `<span class="absolute top-4 right-4 px-3 py-1 rounded-full bg-emerald-500 text-black text-[10px] font-black uppercase tracking-widest shadow-lg">🏆 AI Pick</span>` : ''}
+                            <div class="absolute bottom-4 left-6 right-6">
+                                <p class="text-xs font-semibold ${accentText} uppercase tracking-wider">${escapeHtml(fighter.vibeTagline || '')}</p>
+                                <h3 class="text-3xl font-extrabold text-white">${escapeHtml(fighter.name || '')}</h3>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Breakdown -->
+                        <div class="p-6 space-y-3.5 text-xs">
+                            <div class="bg-white/5 rounded-2xl p-3.5 border border-white/5">
+                                <span class="text-white/50 uppercase tracking-wider text-[10px] font-bold block mb-1">✈️ Flight Reality</span>
+                                <p class="text-white/90">${escapeHtml(fighter.flightEstimate || '')}</p>
+                            </div>
+                            <div class="bg-white/5 rounded-2xl p-3.5 border border-white/5">
+                                <span class="text-white/50 uppercase tracking-wider text-[10px] font-bold block mb-1">🛂 Visa Friction</span>
+                                <p class="text-white/90">${escapeHtml(fighter.visaFriction || '')}</p>
+                            </div>
+                            <div class="bg-white/5 rounded-2xl p-3.5 border border-white/5">
+                                <span class="text-white/50 uppercase tracking-wider text-[10px] font-bold block mb-1">🏨 What Your Hotel Budget Buys</span>
+                                <p class="text-white/90">${escapeHtml(fighter.hotelValue || '')}</p>
+                            </div>
+                            <div class="bg-white/5 rounded-2xl p-3.5 border border-white/5">
+                                <span class="text-white/50 uppercase tracking-wider text-[10px] font-bold block mb-1">🍜 Daily Food & Transit Spend</span>
+                                <p class="text-white/90">${escapeHtml(fighter.dailyFoodCost || '')}</p>
+                            </div>
+                            <div class="bg-white/5 rounded-2xl p-3.5 border border-white/5">
+                                <span class="text-white/50 uppercase tracking-wider text-[10px] font-bold block mb-1">🌤️ Season Right Now</span>
+                                <p class="text-white/90">${escapeHtml(fighter.seasonRightNow || '')}</p>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                <div class="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-3.5">
+                                    <span class="text-emerald-300 font-bold block mb-1">✅ Biggest Pro</span>
+                                    <p class="text-emerald-100/85 leading-relaxed">${escapeHtml(fighter.biggestPro || '')}</p>
+                                </div>
+                                <div class="bg-red-950/35 border border-red-500/30 rounded-2xl p-3.5">
+                                    <span class="text-red-300 font-bold block mb-1">⚠️ Brutal Catch</span>
+                                    <p class="text-red-100/85 leading-relaxed">${escapeHtml(fighter.biggestCatch || '')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6 pt-0">
+                        <button onclick="crownBattleWinner('${(fighter.name || '').replace(/'/g, "\\'")}', ${placesAttr})" class="w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition-all shadow-lg ${btnClass}">
+                            Crown ${escapeHtml(fighter.name || '')} & Build Full Plan →
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function crownBattleWinner(country, places) {
+            closeBattleArena();
+            toggleBattleMode(false);
+            const preselected = Array.isArray(places) && places.length > 0 ? places : null;
+            quickSelectCountry(country, preselected);
+        }
+
+        function closeBattleArena() {
+            document.getElementById('battle-arena-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // =========================================================================
+        // 5. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
         // =========================================================================
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
@@ -1032,6 +1754,11 @@
 
             const defaultPlaces = COUNTRY_PLACES_DB[country] || [`Capital & Highlights of ${country}`];
             activePlacesList = [...defaultPlaces.slice(0, 10)];
+            if (preselectedPlaces && Array.isArray(preselectedPlaces)) {
+                preselectedPlaces.forEach(p => {
+                    if (!activePlacesList.includes(p)) activePlacesList.unshift(p);
+                });
+            }
             selectedPlacesSet = new Set(preselectedPlaces || defaultPlaces.slice(0, 3));
             renderPlaceChips();
         }
@@ -1113,7 +1840,7 @@
         }
 
         // =========================================================================
-        // 4. HOME WIZARD & PAGE NAVIGATION
+        // 6. HOME WIZARD & PAGE NAVIGATION
         // =========================================================================
         function openWizard() {
             const quickInput = document.getElementById('quickDestinationInput').value.trim();
@@ -1186,7 +1913,7 @@
             let totalStops = 0;
             (currentTripData.days || []).forEach(d => totalStops += (d.schedule ? d.schedule.length : 0));
 
-            document.getElementById('places-count').innerText = `${totalStops} places`;
+            document.getElementById('places-count').innerText = `${totalStops} saved stops`;
             headerBtn.classList.remove('hidden');
             headerBtn.classList.add('flex');
 
@@ -1212,7 +1939,7 @@
         }
 
         // =========================================================================
-        // 5. CALL BACKEND API TO GENERATE TRIP
+        // 7. CALL BACKEND API TO GENERATE TRIP
         // =========================================================================
         async function planTrip() {
             const homeCity = document.getElementById('homeCity').value.trim();
@@ -1241,7 +1968,6 @@
             errorBanner.classList.add('hidden');
             errorBanner.innerHTML = '';
 
-            // Show full-screen cinematic loading overlay
             const loader = document.getElementById('loading-overlay');
             const statusText = document.getElementById('loading-status-text');
             loader.classList.remove('hidden');
@@ -1289,7 +2015,6 @@
                     throw new Error(data.details || data.error || `Server error (${response.status})`);
                 }
 
-                // Reset interactive trackers for new trip
                 currentTripData = data;
                 currentTripMeta = {
                     homeCity,
@@ -1323,14 +2048,13 @@
         }
 
         // =========================================================================
-        // 6. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
+        // 8. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
         // =========================================================================
         function renderDedicatedItineraryPage() {
             const summary = currentTripData.summary || {};
             const stay = summary.recommendedStay || {};
             const daysList = currentTripData.days || [];
 
-            // Hero Backdrop & Text
             const heroBg = COUNTRY_BACKDROPS[currentTripMeta.destinationCountry] || DEFAULT_BACKDROP;
             document.getElementById('hero-bg-image').src = heroBg;
             document.getElementById('hero-trip-title').innerText = summary.tripTitle || `${currentTripMeta.destinationCountry} Expedition`;
@@ -1339,7 +2063,6 @@
             document.getElementById('nav-trip-route').innerText = `${summary.tripTitle || currentTripMeta.destinationCountry} (${daysList.length} Days)`;
             document.getElementById('hero-budget-summary').innerText = summary.budgetStrategySummary || `Stay: ${currentTripMeta.hotelBudget} • Daily Spend: ${currentTripMeta.dailySpendingBudget}`;
 
-            // Left Mission Control Sidebar
             document.getElementById('sidebar-hotel-name').innerText = stay.name || 'Recommended Stay';
             document.getElementById('sidebar-hotel-area').innerText = stay.area ? `📍 ${stay.area}` : '';
             document.getElementById('sidebar-hotel-details').innerText = stay.details || '';
@@ -1350,7 +2073,6 @@
             document.getElementById('sidebar-flight-strategy').innerText = summary.flightStrategy || 'Direct or 1-stop flight to your destination.';
             document.getElementById('sidebar-local-transit').innerText = summary.localTransportGuide || 'Use local metro/rail passes and ride-hailing apps.';
 
-            // Compute category stats
             let acts = 0, meals = 0, trans = 0;
             daysList.forEach(d => {
                 (d.schedule || []).forEach(item => {
@@ -1467,15 +2189,11 @@
 
                         return `
                             <div class="relative pl-12 panel-animate">
-                                <!-- Glowing Timeline Node -->
                                 <div class="absolute left-0 top-5 w-10 h-10 rounded-2xl ${style.nodeBg} border ${style.nodeBorder} flex items-center justify-center text-base shadow-lg z-10">
                                     ${style.icon}
                                 </div>
 
-                                <!-- Interactive Stop Card -->
                                 <div class="print-card group bg-[#0e1320] hover:bg-[#131929] border ${isChecked ? 'border-emerald-500/40 opacity-85' : 'border-white/10 hover:border-blue-400/40'} rounded-2xl p-5 transition-all shadow-lg">
-                                    
-                                    <!-- Top Meta Row -->
                                     <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                                         <div class="flex items-center gap-2.5">
                                             <span class="text-xs font-mono font-bold ${style.timeColor} bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
@@ -1486,7 +2204,6 @@
                                             </span>
                                         </div>
 
-                                        <!-- Interactive Action Buttons -->
                                         <div class="no-print flex items-center gap-1.5">
                                             <button onclick="openStopInMaps(${dayIdx}, ${itemIdx})" title="Open in Google Maps" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-blue-600/30 border border-white/10 hover:border-blue-400/50 text-[11px] text-white/75 hover:text-white transition-all">
                                                 📍 Maps ↗
@@ -1500,24 +2217,20 @@
                                         </div>
                                     </div>
 
-                                    <!-- Title & Location -->
                                     <h4 class="text-lg font-bold ${isChecked ? 'line-through text-white/60' : 'text-white'} mb-1.5">
                                         ${escapeHtml(item.title || '')}
                                     </h4>
 
-                                    <!-- Location + Transit + Cost Pills -->
                                     <div class="flex flex-wrap items-center gap-2 text-xs mb-3">
                                         ${item.location ? `<span class="text-blue-200/80 bg-blue-500/10 px-2.5 py-1 rounded-lg">📍 ${escapeHtml(item.location)}</span>` : ''}
                                         ${item.transport ? `<span class="text-cyan-200/80 bg-cyan-500/10 px-2.5 py-1 rounded-lg">🚆 ${escapeHtml(item.transport)}</span>` : ''}
                                         ${item.costNote ? `<span class="text-emerald-300/90 bg-emerald-500/10 px-2.5 py-1 rounded-lg">💳 ${escapeHtml(item.costNote)}</span>` : ''}
                                     </div>
 
-                                    <!-- Description -->
                                     <p class="text-sm text-white/80 leading-relaxed">
                                         ${escapeHtml(item.description || '')}
                                     </p>
 
-                                    <!-- Interactive Personal Note Area -->
                                     <div class="no-print mt-3 pt-3 border-t border-white/5">
                                         ${savedNote ? `
                                             <div class="flex items-start justify-between gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-3.5 py-2 mb-2">
@@ -1541,14 +2254,12 @@
                                             <button onclick="saveStopNote('${key}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg">Save</button>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
                         `;
                     }).join('') + `</div>`;
                 }
 
-                // Day Wrapper Header + Timeline
                 html += `
                     <div class="space-y-5">
                         <div class="print-card bg-gradient-to-r from-[#111726] to-[#0c101a] border border-white/10 rounded-3xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xl">
@@ -1573,7 +2284,6 @@
                 `;
             });
 
-            // Next / Previous Day Footer Navigation when viewing a single day
             if (activeDayView !== 'ALL' && daysList.length > 1) {
                 const hasPrev = activeDayView > 0;
                 const hasNext = activeDayView < daysList.length - 1;
@@ -1600,7 +2310,7 @@
         }
 
         // =========================================================================
-        // 7. INTERACTIVE HANDLERS & HELPERS
+        // 9. INTERACTIVE HANDLERS & HELPERS
         // =========================================================================
         function getCategoryStyle(category) {
             const cat = (category || '').toLowerCase();

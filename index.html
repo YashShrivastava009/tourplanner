@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.1/dist/globe.gl.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -18,7 +18,31 @@
             overflow-x: hidden;
         }
 
-        /* --- HOME PAGE EARTH HORIZON --- */
+        /* --- LIVE TOP CURRENCY & FLIGHT TICKER --- */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+        }
+
+        .ticker-track {
+            display: flex;
+            width: max-content;
+            gap: 14px;
+            animation: tickerScroll 42s linear infinite;
+        }
+
+        .ticker-wrap:hover .ticker-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes tickerScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* --- HOME PAGE EARTH HORIZON + FLIGHT ARCS --- */
         .earth-hero-desktop {
             position: relative;
             width: 100%;
@@ -33,7 +57,7 @@
 
         .earth-sphere-desktop {
             position: absolute;
-            top: 35px;
+            top: 48px;
             left: 50%;
             transform: translateX(-50%);
             width: 180vw;
@@ -58,7 +82,7 @@
 
         .earth-sunrise-desktop {
             position: absolute;
-            top: 14px;
+            top: 26px;
             left: 48%;
             transform: translateX(-50%);
             width: 320px;
@@ -67,6 +91,24 @@
             filter: blur(6px);
             z-index: 2;
             pointer-events: none;
+        }
+
+        .flight-arcs-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .arc-dash {
+            stroke-dasharray: 5 7;
+            animation: dashFlow 22s linear infinite;
+        }
+
+        @keyframes dashFlow {
+            to { stroke-dashoffset: -240; }
         }
 
         .earth-fade-desktop {
@@ -89,6 +131,58 @@
                 inset 3px 3px 8px rgba(0, 0, 0, 0.95),
                 0 0 14px rgba(147, 197, 253, 0.25);
             flex-shrink: 0;
+        }
+
+        /* --- HOLOGRAPHIC CURRENCY PLAYGROUND STYLES --- */
+        .currency-vault-bg {
+            background:
+                radial-gradient(circle at 20% 18%, rgba(37, 99, 235, 0.18), transparent 42%),
+                radial-gradient(circle at 82% 22%, rgba(16, 185, 129, 0.14), transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.12), transparent 45%),
+                #03050a;
+        }
+
+        .currency-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb 0%, #06b6d4 50%, #10b981 100%);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .currency-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #38bdf8;
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.9), 0 4px 10px rgba(0, 0, 0, 0.7);
+            cursor: grab;
+            transition: transform 0.15s ease;
+        }
+
+        .currency-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.16);
+        }
+
+        .currency-slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.22);
+        }
+
+        .swap-spin {
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
+        }
+
+        .banknote-chip {
+            transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+        }
+        .banknote-chip:active {
+            transform: scale(0.93);
         }
 
         /* --- LIVE PORTAL CARD EFFECTS --- */
@@ -179,7 +273,7 @@
         @media print {
             body { background: #ffffff !important; color: #111827 !important; }
             .no-print { display: none !important; }
-            #home-page, #globe-page { display: none !important; }
+            #home-page, #globe-page, #currency-page { display: none !important; }
             #itinerary-page { display: block !important; background: #ffffff !important; }
             .print-card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
             .print-card * { color: #0f172a !important; }
@@ -189,12 +283,28 @@
 <body class="min-h-screen bg-[#030508] text-white">
 
     <!-- ===================================================================== -->
-    <!-- VIEW 1: HOME PAGE (EARTH HERO, CONFIG CONSOLE, LIVE PORTALS & BATTLE) -->
+    <!-- VIEW 1: HOME PAGE (LIVE TICKER, FLIGHT ARCS, CONFIG, LIVE PORTALS)    -->
     <!-- ===================================================================== -->
-    <div id="home-page" class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-32">
+    <div id="home-page" class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-5 pb-32">
+
+        <!-- TOP LIVE CURRENCY & FLIGHT CORRIDOR TICKER -->
+        <div class="relative z-30 mb-5 bg-[#090d16]/85 backdrop-blur-xl border border-white/10 rounded-full py-2 px-3 flex items-center gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.65)]">
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-400/30 flex-shrink-0">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Live FX & Flights</span>
+            </div>
+            <div class="ticker-wrap flex-1">
+                <div id="top-live-ticker" class="ticker-track">
+                    <!-- Populated live with exchange rates & flight corridors -->
+                </div>
+            </div>
+            <button onclick="openCurrencyView()" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-400/35 text-[11px] font-semibold text-emerald-200 transition-all flex-shrink-0">
+                <span>💱</span><span>Vault</span>
+            </button>
+        </div>
 
         <!-- TOP DESKTOP HEADER BAR -->
-        <header class="flex items-start justify-between relative z-20 mb-2">
+        <header class="flex items-start justify-between relative z-20 mb-1">
             <div>
                 <p class="text-white/60 text-sm md:text-base font-normal mb-1">Hi, Traveler!</p>
                 <div onclick="openWizard()" class="inline-flex items-center gap-3 cursor-pointer group">
@@ -222,11 +332,78 @@
             </div>
         </header>
 
-        <!-- WIDESCREEN EARTH HORIZON HERO & COMMAND BAR -->
+        <!-- WIDESCREEN EARTH HORIZON HERO WITH ANIMATED LIVE FLIGHT ARCS -->
         <section class="earth-hero-desktop -mx-6 lg:-mx-12 px-6 lg:px-12">
             <div class="earth-sunrise-desktop"></div>
             <div class="earth-sphere-desktop"></div>
             <div class="earth-fade-desktop"></div>
+
+            <!-- ANIMATED LIVE FLIGHT ARCS OVER THE HORIZON -->
+            <svg class="flight-arcs-svg" viewBox="0 0 1440 410" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="arcGradBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.05"/>
+                        <stop offset="50%" stop-color="#60a5fa" stop-opacity="0.85"/>
+                        <stop offset="100%" stop-color="#a5f3fc" stop-opacity="0.15"/>
+                    </linearGradient>
+                    <linearGradient id="arcGradGold" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.05"/>
+                        <stop offset="50%" stop-color="#fcd34d" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#fb923c" stop-opacity="0.1"/>
+                    </linearGradient>
+                    <linearGradient id="arcGradEmerald" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.08"/>
+                        <stop offset="50%" stop-color="#34d399" stop-opacity="0.75"/>
+                        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
+                    </linearGradient>
+                    <filter id="arcGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="3.5" result="blur"/>
+                        <feMerge>
+                            <feMergeNode in="blur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Flight Arc 1: Europe -> Asia (Long panoramic arc across crest) -->
+                <path id="flightPath1" d="M 210 250 Q 720 15 1230 225" fill="none" stroke="url(#arcGradBlue)" stroke-width="1.6" class="arc-dash" opacity="0.7"/>
+                <circle r="3.5" fill="#e0f2fe" filter="url(#arcGlow)">
+                    <animateMotion dur="9.5s" repeatCount="indefinite" path="M 210 250 Q 720 15 1230 225"/>
+                </circle>
+
+                <!-- Flight Arc 2: India -> Tokyo (Golden eastward arc) -->
+                <path id="flightPath2" d="M 520 180 Q 860 32 1170 215" fill="none" stroke="url(#arcGradGold)" stroke-width="1.5" class="arc-dash" opacity="0.75"/>
+                <circle r="3.2" fill="#fef08a" filter="url(#arcGlow)">
+                    <animateMotion dur="7.2s" begin="1.2s" repeatCount="indefinite" path="M 520 180 Q 860 32 1170 215"/>
+                </circle>
+
+                <!-- Flight Arc 3: Dubai/India -> Swiss Alps (Westward arc) -->
+                <path id="flightPath3" d="M 920 175 Q 610 28 310 205" fill="none" stroke="url(#arcGradEmerald)" stroke-width="1.4" class="arc-dash" opacity="0.65"/>
+                <circle r="3" fill="#6ee7b7" filter="url(#arcGlow)">
+                    <animateMotion dur="8.4s" begin="2.5s" repeatCount="indefinite" path="M 920 175 Q 610 28 310 205"/>
+                </circle>
+
+                <!-- Flight Arc 4: High Polar Northern Lights Corridor -->
+                <path id="flightPath4" d="M 380 185 Q 725 65 1040 165" fill="none" stroke="url(#arcGradBlue)" stroke-width="1.1" opacity="0.45"/>
+                <circle r="2.6" fill="#93c5fd" filter="url(#arcGlow)">
+                    <animateMotion dur="6.8s" begin="0.4s" repeatCount="indefinite" path="M 380 185 Q 725 65 1040 165"/>
+                </circle>
+
+                <!-- Glowing Airport Hub Beacons on the Horizon -->
+                <g filter="url(#arcGlow)">
+                    <circle cx="310" cy="205" r="3" fill="#34d399"/>
+                    <text x="310" y="223" fill="rgba(255,255,255,0.55)" font-size="10" font-weight="600" text-anchor="middle" letter-spacing="1.5">ZRH</text>
+
+                    <circle cx="520" cy="180" r="3.2" fill="#fcd34d"/>
+                    <text x="520" y="198" fill="rgba(255,255,255,0.65)" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="1.5">DEL</text>
+
+                    <circle cx="920" cy="175" r="3" fill="#60a5fa"/>
+                    <text x="920" y="193" fill="rgba(255,255,255,0.55)" font-size="10" font-weight="600" text-anchor="middle" letter-spacing="1.5">ICN</text>
+
+                    <circle cx="1170" cy="215" r="3.2" fill="#fcd34d"/>
+                    <text x="1170" y="233" fill="rgba(255,255,255,0.65)" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="1.5">TYO</text>
+                </g>
+            </svg>
 
             <div class="relative z-10 w-full max-w-3xl mx-auto">
                 <div onclick="openWizard()" class="bg-[#141822]/85 backdrop-blur-2xl border border-white/15 hover:border-blue-400/40 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-[0_20px_60px_rgba(0,0,0,0.9)] cursor-pointer transition-all">
@@ -543,7 +720,6 @@
     <!-- VIEW 3: INTERACTIVE 3D ROTATABLE EARTH (2ND DOCK BUTTON)              -->
     <!-- ===================================================================== -->
     <div id="globe-page" class="hidden fixed inset-0 z-40 bg-[#02040a] overflow-hidden">
-        <!-- Top Overlay Controls -->
         <div class="fixed top-6 left-6 right-6 z-50 flex items-center justify-between pointer-events-none">
             <button onclick="closeGlobeView()" class="pointer-events-auto flex items-center gap-2 bg-[#0d121d]/85 hover:bg-blue-600 backdrop-blur-xl border border-white/15 hover:border-blue-400 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -558,21 +734,180 @@
             </div>
         </div>
 
-        <!-- 3D Globe Loading Indicator -->
         <div id="globe-loader" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#02040a] pointer-events-none">
             <div class="w-12 h-12 rounded-full border-2 border-blue-500/25 border-t-blue-400 animate-spin mb-4"></div>
             <p class="text-xs uppercase tracking-widest text-blue-300 font-semibold">Loading 3D Interactive Earth...</p>
         </div>
 
-        <!-- Full-Screen WebGL 3D Earth Canvas -->
         <div id="globe-canvas-container" class="w-screen h-screen cursor-grab active:cursor-grabbing"></div>
-
-        <!-- Minimal Cursor-Following Country Name Popup (Strictly Country Name Only) -->
         <div id="globe-country-tooltip" class="hidden bg-[#0c111d]/95 backdrop-blur-xl border border-blue-400/60 text-white text-sm font-semibold px-3.5 py-1.5 rounded-xl shadow-[0_8px_25px_rgba(0,0,0,0.85)]"></div>
     </div>
 
     <!-- ===================================================================== -->
-    <!-- SHARED FLOATING GLASS DOCK (4 BUTTONS)                                -->
+    <!-- VIEW 4: HOLOGRAPHIC CURRENCY PLAYGROUND (3RD DOCK BUTTON)             -->
+    <!-- ===================================================================== -->
+    <div id="currency-page" class="hidden min-h-screen currency-vault-bg text-white panel-animate pb-32">
+        <div class="max-w-6xl mx-auto px-6 lg:px-10 pt-7">
+
+            <!-- Top Navigation Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5 mb-7">
+                <div class="flex items-center gap-4">
+                    <button onclick="closeCurrencyView()" class="flex items-center gap-2 bg-white/10 hover:bg-blue-600 border border-white/15 hover:border-blue-400 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        <span>Back to Home</span>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl md:text-2xl font-extrabold tracking-tight text-white">Quantum Currency Vault</h1>
+                            <span id="fx-live-badge" class="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-300 font-bold">● Live FX</span>
+                        </div>
+                        <p class="text-xs text-white/50">Real-time exchange rates, hidden forex fee detector & live travel buying power</p>
+                    </div>
+                </div>
+
+                <!-- Quick Travel Split-Bill & Tip Controls -->
+                <div class="flex items-center gap-2 bg-[#0c111d]/90 border border-white/10 rounded-2xl p-1.5">
+                    <span class="text-[10px] uppercase tracking-wider text-white/45 font-bold px-2.5">Split / Tip:</span>
+                    <button onclick="setBillSplit(1)" id="split-btn-1" class="split-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white transition-all">1x</button>
+                    <button onclick="setBillSplit(2)" id="split-btn-2" class="split-btn px-3 py-1.5 rounded-xl text-xs font-medium text-white/60 hover:text-white transition-all">÷2</button>
+                    <button onclick="setBillSplit(3)" id="split-btn-3" class="split-btn px-3 py-1.5 rounded-xl text-xs font-medium text-white/60 hover:text-white transition-all">÷3</button>
+                    <button onclick="setBillSplit(4)" id="split-btn-4" class="split-btn px-3 py-1.5 rounded-xl text-xs font-medium text-white/60 hover:text-white transition-all">÷4</button>
+                    <div class="w-[1px] h-5 bg-white/10 mx-1"></div>
+                    <button onclick="toggleTipBoost()" id="tip-boost-btn" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-amber-500/20 text-white/70 hover:text-amber-200 border border-white/10 transition-all">+10% Tip</button>
+                </div>
+            </div>
+
+            <!-- MAIN CONVERSION DECK (2 TACTILE GLASS CARDS + ORBITAL SWAP) -->
+            <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6 items-stretch">
+
+                <!-- FROM CURRENCY CARD -->
+                <div class="bg-[#0b101c]/90 backdrop-blur-2xl border border-blue-500/35 rounded-3xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.75)] flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-[11px] uppercase tracking-widest text-blue-300 font-bold">You Spend (Base)</span>
+                            <select id="fx-from-select" onchange="handleCurrencyChange()" class="bg-[#151d30] border border-blue-400/35 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none cursor-pointer"></select>
+                        </div>
+
+                        <div class="flex items-baseline gap-2.5 bg-[#060911] border border-white/10 focus-within:border-blue-400 rounded-2xl px-5 py-4 mb-4 transition-all">
+                            <span id="fx-from-symbol" class="text-2xl md:text-3xl font-bold text-blue-400 select-none">₹</span>
+                            <input 
+                                type="number" 
+                                id="fx-amount-input" 
+                                value="50000" 
+                                min="0"
+                                step="any"
+                                oninput="handleAmountInput(this.value)"
+                                class="w-full bg-transparent text-3xl md:text-5xl font-black tracking-tight text-white focus:outline-none"
+                            >
+                        </div>
+
+                        <!-- Tactile Money Scrubber Slider -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between text-[11px] text-white/45 mb-2">
+                                <span>Drag to feel the money move</span>
+                                <span id="fx-slider-hint" class="text-blue-300 font-mono">Quick Scrubber</span>
+                            </div>
+                            <input type="range" id="fx-slider" min="0" max="100" value="58" oninput="handleSliderScrub(this.value)" class="currency-slider w-full">
+                        </div>
+                    </div>
+
+                    <!-- Quick-Tap Cash Banknote Chips -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] uppercase tracking-widest text-white/40 font-bold">Tap Cash Stack</span>
+                            <button onclick="resetCurrencyAmount()" class="text-[11px] text-white/45 hover:text-red-300 transition-colors">Clear</button>
+                        </div>
+                        <div id="fx-banknote-chips" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- FLOATING ORBITAL SWAP BUTTON -->
+                <button 
+                    id="fx-swap-btn"
+                    onclick="swapCurrencies()" 
+                    title="Swap Currencies"
+                    class="swap-spin lg:absolute lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 z-20 mx-auto w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-400 text-black font-black text-xl flex items-center justify-center shadow-[0_0_35px_rgba(56,189,248,0.65)] hover:shadow-[0_0_45px_rgba(56,189,248,0.95)] border-4 border-[#03050a]"
+                >
+                    ⇄
+                </button>
+
+                <!-- TO CURRENCY CARD (TARGET RESULT + FOREX REALITY METER) -->
+                <div class="bg-gradient-to-br from-[#0d1626]/95 via-[#0a1320]/95 to-[#071419]/95 backdrop-blur-2xl border border-emerald-500/35 rounded-3xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.75)] flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-[11px] uppercase tracking-widest text-emerald-300 font-bold">You Actually Receive</span>
+                            <select id="fx-to-select" onchange="handleCurrencyChange()" class="bg-[#122229] border border-emerald-400/35 rounded-xl px-3.5 py-2 text-sm font-bold text-white focus:outline-none cursor-pointer"></select>
+                        </div>
+
+                        <!-- Giant Converted Output -->
+                        <div class="bg-[#050a10] border border-emerald-400/25 rounded-2xl px-5 py-4 mb-4">
+                            <div class="flex items-baseline gap-2 overflow-x-auto">
+                                <span id="fx-to-symbol" class="text-2xl md:text-3xl font-bold text-emerald-400 flex-shrink-0">¥</span>
+                                <span id="fx-converted-output" class="text-3xl md:text-5xl font-black tracking-tight text-white">0</span>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-between gap-2 mt-2 pt-2 border-t border-white/10 text-xs">
+                                <span id="fx-unit-rate" class="text-cyan-300 font-mono font-semibold">1 INR = 1.80 JPY</span>
+                                <span id="fx-split-note" class="text-amber-300 font-semibold hidden"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOREX REALITY METER (0% Card vs 3.5% Bank vs 8% Airport Kiosk) -->
+                    <div class="bg-black/40 border border-white/10 rounded-2xl p-4">
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <span class="text-[10px] uppercase tracking-widest text-white/60 font-bold">⚡ Real-World Forex Markup Check</span>
+                            <span id="fx-fee-loss-badge" class="text-[11px] font-bold text-emerald-300">₹0 lost to fees</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setForexMarkup(0)" id="markup-btn-0" class="markup-btn py-2 px-2 rounded-xl border text-[11px] font-bold transition-all bg-emerald-500/25 border-emerald-400 text-emerald-200">
+                                0% Card<br><span class="text-[9px] font-normal opacity-80">Zero-Forex</span>
+                            </button>
+                            <button onclick="setForexMarkup(3.5)" id="markup-btn-35" class="markup-btn py-2 px-2 rounded-xl border text-[11px] font-medium transition-all bg-white/5 border-white/10 text-white/65 hover:text-white">
+                                3.5% Bank<br><span class="text-[9px] font-normal opacity-75">Normal Card</span>
+                            </button>
+                            <button onclick="setForexMarkup(8)" id="markup-btn-8" class="markup-btn py-2 px-2 rounded-xl border text-[11px] font-medium transition-all bg-white/5 border-white/10 text-white/65 hover:text-white">
+                                8% Airport<br><span class="text-[9px] font-normal opacity-75">Cash Kiosk</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REAL-WORLD TRAVEL BUYING POWER VISUALIZER -->
+            <div class="bg-[#0b101c]/90 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 mb-6 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-cyan-300 font-bold">✨ What This Money Actually Buys in <span id="bp-country-name" class="text-white underline">Japan</span></span>
+                        <p class="text-xs text-white/50 mt-0.5">Live purchasing-power estimate so you instantly feel how far your cash goes on the ground</p>
+                    </div>
+                    <button onclick="planTripWithCurrentCurrency()" class="px-4 py-2 rounded-xl bg-blue-600/25 hover:bg-blue-600 border border-blue-400/40 text-xs font-bold text-blue-200 hover:text-white transition-all">
+                        Plan Trip to <span id="bp-plan-country-btn">Japan</span> →
+                    </button>
+                </div>
+
+                <div id="buying-power-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Populated dynamically with meals, coffee, transit, hotel nights -->
+                </div>
+            </div>
+
+            <!-- MULTI-CURRENCY RADAR STRIP (INSTANT 4-WAY SIMULTANEOUS COMPARISON) -->
+            <div class="bg-[#0b101c]/85 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs uppercase tracking-widest text-white/60 font-bold">🌍 Multi-Currency Radar (Click any card to switch target instantly)</span>
+                    <span id="fx-last-updated" class="text-[11px] text-white/40 font-mono"></span>
+                </div>
+                <div id="fx-radar-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- SHARED FLOATING GLASS DOCK (4 BUTTONS: HOME | 3D EARTH | FX | PLAN)   -->
     <!-- ===================================================================== -->
     <div id="main-dock" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 no-print">
         <div class="bg-[#161923]/85 backdrop-blur-2xl border border-white/15 rounded-full px-4 py-2 flex items-center gap-6 shadow-[0_15px_50px_rgba(0,0,0,0.95)]">
@@ -589,9 +924,11 @@
                     <path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>
                 </svg>
             </button>
-            <!-- Button 3: Country Battle Mode -->
-            <button id="dock-btn-battle" onclick="navigateDock('battle')" title="Country Battle Mode" class="w-11 h-11 rounded-full flex items-center justify-center text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-base">
-                ⚔️
+            <!-- Button 3: Quantum Currency Vault -->
+            <button id="dock-btn-currency" onclick="navigateDock('currency')" title="Quantum Currency Calculator" class="w-11 h-11 rounded-full flex items-center justify-center text-emerald-300/85 hover:text-emerald-200 hover:bg-emerald-500/15 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </button>
             <!-- Button 4: Active Itinerary Map -->
             <button id="dock-btn-plan" onclick="navigateDock('plan')" title="Active Itinerary" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
@@ -677,7 +1014,6 @@
     <!-- ===================================================================== -->
     <div id="itinerary-page" class="hidden min-h-screen bg-[#04070d] text-white panel-animate pb-20">
 
-        <!-- STICKY TOP NAVIGATION BAR WITH PROMINENT BACK BUTTON -->
         <nav class="sticky top-0 z-40 bg-[#060911]/90 backdrop-blur-2xl border-b border-white/10 no-print">
             <div class="max-w-7xl mx-auto px-6 lg:px-10 h-16 flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4 min-w-0">
@@ -704,7 +1040,6 @@
             </div>
         </nav>
 
-        <!-- CINEMATIC DESTINATION HERO BANNER -->
         <section id="itinerary-hero" class="relative w-full h-72 md:h-80 overflow-hidden border-b border-white/10">
             <img id="hero-bg-image" src="" alt="Destination Backdrop" class="w-full h-full object-cover scale-105 opacity-60">
             <div class="absolute inset-0 bg-gradient-to-t from-[#04070d] via-[#04070d]/65 to-black/30"></div>
@@ -741,11 +1076,9 @@
             </div>
         </section>
 
-        <!-- 2-COLUMN DESKTOP WORKSPACE -->
         <main class="max-w-7xl mx-auto px-6 lg:px-10 pt-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                <!-- LEFT COLUMN (4 COLS): STICKY MISSION CONTROL SIDEBAR -->
                 <aside class="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
                     <div class="print-card bg-gradient-to-br from-[#121a2d] via-[#0e1422] to-[#0a0e18] border border-blue-500/35 rounded-3xl p-6 shadow-xl">
                         <div class="flex items-center justify-between mb-3">
@@ -800,7 +1133,6 @@
                     </div>
                 </aside>
 
-                <!-- RIGHT COLUMN (8 COLS): INTERACTIVE DAY TABS & VISUAL TIMELINE -->
                 <section class="lg:col-span-8 space-y-6">
                     <div class="no-print bg-[#0d111b] border border-white/10 rounded-2xl p-3 shadow-lg">
                         <div id="day-tabs-bar" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
@@ -825,7 +1157,46 @@
 
     <script>
         // =========================================================================
-        // 1. LIVE WORLD PORTALS CONFIG (COORDS, TIMEZONES, SEASON PULSE)
+        // 1. CURRENCY METADATA, LIVE RATES & PURCHASING POWER BENCHMARKS
+        // =========================================================================
+        const CURRENCIES = {
+            INR: { code: "INR", symbol: "₹", flag: "🇮🇳", name: "Indian Rupee", country: "India", mealUsd: 4, coffeeUsd: 2.2, transitUsd: 0.7, hotelUsd: 55, chips: [500, 2000, 10000, 50000, 100000] },
+            JPY: { code: "JPY", symbol: "¥", flag: "🇯🇵", name: "Japanese Yen", country: "Japan", mealUsd: 9, coffeeUsd: 3.5, transitUsd: 2, hotelUsd: 115, chips: [1000, 5000, 10000, 50000, 100000] },
+            USD: { code: "USD", symbol: "$", flag: "🇺🇸", name: "US Dollar", country: "United States", mealUsd: 18, coffeeUsd: 5.5, transitUsd: 3, hotelUsd: 190, chips: [20, 100, 500, 1000, 2500] },
+            EUR: { code: "EUR", symbol: "€", flag: "🇪🇺", name: "Euro", country: "Italy", mealUsd: 16, coffeeUsd: 3.8, transitUsd: 2.5, hotelUsd: 155, chips: [20, 100, 500, 1000, 2500] },
+            CHF: { code: "CHF", symbol: "CHF ", flag: "🇨🇭", name: "Swiss Franc", country: "Switzerland", mealUsd: 28, coffeeUsd: 6.5, transitUsd: 5.5, hotelUsd: 240, chips: [20, 100, 500, 1000, 2000] },
+            GBP: { code: "GBP", symbol: "£", flag: "🇬🇧", name: "British Pound", country: "United Kingdom", mealUsd: 18, coffeeUsd: 4.8, transitUsd: 3.8, hotelUsd: 175, chips: [20, 100, 500, 1000, 2000] },
+            AED: { code: "AED", symbol: "د.إ ", flag: "🇦🇪", name: "UAE Dirham", country: "United Arab Emirates", mealUsd: 12, coffeeUsd: 5, transitUsd: 2, hotelUsd: 140, chips: [100, 500, 1000, 5000, 10000] },
+            THB: { code: "THB", symbol: "฿", flag: "🇹🇭", name: "Thai Baht", country: "Thailand", mealUsd: 4, coffeeUsd: 2.5, transitUsd: 1.2, hotelUsd: 60, chips: [500, 1000, 5000, 10000, 25000] },
+            KRW: { code: "KRW", symbol: "₩", flag: "🇰🇷", name: "South Korean Won", country: "South Korea", mealUsd: 8.5, coffeeUsd: 3.8, transitUsd: 1.3, hotelUsd: 105, chips: [10000, 50000, 100000, 500000, 1000000] },
+            IDR: { code: "IDR", symbol: "Rp ", flag: "🇮🇩", name: "Indonesian Rupiah", country: "Indonesia", mealUsd: 4, coffeeUsd: 2.5, transitUsd: 1.5, hotelUsd: 65, chips: [100000, 500000, 1000000, 5000000, 10000000] },
+            SGD: { code: "SGD", symbol: "S$", flag: "🇸🇬", name: "Singapore Dollar", country: "Singapore", mealUsd: 9, coffeeUsd: 4.5, transitUsd: 1.8, hotelUsd: 165, chips: [50, 100, 500, 1000, 2500] },
+            NOK: { code: "NOK", symbol: "kr ", flag: "🇳🇴", name: "Norwegian Krone", country: "Norway", mealUsd: 24, coffeeUsd: 5.5, transitUsd: 4.2, hotelUsd: 180, chips: [200, 1000, 5000, 10000, 20000] },
+            AUD: { code: "AUD", symbol: "A$", flag: "🇦🇺", name: "Australian Dollar", country: "Australia", mealUsd: 16, coffeeUsd: 4.2, transitUsd: 3.2, hotelUsd: 150, chips: [50, 100, 500, 1000, 2500] },
+            VND: { code: "VND", symbol: "₫", flag: "🇻🇳", name: "Vietnamese Dong", country: "Vietnam", mealUsd: 3, coffeeUsd: 1.8, transitUsd: 0.8, hotelUsd: 45, chips: [200000, 500000, 1000000, 5000000, 10000000] },
+            TRY: { code: "TRY", symbol: "₺", flag: "🇹🇷", name: "Turkish Lira", country: "Turkey", mealUsd: 7, coffeeUsd: 3, transitUsd: 1, hotelUsd: 80, chips: [500, 1000, 5000, 10000, 25000] }
+        };
+
+        // Fallback USD-based rates (instant zero-latency startup, upgraded live via open.er-api.com)
+        let fxRatesUsd = {
+            USD: 1, INR: 84.5, JPY: 153.2, EUR: 0.92, CHF: 0.88, GBP: 0.78,
+            AED: 3.67, THB: 34.4, KRW: 1390, IDR: 15800, SGD: 1.34, NOK: 11.05,
+            AUD: 1.53, VND: 25300, TRY: 34.4
+        };
+        let fxIsLive = false;
+        let fxUpdatedLabel = "Baseline Rates";
+
+        // Currency Playground State
+        let fxFrom = "INR";
+        let fxTo = "JPY";
+        let fxAmount = 50000;
+        let fxMarkupPercent = 0;
+        let fxBillSplit = 1;
+        let fxTipEnabled = false;
+        let swapSpinDeg = 0;
+
+        // =========================================================================
+        // 2. LIVE WORLD PORTALS CONFIG (COORDS, TIMEZONES, SEASON PULSE)
         // =========================================================================
         const LIVE_PORTALS = [
             {
@@ -1012,24 +1383,21 @@
         const ALL_COUNTRIES = Object.keys(COUNTRY_ISO_MAP);
 
         // =========================================================================
-        // 2. APPLICATION STATE & SAVED PLANS STORAGE
+        // 3. APPLICATION STATE & INITIALIZATION
         // =========================================================================
         let activePlacesList = [];
         let selectedPlacesSet = new Set();
         let searchTimeout = null;
 
-        // Live Portals & Battle Mode State
         let isBattleMode = false;
         let battleCountryA = "Japan";
         let battleCountryB = "Switzerland";
         let battleNextSlot = "A";
         const dossierCache = {};
 
-        // Multi-Plan Storage State
         let savedPlans = [];
         let activePlanId = null;
 
-        // Active Itinerary Interactive State
         let currentTripData = null;
         let currentTripMeta = null;
         let activeDayView = 0;
@@ -1038,7 +1406,6 @@
         let favoriteStops = new Set();
         let stopNotes = {};
 
-        // 3D Globe State
         let worldGlobe = null;
         let globeInitialized = false;
         let hoveredCountryFeature = null;
@@ -1048,14 +1415,406 @@
             document.getElementById('live-month-tag').innerText = `Live • ${monthLabel}`;
 
             initBattleSelectors();
+            initCurrencyDropdowns();
+            renderTopTicker();
+            fetchLiveExchangeRates();
             renderLivePortals();
             fetchAllPortalWeather();
             setInterval(updatePortalClocks, 30000);
 
             loadSavedPlansFromStorage();
             updateHomeActivePlanBanner();
+            updateCurrencyPlayground();
         });
 
+        // =========================================================================
+        // 4. LIVE FX API + TOP CURRENCY & FLIGHT TICKER
+        // =========================================================================
+        async function fetchLiveExchangeRates() {
+            try {
+                const res = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await res.json();
+                if (data && data.result === 'success' && data.rates) {
+                    Object.keys(CURRENCIES).forEach(code => {
+                        if (data.rates[code]) fxRatesUsd[code] = data.rates[code];
+                    });
+                    fxIsLive = true;
+                    const d = data.time_last_update_utc ? new Date(data.time_last_update_utc) : new Date();
+                    fxUpdatedLabel = `Live Market • ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                    document.getElementById('fx-live-badge').innerText = '● Live Market FX';
+                    renderTopTicker();
+                    updateCurrencyPlayground();
+                }
+            } catch (err) {
+                fxUpdatedLabel = "Offline Estimate";
+                renderTopTicker();
+            }
+        }
+
+        function getRate(fromCode, toCode) {
+            const rFrom = fxRatesUsd[fromCode] || 1;
+            const rTo = fxRatesUsd[toCode] || 1;
+            return rTo / rFrom;
+        }
+
+        function renderTopTicker() {
+            const track = document.getElementById('top-live-ticker');
+            if (!track) return;
+
+            const tickerPairs = [
+                { type: 'fx', from: 'USD', to: 'INR', unit: 1 },
+                { type: 'flight', route: 'DEL ✈ HND', label: '7h 30m Nonstop', country: 'Japan' },
+                { type: 'fx', from: 'JPY', to: 'INR', unit: 100 },
+                { type: 'flight', route: 'BOM ✈ ZRH', label: '8h 45m Nonstop', country: 'Switzerland' },
+                { type: 'fx', from: 'EUR', to: 'INR', unit: 1 },
+                { type: 'flight', route: 'DEL ✈ ICN', label: '6h 40m Nonstop', country: 'South Korea' },
+                { type: 'fx', from: 'CHF', to: 'INR', unit: 1 },
+                { type: 'flight', route: 'BOM ✈ DPS', label: '7h 15m Bali', country: 'Indonesia' },
+                { type: 'fx', from: 'AED', to: 'INR', unit: 1 },
+                { type: 'flight', route: 'DEL ✈ ATH', label: '7h 50m Greece', country: 'Greece' },
+                { type: 'fx', from: 'GBP', to: 'INR', unit: 1 },
+                { type: 'fx', from: 'SGD', to: 'INR', unit: 1 }
+            ];
+
+            const buildItems = () => tickerPairs.map(item => {
+                if (item.type === 'fx') {
+                    const cFrom = CURRENCIES[item.from];
+                    const cTo = CURRENCIES[item.to];
+                    const val = (getRate(item.from, item.to) * item.unit).toFixed(2);
+                    return `
+                        <button onclick="openCurrencyPair('${item.to}', '${item.from}')" class="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-400/40 text-xs transition-all flex-shrink-0 cursor-pointer">
+                            <span>${cFrom.flag}</span>
+                            <span class="font-semibold text-white/90">${item.unit} ${item.from}</span>
+                            <span class="text-white/35">→</span>
+                            <span class="font-mono font-bold text-emerald-300">${cTo.symbol}${val}</span>
+                        </button>
+                    `;
+                } else {
+                    return `
+                        <button onclick="quickSelectCountry('${item.country}')" class="flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-950/40 hover:bg-blue-600/30 border border-blue-400/25 text-xs transition-all flex-shrink-0 cursor-pointer">
+                            <span class="font-mono font-bold text-blue-300">${item.route}</span>
+                            <span class="text-white/50 text-[11px]">${item.label}</span>
+                        </button>
+                    `;
+                }
+            }).join('');
+
+            // Duplicate track for seamless infinite marquee loop
+            const single = buildItems();
+            track.innerHTML = single + single;
+        }
+
+        // =========================================================================
+        // 5. QUANTUM CURRENCY VAULT (3RD DOCK BUTTON)
+        // =========================================================================
+        function initCurrencyDropdowns() {
+            const fromSel = document.getElementById('fx-from-select');
+            const toSel = document.getElementById('fx-to-select');
+            const opts = Object.values(CURRENCIES).map(c =>
+                `<option value="${c.code}" class="bg-[#0e1422] text-white">${c.flag} ${c.code} — ${c.name}</option>`
+            ).join('');
+            fromSel.innerHTML = opts;
+            toSel.innerHTML = opts;
+            fromSel.value = fxFrom;
+            toSel.value = fxTo;
+        }
+
+        function openCurrencyPair(fromCode, toCode) {
+            fxFrom = CURRENCIES[fromCode] ? fromCode : "INR";
+            fxTo = CURRENCIES[toCode] ? toCode : "JPY";
+            if (fxFrom === fxTo) fxTo = fxFrom === "USD" ? "JPY" : "USD";
+            document.getElementById('fx-from-select').value = fxFrom;
+            document.getElementById('fx-to-select').value = fxTo;
+            fxAmount = CURRENCIES[fxFrom].chips[3] || 1000;
+            document.getElementById('fx-amount-input').value = fxAmount;
+            openCurrencyView();
+        }
+
+        function openCurrencyView() {
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('globe-page').classList.add('hidden');
+            document.getElementById('itinerary-page').classList.add('hidden');
+            document.getElementById('currency-page').classList.remove('hidden');
+            document.getElementById('main-dock').classList.remove('hidden');
+            document.body.style.overflow = '';
+            setActiveDockButton('currency');
+            updateCurrencyPlayground();
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        function closeCurrencyView() {
+            const page = document.getElementById('currency-page');
+            if (!page.classList.contains('hidden')) {
+                page.classList.add('hidden');
+                document.getElementById('home-page').classList.remove('hidden');
+                setActiveDockButton('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function handleCurrencyChange() {
+            fxFrom = document.getElementById('fx-from-select').value;
+            fxTo = document.getElementById('fx-to-select').value;
+            updateCurrencyPlayground();
+        }
+
+        function handleAmountInput(val) {
+            const num = parseFloat(val);
+            fxAmount = isNaN(num) || num < 0 ? 0 : num;
+            syncSliderFromAmount();
+            updateCurrencyPlayground(false);
+        }
+
+        function handleSliderScrub(sliderVal) {
+            // Logarithmic curve scaled to the current currency's typical trip budget range
+            const chips = CURRENCIES[fxFrom].chips;
+            const maxRef = chips[chips.length - 1] * 4;
+            const minRef = Math.max(1, chips[0] / 10);
+            const pct = Number(sliderVal) / 100;
+
+            let computed = pct === 0 ? 0 : Math.round(minRef * Math.pow(maxRef / minRef, pct));
+            // Snap to clean round numbers for satisfying tactile feel
+            if (computed > 100000) computed = Math.round(computed / 5000) * 5000;
+            else if (computed > 10000) computed = Math.round(computed / 500) * 500;
+            else if (computed > 1000) computed = Math.round(computed / 100) * 100;
+            else if (computed > 100) computed = Math.round(computed / 10) * 10;
+
+            fxAmount = computed;
+            document.getElementById('fx-amount-input').value = fxAmount;
+            updateCurrencyPlayground(false);
+        }
+
+        function syncSliderFromAmount() {
+            const slider = document.getElementById('fx-slider');
+            const chips = CURRENCIES[fxFrom].chips;
+            const maxRef = chips[chips.length - 1] * 4;
+            const minRef = Math.max(1, chips[0] / 10);
+            if (fxAmount <= 0) {
+                slider.value = 0;
+                return;
+            }
+            const clamped = Math.min(Math.max(fxAmount, minRef), maxRef);
+            const pct = Math.log(clamped / minRef) / Math.log(maxRef / minRef);
+            slider.value = Math.round(pct * 100);
+        }
+
+        function addCashChip(amountToAdd) {
+            fxAmount = Math.round((fxAmount + amountToAdd) * 100) / 100;
+            document.getElementById('fx-amount-input').value = fxAmount;
+            syncSliderFromAmount();
+            updateCurrencyPlayground();
+        }
+
+        function resetCurrencyAmount() {
+            fxAmount = 0;
+            document.getElementById('fx-amount-input').value = 0;
+            document.getElementById('fx-slider').value = 0;
+            updateCurrencyPlayground();
+        }
+
+        function swapCurrencies() {
+            swapSpinDeg += 180;
+            const btn = document.getElementById('fx-swap-btn');
+            if (btn) btn.style.transform = `translate(${window.innerWidth >= 1024 ? '-50%, -50%' : '0, 0'}) rotate(${swapSpinDeg}deg)`;
+
+            const temp = fxFrom;
+            fxFrom = fxTo;
+            fxTo = temp;
+            document.getElementById('fx-from-select').value = fxFrom;
+            document.getElementById('fx-to-select').value = fxTo;
+
+            // Adjust amount smartly so user doesn't get stuck with tiny/huge numbers after swap
+            const targetChips = CURRENCIES[fxFrom].chips;
+            if (fxAmount === 0) fxAmount = targetChips[2];
+            document.getElementById('fx-amount-input').value = fxAmount;
+            syncSliderFromAmount();
+            updateCurrencyPlayground();
+        }
+
+        function setForexMarkup(pct) {
+            fxMarkupPercent = pct;
+            const map = { 0: 'markup-btn-0', 3.5: 'markup-btn-35', 8: 'markup-btn-8' };
+            Object.entries(map).forEach(([k, id]) => {
+                const el = document.getElementById(id);
+                const active = Number(k) === pct;
+                if (active) {
+                    if (pct === 0) el.className = "markup-btn py-2 px-2 rounded-xl border text-[11px] font-bold transition-all bg-emerald-500/25 border-emerald-400 text-emerald-200";
+                    else if (pct === 3.5) el.className = "markup-btn py-2 px-2 rounded-xl border text-[11px] font-bold transition-all bg-amber-500/25 border-amber-400 text-amber-200";
+                    else el.className = "markup-btn py-2 px-2 rounded-xl border text-[11px] font-bold transition-all bg-red-500/25 border-red-400 text-red-200";
+                } else {
+                    el.className = "markup-btn py-2 px-2 rounded-xl border text-[11px] font-medium transition-all bg-white/5 border-white/10 text-white/65 hover:text-white";
+                }
+            });
+            updateCurrencyPlayground();
+        }
+
+        function setBillSplit(n) {
+            fxBillSplit = n;
+            [1, 2, 3, 4].forEach(num => {
+                const el = document.getElementById(`split-btn-${num}`);
+                el.className = num === n
+                    ? "split-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white transition-all"
+                    : "split-btn px-3 py-1.5 rounded-xl text-xs font-medium text-white/60 hover:text-white transition-all";
+            });
+            updateCurrencyPlayground();
+        }
+
+        function toggleTipBoost() {
+            fxTipEnabled = !fxTipEnabled;
+            const btn = document.getElementById('tip-boost-btn');
+            btn.className = fxTipEnabled
+                ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black border border-amber-300 transition-all"
+                : "px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-amber-500/20 text-white/70 hover:text-amber-200 border border-white/10 transition-all";
+            updateCurrencyPlayground();
+        }
+
+        function formatMoney(num, code) {
+            const noDecimalCodes = ['JPY', 'KRW', 'IDR', 'VND'];
+            const decimals = noDecimalCodes.includes(code) ? 0 : (num >= 1000 ? 0 : 2);
+            return num.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatShortChip(num) {
+            if (num >= 1000000) return `${num / 1000000}M`;
+            if (num >= 1000) return `${num / 1000}K`;
+            return String(num);
+        }
+
+        function updateCurrencyPlayground(shouldSyncSlider = true) {
+            const fromMeta = CURRENCIES[fxFrom];
+            const toMeta = CURRENCIES[fxTo];
+            if (!fromMeta || !toMeta) return;
+
+            if (shouldSyncSlider) syncSliderFromAmount();
+
+            const rawRate = getRate(fxFrom, fxTo);
+            const effectiveRate = rawRate * (1 - fxMarkupPercent / 100);
+            const effectiveBaseAmount = (fxAmount * (fxTipEnabled ? 1.10 : 1)) / fxBillSplit;
+            const converted = effectiveBaseAmount * effectiveRate;
+            const lostInBase = effectiveBaseAmount * (fxMarkupPercent / 100);
+
+            // Update Primary Card Symbols & Output
+            document.getElementById('fx-from-symbol').innerText = fromMeta.symbol;
+            document.getElementById('fx-to-symbol').innerText = toMeta.symbol;
+            document.getElementById('fx-converted-output').innerText = formatMoney(converted, fxTo);
+
+            // Display clean unit rate (handle small-unit currencies like JPY/KRW cleanly)
+            const unitRateStr = rawRate < 0.1
+                ? `100 ${fxFrom} = ${(rawRate * 100).toFixed(2)} ${fxTo}`
+                : `1 ${fxFrom} = ${rawRate.toFixed(rawRate >= 10 ? 2 : 4)} ${fxTo}`;
+            document.getElementById('fx-unit-rate').innerText = unitRateStr;
+
+            // Split / Tip Note
+            const splitNoteEl = document.getElementById('fx-split-note');
+            if (fxBillSplit > 1 || fxTipEnabled) {
+                const parts = [];
+                if (fxTipEnabled) parts.push('+10% tip');
+                if (fxBillSplit > 1) parts.push(`split ÷${fxBillSplit} people`);
+                splitNoteEl.innerText = `Showing per person (${parts.join(', ')})`;
+                splitNoteEl.classList.remove('hidden');
+            } else {
+                splitNoteEl.classList.add('hidden');
+            }
+
+            // Forex Hidden Fee Loss Badge
+            const feeBadge = document.getElementById('fx-fee-loss-badge');
+            if (fxMarkupPercent === 0) {
+                feeBadge.className = "text-[11px] font-bold text-emerald-300";
+                feeBadge.innerText = `✓ ${fromMeta.symbol}0 lost to hidden fees`;
+            } else {
+                feeBadge.className = fxMarkupPercent >= 8 ? "text-[11px] font-bold text-red-400" : "text-[11px] font-bold text-amber-300";
+                feeBadge.innerText = `⚠️ Losing ${fromMeta.symbol}${formatMoney(lostInBase, fxFrom)} in markup!`;
+            }
+
+            // Cash Banknote Chips
+            document.getElementById('fx-banknote-chips').innerHTML = fromMeta.chips.map(val => `
+                <button onclick="addCashChip(${val})" class="banknote-chip px-3.5 py-2 rounded-xl bg-white/5 hover:bg-blue-600/30 border border-white/10 hover:border-blue-400/50 text-xs font-bold text-white/85 hover:text-white">
+                    +${fromMeta.symbol}${formatShortChip(val)}
+                </button>
+            `).join('');
+
+            // Purchasing Power Visualizer in Target Country
+            document.getElementById('bp-country-name').innerText = toMeta.country;
+            document.getElementById('bp-plan-country-btn').innerText = toMeta.country;
+
+            const usdValue = effectiveBaseAmount / (fxRatesUsd[fxFrom] || 1) * (1 - fxMarkupPercent / 100);
+            const meals = Math.floor(usdValue / toMeta.mealUsd);
+            const coffees = Math.floor(usdValue / toMeta.coffeeUsd);
+            const rides = Math.floor(usdValue / toMeta.transitUsd);
+            const nights = (usdValue / toMeta.hotelUsd).toFixed(1);
+
+            document.getElementById('buying-power-grid').innerHTML = `
+                <div class="bg-[#121827] border border-emerald-500/25 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xl">🍜</span>
+                        <span class="text-[10px] uppercase tracking-wider text-emerald-300 font-bold">Local Meals</span>
+                    </div>
+                    <div class="text-2xl font-black text-white">${meals.toLocaleString()}</div>
+                    <p class="text-[11px] text-white/50 mt-0.5">Street / casual meals</p>
+                </div>
+                <div class="bg-[#121827] border border-amber-500/25 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xl">☕</span>
+                        <span class="text-[10px] uppercase tracking-wider text-amber-300 font-bold">Cafe Coffees</span>
+                    </div>
+                    <div class="text-2xl font-black text-white">${coffees.toLocaleString()}</div>
+                    <p class="text-[11px] text-white/50 mt-0.5">Artisan coffee stops</p>
+                </div>
+                <div class="bg-[#121827] border border-cyan-500/25 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xl">🚆</span>
+                        <span class="text-[10px] uppercase tracking-wider text-cyan-300 font-bold">Metro Rides</span>
+                    </div>
+                    <div class="text-2xl font-black text-white">${rides.toLocaleString()}</div>
+                    <p class="text-[11px] text-white/50 mt-0.5">Local transit trips</p>
+                </div>
+                <div class="bg-[#121827] border border-blue-500/25 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xl">🏨</span>
+                        <span class="text-[10px] uppercase tracking-wider text-blue-300 font-bold">3-4★ Hotel Nights</span>
+                    </div>
+                    <div class="text-2xl font-black text-white">${nights}</div>
+                    <p class="text-[11px] text-white/50 mt-0.5">Comfort hotel stays</p>
+                </div>
+            `;
+
+            // Multi-Currency Radar Strip (Pick 4 popular travel currencies other than From/To)
+            const radarCandidates = ['USD', 'EUR', 'JPY', 'CHF', 'GBP', 'AED', 'THB', 'KRW', 'SGD'].filter(c => c !== fxFrom && c !== fxTo).slice(0, 4);
+            document.getElementById('fx-last-updated').innerText = fxUpdatedLabel;
+            document.getElementById('fx-radar-grid').innerHTML = radarCandidates.map(code => {
+                const meta = CURRENCIES[code];
+                const val = effectiveBaseAmount * getRate(fxFrom, code) * (1 - fxMarkupPercent / 100);
+                return `
+                    <button onclick="selectRadarTarget('${code}')" class="text-left bg-[#121827] hover:bg-[#192338] border border-white/10 hover:border-blue-400/50 rounded-2xl p-4 transition-all group">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-bold text-white/80">${meta.flag} ${meta.code}</span>
+                            <span class="text-[10px] text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity">Select →</span>
+                        </div>
+                        <div class="text-lg font-extrabold text-white truncate">${meta.symbol}${formatMoney(val, code)}</div>
+                        <div class="text-[11px] text-white/45 truncate mt-0.5">${meta.country}</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectRadarTarget(code) {
+            fxTo = code;
+            document.getElementById('fx-to-select').value = fxTo;
+            updateCurrencyPlayground();
+        }
+
+        function planTripWithCurrentCurrency() {
+            const targetCountry = CURRENCIES[fxTo]?.country || "Japan";
+            closeCurrencyView();
+            quickSelectCountry(targetCountry);
+        }
+
+        // =========================================================================
+        // 6. SAVED PLANS STORAGE & DELETE BAR
+        // =========================================================================
         function loadSavedPlansFromStorage() {
             try {
                 const rawList = localStorage.getItem('ai_travel_saved_plans');
@@ -1063,7 +1822,6 @@
                     const parsedList = JSON.parse(rawList);
                     if (Array.isArray(parsedList)) savedPlans = parsedList;
                 } else {
-                    // Migrate single legacy saved plan if present
                     const legacy = localStorage.getItem('ai_travel_last_trip');
                     if (legacy) {
                         const parsed = JSON.parse(legacy);
@@ -1081,10 +1839,7 @@
                         }
                     }
                 }
-
-                if (savedPlans.length > 0) {
-                    setActivePlanById(savedPlans[0].id);
-                }
+                if (savedPlans.length > 0) setActivePlanById(savedPlans[0].id);
             } catch (e) {}
         }
 
@@ -1145,37 +1900,35 @@
         }
 
         // =========================================================================
-        // 3. FLOATING 4-BUTTON DOCK & INTERACTIVE 3D ROTATABLE EARTH
+        // 7. FLOATING 4-BUTTON DOCK & INTERACTIVE 3D ROTATABLE EARTH
         // =========================================================================
         function setActiveDockButton(activeTab) {
             const activeStyle = "w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner transition-all";
             const inactiveStyle = "w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all";
-            const battleInactive = "w-11 h-11 rounded-full flex items-center justify-center text-amber-300/80 hover:text-amber-300 hover:bg-amber-500/10 transition-all text-base";
+            const fxInactive = "w-11 h-11 rounded-full flex items-center justify-center text-emerald-300/85 hover:text-emerald-200 hover:bg-emerald-500/15 transition-all";
 
             document.getElementById('dock-btn-home').className = activeTab === 'home' ? activeStyle : inactiveStyle;
             document.getElementById('dock-btn-globe').className = activeTab === 'globe' ? activeStyle : inactiveStyle;
-            document.getElementById('dock-btn-battle').className = activeTab === 'battle' ? activeStyle + " text-amber-300" : battleInactive;
+            document.getElementById('dock-btn-currency').className = activeTab === 'currency' ? activeStyle + " text-emerald-300 border-emerald-400/50" : fxInactive;
             document.getElementById('dock-btn-plan').className = activeTab === 'plan' ? activeStyle : inactiveStyle;
         }
 
         function navigateDock(tab) {
             if (tab === 'home') {
                 closeGlobeView();
+                closeCurrencyView();
                 goBackHome();
                 setActiveDockButton('home');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (tab === 'globe') {
+                closeCurrencyView();
                 openGlobeView();
-            } else if (tab === 'battle') {
+            } else if (tab === 'currency') {
                 closeGlobeView();
-                document.getElementById('itinerary-page').classList.add('hidden');
-                document.getElementById('home-page').classList.remove('hidden');
-                document.getElementById('main-dock').classList.remove('hidden');
-                toggleBattleMode(true);
-                setActiveDockButton('battle');
-                document.getElementById('portals-section').scrollIntoView({ behavior: 'smooth' });
+                openCurrencyView();
             } else if (tab === 'plan') {
                 closeGlobeView();
+                closeCurrencyView();
                 if (currentTripData) openItineraryPage();
                 else openWizard();
             }
@@ -1184,6 +1937,7 @@
         function openGlobeView() {
             document.getElementById('itinerary-page').classList.add('hidden');
             document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('currency-page').classList.add('hidden');
             document.getElementById('globe-page').classList.remove('hidden');
             document.getElementById('main-dock').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -1213,7 +1967,6 @@
             const tooltip = document.getElementById('globe-country-tooltip');
             const loader = document.getElementById('globe-loader');
 
-            // Track cursor position cleanly for the country-name popup
             container.addEventListener('mousemove', (e) => {
                 if (hoveredCountryFeature) {
                     tooltip.style.left = `${e.clientX}px`;
@@ -1227,7 +1980,6 @@
             });
 
             try {
-                // Load world country borders TopoJSON
                 let worldTopo = null;
                 try {
                     const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
@@ -1286,7 +2038,6 @@
                         }
                     });
 
-                // Smooth camera & gentle idle auto-rotation
                 worldGlobe.pointOfView({ lat: 22, lng: 78, altitude: 2.2 });
                 const controls = worldGlobe.controls();
                 controls.autoRotate = true;
@@ -1309,7 +2060,7 @@
         }
 
         // =========================================================================
-        // 4. LIVE WORLD PORTALS ENGINE (CLOCKS + OPEN-METEO WEATHER + DOSSIER)
+        // 8. LIVE WORLD PORTALS ENGINE (CLOCKS + OPEN-METEO WEATHER + DOSSIER)
         // =========================================================================
         function getWeatherMeta(code) {
             if (code === 0) return { icon: "☀️", desc: "Clear" };
@@ -1566,7 +2317,7 @@
         }
 
         // =========================================================================
-        // 5. COUNTRY BATTLE MODE (HEAD-TO-HEAD AI SHOWDOWN)
+        // 9. COUNTRY BATTLE MODE (HEAD-TO-HEAD AI SHOWDOWN)
         // =========================================================================
         function initBattleSelectors() {
             const selectA = document.getElementById('battle-select-a');
@@ -1601,7 +2352,6 @@
                 label.innerText = "Country Battle Mode";
                 toggleBtn.className = "flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold border transition-all bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/35 hover:to-orange-500/35 border-amber-400/50 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.18)]";
                 subtitle.innerText = "Real-time local clocks, live weather & seasonal intel. Click any portal for an AI Dossier, or activate Battle Mode to pit 2 countries head-to-head.";
-                setActiveDockButton('home');
             }
             renderLivePortals();
         }
@@ -1819,7 +2569,7 @@
         }
 
         // =========================================================================
-        // 6. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
+        // 10. AUTOCOMPLETE LOGIC (GLOBAL + COUNTRY-LOCKED)
         // =========================================================================
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
@@ -2094,7 +2844,7 @@
         }
 
         // =========================================================================
-        // 7. HOME WIZARD, SAVED PLANS DELETE BAR & PAGE NAVIGATION
+        // 11. HOME WIZARD, SAVED PLANS DELETE BAR & PAGE NAVIGATION
         // =========================================================================
         function openWizard() {
             const quickInput = document.getElementById('quickDestinationInput').value.trim();
@@ -2109,7 +2859,7 @@
             document.getElementById('planner-drawer').classList.add('hidden');
         }
 
-        function quickSelectCountry(country, places) {
+        function quickSelectCountry(country, places = null) {
             document.getElementById('quickDestinationInput').value = country;
             openWizard();
             selectCountry(country, places);
@@ -2136,6 +2886,7 @@
         function goBackHome() {
             document.getElementById('itinerary-page').classList.add('hidden');
             document.getElementById('globe-page').classList.add('hidden');
+            document.getElementById('currency-page').classList.add('hidden');
             document.getElementById('home-page').classList.remove('hidden');
             document.getElementById('main-dock').classList.remove('hidden');
             document.body.style.overflow = '';
@@ -2154,6 +2905,7 @@
             if (!currentTripData) return;
             document.getElementById('home-page').classList.add('hidden');
             document.getElementById('globe-page').classList.add('hidden');
+            document.getElementById('currency-page').classList.add('hidden');
             document.getElementById('main-dock').classList.add('hidden');
             document.getElementById('itinerary-page').classList.remove('hidden');
             document.body.style.overflow = '';
@@ -2217,7 +2969,6 @@
 
             banner.innerHTML = `
                 <div class="space-y-3">
-                    <!-- Delete Management Bar -->
                     <div class="flex items-center justify-between bg-[#0d111b] border border-white/10 rounded-2xl px-4 py-2.5">
                         <div class="flex items-center gap-2.5 text-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -2236,7 +2987,7 @@
         }
 
         // =========================================================================
-        // 8. CALL BACKEND API TO GENERATE TRIP
+        // 12. CALL BACKEND API TO GENERATE TRIP
         // =========================================================================
         async function planTrip() {
             const homeCity = document.getElementById('homeCity').value.trim();
@@ -2329,7 +3080,6 @@
                     createdAt: Date.now()
                 };
 
-                // Add newest plan at top (cap at 8 to stay neat)
                 savedPlans.unshift(newPlan);
                 if (savedPlans.length > 8) savedPlans = savedPlans.slice(0, 8);
                 persistPlansToStorage();
@@ -2351,7 +3101,7 @@
         }
 
         // =========================================================================
-        // 9. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
+        // 13. DEDICATED INTERACTIVE ITINERARY PAGE RENDERING
         // =========================================================================
         function renderDedicatedItineraryPage() {
             const summary = currentTripData.summary || {};
@@ -2613,7 +3363,7 @@
         }
 
         // =========================================================================
-        // 10. INTERACTIVE HANDLERS & HELPERS
+        // 14. INTERACTIVE HANDLERS & HELPERS
         // =========================================================================
         function getCategoryStyle(category) {
             const cat = (category || '').toLowerCase();

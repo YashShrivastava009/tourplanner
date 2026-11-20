@@ -1,0 +1,279 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #030508;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* --- LIVE TOP CURRENCY & FLIGHT TICKER --- */
+.ticker-wrap {
+    width: 100%;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+.ticker-track {
+    display: flex;
+    width: max-content;
+    gap: 14px;
+    animation: tickerScroll 42s linear infinite;
+}
+
+.ticker-wrap:hover .ticker-track {
+    animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* --- HOME PAGE EARTH HORIZON + FLIGHT ARCS --- */
+.earth-hero-desktop {
+    position: relative;
+    width: 100%;
+    height: 410px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 24px;
+}
+
+.earth-sphere-desktop {
+    position: absolute;
+    top: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180vw;
+    min-width: 1500px;
+    max-width: 2400px;
+    height: 180vw;
+    min-height: 1500px;
+    max-height: 2400px;
+    border-radius: 50%;
+    background-image:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.95) 0%, rgba(147, 197, 253, 0.45) 6%, rgba(37, 99, 235, 0.2) 18%, transparent 45%),
+        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=90');
+    background-size: 110% auto;
+    background-position: center 8%;
+    box-shadow:
+        0 -20px 60px rgba(96, 165, 250, 0.55),
+        0 -4px 20px rgba(255, 255, 255, 0.9),
+        inset 0 25px 60px rgba(191, 219, 254, 0.45),
+        inset 0 -180px 160px #030508;
+    z-index: 1;
+}
+
+.earth-sunrise-desktop {
+    position: absolute;
+    top: 26px;
+    left: 48%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 45px;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(191,219,254,0.65) 40%, transparent 75%);
+    filter: blur(6px);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.flight-arcs-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.arc-dash {
+    stroke-dasharray: 5 7;
+    animation: dashFlow 22s linear infinite;
+}
+
+@keyframes dashFlow {
+    to { stroke-dashoffset: -240; }
+}
+
+.earth-fade-desktop {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to top, #030508 8%, rgba(3, 5, 8, 0.85) 35%, transparent 75%),
+        linear-gradient(to right, #030508 0%, transparent 15%, transparent 85%, #030508 100%);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.orb-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #6b7280, #111827 70%);
+    box-shadow:
+        inset -3px -3px 8px rgba(255, 255, 255, 0.4),
+        inset 3px 3px 8px rgba(0, 0, 0, 0.95),
+        0 0 14px rgba(147, 197, 253, 0.25);
+    flex-shrink: 0;
+}
+
+/* --- STEALTH LOCK SCREEN --- */
+.stealth-lock-bg {
+    background:
+        radial-gradient(circle at 50% 20%, rgba(37, 99, 235, 0.25), transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.14), transparent 45%),
+        #02040a;
+}
+
+/* --- HOLOGRAPHIC CURRENCY PLAYGROUND STYLES --- */
+.currency-vault-bg {
+    background:
+        radial-gradient(circle at 20% 18%, rgba(37, 99, 235, 0.18), transparent 42%),
+        radial-gradient(circle at 82% 22%, rgba(16, 185, 129, 0.14), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.12), transparent 45%),
+        #03050a;
+}
+
+/* --- TRAVEL SHIELD (BUTTON 4) TACTICAL BACKGROUND --- */
+.shield-vault-bg {
+    background:
+        radial-gradient(circle at 18% 15%, rgba(244, 63, 94, 0.15), transparent 42%),
+        radial-gradient(circle at 82% 20%, rgba(245, 158, 11, 0.14), transparent 40%),
+        radial-gradient(circle at 50% 88%, rgba(59, 130, 246, 0.12), transparent 45%),
+        #04050a;
+}
+
+.currency-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2563eb 0%, #06b6d4 50%, #10b981 100%);
+    outline: none;
+    cursor: pointer;
+}
+
+.currency-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #38bdf8;
+    box-shadow: 0 0 18px rgba(56, 189, 248, 0.9), 0 4px 10px rgba(0, 0, 0, 0.7);
+    cursor: grab;
+    transition: transform 0.15s ease;
+}
+
+.currency-slider::-webkit-slider-thumb:hover { transform: scale(1.16); }
+.currency-slider::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.22); }
+
+.swap-spin { transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s; }
+.banknote-chip { transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease; }
+.banknote-chip:active { transform: scale(0.93); }
+
+/* --- LIVE PORTAL & BLUEPRINT CARD EFFECTS --- */
+.portal-card, .blueprint-card {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s;
+}
+.portal-card:hover, .blueprint-card:hover {
+    transform: translateY(-4px);
+}
+
+.battle-selected-a {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7), 0 14px 35px rgba(37, 99, 235, 0.45) !important;
+}
+.battle-selected-b {
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.75), 0 14px 35px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* --- 3D GLOBE CURSOR POPUP & COMMAND LAUNCHER --- */
+#globe-country-tooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 200;
+    transform: translate(16px, -50%);
+    transition: opacity 0.12s ease;
+}
+
+.globe-launcher-animate {
+    animation: slideUpCommand 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpCommand {
+    from { opacity: 0; transform: translate(-50%, 18px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* --- AUTOCOMPLETE DROPDOWN --- */
+.autocomplete-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #141926;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    border-radius: 14px;
+    max-height: 230px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.95);
+}
+
+.autocomplete-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s;
+}
+
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background: rgba(59, 130, 246, 0.25); }
+
+/* --- ANIMATIONS --- */
+.panel-animate { animation: fadeSlide 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- TIMELINE GLOW TRACK --- */
+.timeline-track { position: relative; }
+.timeline-track::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    bottom: 24px;
+    left: 19px;
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.7), rgba(16, 185, 129, 0.5), rgba(139, 92, 246, 0.4), transparent);
+}
+
+/* --- CUSTOM SCROLLBAR --- */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: #070a11; }
+::-webkit-scrollbar-thumb { background: #263147; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+/* --- CLEAN PRINT / PDF EXPORT --- */
+@media print {
+    body { background: #ffffff !important; color: #111827 !important; }
+    .no-print { display: none !important; }
+    #home-page, #globe-page, #currency-page, #shield-page, #stealth-lock-screen { display: none !important; }
+    #itinerary-page { display: block !important; background: #ffffff !important; }
+    .print-card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+    .print-card * { color: #0f172a !important; }
+}

@@ -11,25 +11,29 @@ app.use(express.static(__dirname));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Password Protection Middleware
+// Stealth Access Code (Set SITE_PASSWORD in Render Environment Variables to customize)
+function getExpectedPassword() {
+    return (process.env.SITE_PASSWORD || 'mysecretpassword').trim();
+}
+
 const checkPassword = (req, res, next) => {
-    if (req.headers['x-site-password'] === 'mysecretpassword') {
+    const incoming = (req.headers['x-site-password'] || '').trim();
+    if (incoming && incoming === getExpectedPassword()) {
         next();
     } else {
-        res.status(401).json({ error: 'Unauthorized: Password mismatch' });
+        res.status(401).json({ error: 'Unauthorized: Invalid stealth access code' });
     }
 };
 
-// Helper to get Gemini client safely
 function getGeminiClient() {
     const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
     if (!apiKey) {
-        throw new Error('GEMINI_API_KEY is missing in your Render Environment Variables. Go to Render Dashboard -> Environment and add GEMINI_API_KEY.');
+        throw new Error('GEMINI_API_KEY is missing in your Render Environment Variables.');
     }
     return new GoogleGenAI({ apiKey });
 }
 
-// Smart Gemini caller: auto-retries on 503 spikes and falls back across active Flash models
+// Smart Gemini caller with 503 auto-retry & model fallback
 async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 8192) {
     const candidateModels = [
         'gemini-3.8-flash',
@@ -75,11 +79,9 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 8192) {
                 if (isBusy) {
                     sawHighDemand = true;
                     if (attempt === 1) {
-                        console.warn(`Model ${modelName} busy (503). Retrying in 2s...`);
                         await sleep(2000);
                         continue;
                     }
-                    console.warn(`Model ${modelName} still busy. Trying next model...`);
                     break;
                 }
 
@@ -97,7 +99,7 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 8192) {
     }
 
     if (sawHighDemand) {
-        throw new Error('Google Gemini servers are temporarily experiencing heavy traffic across models. Please wait 15–30 seconds and try again.');
+        throw new Error('Google Gemini servers are temporarily experiencing heavy traffic. Please wait 15–30 seconds and try again.');
     }
 
     throw lastError;
@@ -111,6 +113,17 @@ function parseCleanJson(response) {
     rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
     return JSON.parse(rawText);
 }
+
+// =========================================================================
+// ROUTE 0: Verify Stealth Invite Code
+// =========================================================================
+app.post('/api/verify-access', (req, res) => {
+    const code = (req.body?.password || '').trim();
+    if (code && code === getExpectedPassword()) {
+        return res.json({ ok: true });
+    }
+    return res.status(401).json({ ok: false, error: 'Incorrect stealth access code.' });
+});
 
 // =========================================================================
 // ROUTE 1: Gemini AI Live Place Recommender for any Country
@@ -171,15 +184,7 @@ Return ONLY valid JSON matching this exact structure:
 app.post('/api/country-battle', checkPassword, async (req, res) => {
     try {
         const ai = getGeminiClient();
-        const {
-            countryA,
-            countryB,
-            homeCity,
-            days,
-            hotelBudget,
-            dailySpendingBudget,
-            currentMonth
-        } = req.body;
+        const { countryA, countryB, homeCity, days, hotelBudget, dailySpendingBudget, currentMonth } = req.body;
 
         if (!countryA || !countryB) {
             return res.status(400).json({ error: 'Please choose two countries to battle.' });
@@ -192,16 +197,16 @@ Traveler context:
 - Timing: ${currentMonth || 'Current Month'}
 - Split Budget Style: Hotel = ${hotelBudget || '3-to-4 Star Comfort Hotels'}, Daily Food & Sights = ${dailySpendingBudget || 'Moderate'}
 
-Compare both countries specifically for THIS traveler's split budget and THIS exact month. Name real trade-offs, flight reality, visa friction, and what their money actually buys.
+Compare both countries specifically for THIS traveler's split budget and THIS exact month.
 
 Return ONLY valid JSON matching this exact structure:
 {
   "headline": "String (Punchy showdown title)",
   "verdictWinner": "String (Must be either ${countryA} or ${countryB})",
-  "verdictReason": "String (2-3 sharp sentences explaining why the winner beats the other right now for this specific budget)",
+  "verdictReason": "String (2-3 sharp sentences explaining why the winner beats the other right now)",
   "countryA": {
     "name": "${countryA}",
-    "vibeTagline": "String (3-5 word cinematic vibe)",
+    "vibeTagline": "String",
     "flightEstimate": "String",
     "visaFriction": "String",
     "hotelValue": "String",
@@ -213,7 +218,7 @@ Return ONLY valid JSON matching this exact structure:
   },
   "countryB": {
     "name": "${countryB}",
-    "vibeTagline": "String (3-5 word cinematic vibe)",
+    "vibeTagline": "String",
     "flightEstimate": "String",
     "visaFriction": "String",
     "hotelValue": "String",
@@ -265,20 +270,15 @@ Return ONLY valid JSON matching this exact structure:
 {
   "truthScore": 45,
   "verdict": "SOLID BOOKING | BOOK WITH CAUTION | WALK AWAY",
-  "headline": "String (Blunt, memorable 6-10 word summary of what this place really is)",
-  "summary": "String (2-3 sharp sentences giving your honest bottom-line assessment)",
+  "headline": "String",
+  "summary": "String",
   "bsTranslations": [
-    {
-      "phrase": "String (Exact euphemism or fluff from the listing, e.g. 'Cozy walk-up loft')",
-      "reality": "String (Blunt real-world translation, e.g. 'Tiny room up 5 flights of stairs with no elevator')"
-    }
+    { "phrase": "String", "reality": "String" }
   ],
-  "redFlags": ["String (Major issue 1)", "String (Major issue 2)"],
-  "hiddenFees": ["String (Any mandatory cash/cleaning/linen/resort/late-check-in fees found or likely)"],
-  "greenFlags": ["String (Any genuine positives found in the listing)"],
-  "hostQuestions": [
-    "String (Exact pointed question to message the host before paying so you get proof in writing)"
-  ]
+  "redFlags": ["String"],
+  "hiddenFees": ["String"],
+  "greenFlags": ["String"],
+  "hostQuestions": ["String"]
 }`;
 
         const response = await generateJsonWithGemini(ai, prompt, 3072);
@@ -301,36 +301,33 @@ app.post('/api/safety-vault', checkPassword, async (req, res) => {
             return res.status(400).json({ error: 'Please select a destination country.' });
         }
 
-        const prompt = `Act as a street-smart travel security & local etiquette specialist. Build a practical, high-signal Safety, Scam & Crisis Briefing for a traveler visiting ${country}.
-Also generate a clear native-language Show-To-Local Card for this specific need: "${need || 'Strict Vegetarian'}".
+        const prompt = `Act as a street-smart travel security & local etiquette specialist. Build a practical Safety, Scam & Crisis Briefing for visiting ${country}.
+Also generate a clear native-language Show-To-Local Card for: "${need || 'Strict Vegetarian'}".
 
 Return ONLY valid JSON matching this exact structure:
 {
   "emergencyNumbers": {
-    "police": "String (Exact local police number)",
-    "ambulance": "String (Exact local ambulance/medical emergency number)",
-    "touristPolice": "String (Local tourist police hotline or national help number)"
+    "police": "String",
+    "ambulance": "String",
+    "touristPolice": "String"
   },
-  "plugAndTipQuickNote": "String (1 short line with power plug type + tipping norm, e.g. 'Type A/B plugs • Never tip in Japan')",
+  "plugAndTipQuickNote": "String",
   "crisisCard": {
-    "nativeText": "String (Clear, polite, unmistakable message in the primary local script of ${country} for: ${need || 'Strict Vegetarian'})",
-    "pronunciation": "String (Easy phonetic Romanized pronunciation)",
-    "englishMeaning": "String (Exact English meaning of what the native card says)",
-    "langCode": "String (BCP-47 voice code like ja-JP, th-TH, it-IT, fr-FR, tr-TR, ar-SA, id-ID, en-US)"
+    "nativeText": "String",
+    "pronunciation": "String",
+    "englishMeaning": "String",
+    "langCode": "String (BCP-47 like ja-JP, th-TH, it-IT, fr-FR, tr-TR, ar-SA, id-ID, en-US)"
   },
   "scams": [
     {
-      "name": "String (Specific real-world tourist scam in ${country})",
+      "name": "String",
       "riskLevel": "High Risk | Medium Risk | Common Trap",
-      "howItWorks": "String (1-2 crisp sentences explaining the exact hook/setup)",
-      "counterMove": "String (1-2 crisp sentences explaining how to shut it down immediately)"
+      "howItWorks": "String",
+      "counterMove": "String"
     }
   ],
   "strictLaws": [
-    {
-      "rule": "String (Strict or unexpected local law/etiquette rule in ${country})",
-      "penalty": "String (Fine, arrest risk, or consequence to watch out for)"
-    }
+    { "rule": "String", "penalty": "String" }
   ]
 }
 Include 4 specific real scams and 3 strict local laws/customs traps.`;
@@ -344,25 +341,60 @@ Include 4 specific real scams and 3 strict local laws/customs traps.`;
 });
 
 // =========================================================================
-// ROUTE 6: Complete Master Trip Planner
+// ROUTE 6: Single-Stop Live Swap Inside Any Itinerary
+// =========================================================================
+app.post('/api/swap-stop', checkPassword, async (req, res) => {
+    try {
+        const ai = getGeminiClient();
+        const { destinationCountry, dayTitle, currentStop, preference, existingTitles } = req.body;
+
+        if (!currentStop || !destinationCountry) {
+            return res.status(400).json({ error: 'Missing stop details to swap.' });
+        }
+
+        const avoidList = Array.isArray(existingTitles) && existingTitles.length
+            ? existingTitles.join(', ')
+            : currentStop.title;
+
+        const prompt = `Act as an elite local travel architect in ${destinationCountry}.
+Replace ONLY this single itinerary stop with a fresh, real-world alternative in the same city/area and same time slot:
+- Day Theme: ${dayTitle || destinationCountry}
+- Current Stop Being Replaced: "${currentStop.title}" (${currentStop.category || 'Activity'}) at ${currentStop.location || destinationCountry} during ${currentStop.time || 'this slot'}
+- Traveler's Swap Request: "${preference || 'Give me a fresh, better hidden-gem alternative'}"
+- Do NOT repeat any of these already-planned stops: ${avoidList}
+
+Keep the exact same time window ("${currentStop.time || ''}") and category ("${currentStop.category || 'Activity'}").
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "time": "${currentStop.time || ''}",
+  "category": "${currentStop.category || 'Activity'}",
+  "title": "String (Specific real venue, restaurant, or attraction name)",
+  "location": "String (City & Neighborhood)",
+  "transport": "String (Exact transit to get here + duration)",
+  "costNote": "String (Estimated cost level)",
+  "description": "String (1-2 sharp sentences explaining what to do/eat and why this swap fits '${preference || 'the request'}')"
+}`;
+
+        const response = await generateJsonWithGemini(ai, prompt, 1536);
+        res.json({ stop: parseCleanJson(response) });
+    } catch (error) {
+        console.error("Swap Stop Error:", error);
+        res.status(500).json({ error: "Failed to swap stop", details: error.message });
+    }
+});
+
+// =========================================================================
+// ROUTE 7: Complete Master Trip Planner
 // =========================================================================
 app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {
         const ai = getGeminiClient();
 
         const {
-            homeCity,
-            departureCity,
-            destinationCountry,
-            destination,
-            selectedPlaces,
-            days,
-            hotelBudget,
-            dailySpendingBudget,
-            transitStyle,
-            customBudgetNote,
-            isFirstTime,
-            visitedPlaces
+            homeCity, departureCity, destinationCountry, destination,
+            selectedPlaces, days, hotelBudget, dailySpendingBudget,
+            transitStyle, customBudgetNote, isFirstTime, visitedPlaces
         } = req.body;
 
         const targetCountry = destinationCountry || destination || 'Destination';
@@ -373,7 +405,7 @@ app.post('/api/plan-trip', checkPassword, async (req, res) => {
             : `Select the best cities and regions in ${targetCountry} for a ${numDays}-day trip.`;
 
         const exclusionRule = (isFirstTime === 'no' && visitedPlaces)
-            ? `CRITICAL RULE: The user has visited ${targetCountry} before and already saw: ${visitedPlaces}. DO NOT include any of these already-visited places. Suggest fresh attractions and areas.`
+            ? `CRITICAL RULE: The user has visited ${targetCountry} before and already saw: ${visitedPlaces}. DO NOT include any of these already-visited places.`
             : `This is the user's first time visiting ${targetCountry}.`;
 
         const prompt = `Act as an elite travel architect. Build a complete, day-by-day travel plan based on these parameters:
@@ -395,31 +427,31 @@ Return ONLY valid JSON matching this exact structure:
 {
   "summary": {
     "tripTitle": "String",
-    "budgetStrategySummary": "String explaining how you balanced the hotel tier with daily spending",
-    "homeToDepartureTransit": "String explaining how to travel from ${homeCity} to ${departureCity} airport",
-    "flightStrategy": "String explaining flight route from ${departureCity} to ${targetCountry}",
+    "budgetStrategySummary": "String",
+    "homeToDepartureTransit": "String",
+    "flightStrategy": "String",
     "recommendedStay": {
-      "name": "String (Specific Hotel/Resort/Hostel Name)",
-      "area": "String (City & Neighborhood)",
-      "details": "String (Why this stay fits their hotel budget and nightly estimate)"
+      "name": "String",
+      "area": "String",
+      "details": "String"
     },
-    "localTransportGuide": "String (Best passes, cards, or transit methods to use)"
+    "localTransportGuide": "String"
   },
   "days": [
     {
       "dayNumber": 1,
-      "dayTitle": "String (City & Theme of the day)",
-      "wakeUpTime": "String (e.g. 07:00 AM)",
-      "sleepTime": "String (e.g. 10:30 PM)",
+      "dayTitle": "String",
+      "wakeUpTime": "String",
+      "sleepTime": "String",
       "schedule": [
         {
-          "time": "String (e.g. 08:00 AM - 10:30 AM)",
+          "time": "String",
           "category": "Meal | Activity | Transit | Stay",
-          "title": "String (Name of place, restaurant, or action)",
-          "location": "String (City & Neighborhood)",
-          "transport": "String (Exact transit to get here + duration)",
-          "costNote": "String (Estimated cost level)",
-          "description": "String (What to do, what dish to eat, and key tip)"
+          "title": "String",
+          "location": "String",
+          "transport": "String",
+          "costNote": "String",
+          "description": "String"
         }
       ]
     }
@@ -428,22 +460,16 @@ Return ONLY valid JSON matching this exact structure:
 
         const response = await generateJsonWithGemini(ai, prompt, 8192);
         res.json(parseCleanJson(response));
-
     } catch (error) {
         console.error("AI Generation Error:", error);
-        res.status(500).json({
-            error: "Failed to generate itinerary",
-            details: error.message || "Unknown server error"
-        });
+        res.status(500).json({ error: "Failed to generate itinerary", details: error.message || "Unknown server error" });
     }
 });
 
-// Return clean JSON instead of HTML for any unknown /api route
 app.use('/api', (req, res) => {
     res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
 });
 
-// Serve the main frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });

@@ -63,9 +63,8 @@ function withTimeout(promise, ms, label) {
 }
 
 // Self-healing JSON parser: strips fences, stray text, and trailing commas
-function safeParseGeminiJson(response, expectArray = false) {
-    let rawText = typeof response.text === 'function' ? response.text() : response.text;
-    if (!rawText) throw new Error('JSON_ERROR: Empty response from Gemini.');
+function safeParseRawJson(rawText, expectArray = false) {
+    if (!rawText) throw new Error('JSON_ERROR: Empty response from AI.');
 
     let cleaned = String(rawText)
         .replace(/^\uFEFF/, '')
@@ -74,7 +73,6 @@ function safeParseGeminiJson(response, expectArray = false) {
         .replace(/```\s*$/i, '')
         .trim();
 
-    // Extract outermost JSON structure in case the model added extra commentary
     const openChar = expectArray ? '[' : '{';
     const closeChar = expectArray ? ']' : '}';
     const firstIdx = cleaned.indexOf(openChar);
@@ -83,11 +81,9 @@ function safeParseGeminiJson(response, expectArray = false) {
         cleaned = cleaned.slice(firstIdx, lastIdx + 1);
     }
 
-    // Attempt 1: strict parse
     try {
         return JSON.parse(cleaned);
     } catch (firstErr) {
-        // Attempt 2: repair trailing commas & stray control chars
         const repaired = cleaned
             .replace(/,\s*([}\]])/g, '$1')
             .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
@@ -99,16 +95,69 @@ function safeParseGeminiJson(response, expectArray = false) {
     }
 }
 
-// Fast Gemini caller with JSON repair + automatic retry/fallback on malformed JSON or 503s
-async function generateParsedJson(ai, prompt, maxOutputTokens = 4096, expectArray = false) {
-    const candidateModels = [
-        'gemini-3.5-flash-lite',
-        'gemini-3.1-flash-lite',
-        'gemini-3.8-flash',
-        'gemini-flash-latest'
-    ];
+// Optional 100% Free Groq Failover (activates automatically if GROQ_API_KEY is set in Render)
+async function callGroqFallback(prompt, maxOutputTokens = 4096, expectArray = false) {
+    const groqKey = process.env.GROQ_API_KEY ? process.env.GROQ_API_KEY.trim() : '';
+    if (!groqKey) return null;
+
+    const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'];
+    const wrappedPrompt = expectArray
+        ? `${prompt}\nReturn as JSON object: { "items": [...] }`
+        : prompt;
+
+    for (const model of groqModels) {
+        try {
+            const res = await withTimeout(
+                fetch('[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${groqKey}`
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: 'system', content: 'You are an expert travel architect. Return ONLY valid strict JSON.' },
+                            { role: 'user', content: wrappedPrompt }
+                        ],
+                        temperature: 0.35,
+                        max_tokens: Math.min(maxOutputTokens, 7500),
+                        response_format: { type: 'json_object' }
+                    })
+                }),
+                30000,
+                `groq:${model}`
+            );
+
+            if (!res.ok) continue;
+            const data = await res.json();
+            const content = data?.choices?.[0]?.message?.content;
+            if (!content) continue;
+
+            const parsed = safeParseRawJson(content, false);
+            if (expectArray) {
+                if (Array.isArray(parsed)) return parsed;
+                if (Array.isArray(parsed.items)) return parsed.items;
+                const firstArr = Object.values(parsed).find(v => Array.isArray(v));
+                if (firstArr) return firstArr;
+            }
+            return parsed;
+        } catch (e) {
+            console.warn(`Groq fallback (${model}) skipped:`, e.message);
+        }
+    }
+    return null;
+}
+
+// Smart Gemini caller with JSON repair + fallback across active Flash models + optional Groq failover
+async function generateParsedJson(ai, prompt, maxOutputTokens = 6144, expectArray = false, preferRichModel = false) {
+    const candidateModels = preferRichModel
+        ? ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-flash-latest']
+        : ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+
     let lastError = null;
     let sawHighDemand = false;
+    let sawRateLimit = false;
 
     for (let i = 0; i < candidateModels.length; i++) {
         const modelName = candidateModels[i];
@@ -119,7 +168,7 @@ async function generateParsedJson(ai, prompt, maxOutputTokens = 4096, expectArra
                 const config = {
                     responseMimeType: "application/json",
                     maxOutputTokens,
-                    temperature: 0.35
+                    temperature: 0.4
                 };
 
                 if (attempt === 1 && modelName.includes('gemini-3')) {
@@ -130,37 +179,27 @@ async function generateParsedJson(ai, prompt, maxOutputTokens = 4096, expectArra
 
                 const response = await withTimeout(
                     ai.models.generateContent({ model: modelName, contents: prompt, config }),
-                    35000,
+                    42000,
                     modelName
                 );
 
-                // Parse inside the loop so broken JSON triggers an automatic fallback
-                return safeParseGeminiJson(response, expectArray);
+                const rawText = typeof response.text === 'function' ? response.text() : response.text;
+                return safeParseRawJson(rawText, expectArray);
             } catch (err) {
                 lastError = err;
                 const msg = err && err.message ? err.message : JSON.stringify(err);
 
-                const matches = msg.match(/models\/([a-zA-Z0-9._-]+)/g);
-                if (matches && matches.length > 1) {
-                    const suggestedModel = matches[1].replace('models/', '');
-                    if (!candidateModels.includes(suggestedModel)) {
-                        candidateModels.push(suggestedModel);
-                    }
-                }
-
-                // If model emitted broken/truncated JSON, immediately try next model
                 if (msg.startsWith('JSON_ERROR:')) {
-                    console.warn(`${modelName} returned malformed JSON (${msg}). Trying fallback...`);
+                    console.warn(`${modelName} returned malformed JSON. Trying next model...`);
                     break;
                 }
 
-                // If a model rejects thinkingConfig, retry immediately without it
                 if (attempt === 1 && (msg.includes('thinking') || msg.includes('INVALID_ARGUMENT') || msg.includes('400'))) {
                     continue;
                 }
 
                 if (msg.includes('TIMEOUT')) {
-                    console.warn(`${modelName} timed out. Switching to next model...`);
+                    console.warn(`${modelName} timed out. Switching model...`);
                     break;
                 }
 
@@ -184,7 +223,8 @@ async function generateParsedJson(ai, prompt, maxOutputTokens = 4096, expectArra
                 }
 
                 if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
-                    throw new Error('Free-tier API rate limit reached. Please wait 30 seconds and try again.');
+                    sawRateLimit = true;
+                    break;
                 }
 
                 throw err;
@@ -192,11 +232,36 @@ async function generateParsedJson(ai, prompt, maxOutputTokens = 4096, expectArra
         }
     }
 
+    // Try free Groq fallback if configured in Render Environment Variables
+    const groqResult = await callGroqFallback(prompt, maxOutputTokens, expectArray);
+    if (groqResult) return groqResult;
+
+    if (sawRateLimit) {
+        throw new Error('Free-tier API rate limit reached. Wait 30 seconds and try again (or add a free GROQ_API_KEY in Render for automatic failover).');
+    }
+
     if (sawHighDemand) {
         throw new Error('Google Gemini servers are temporarily busy. Please try again in 15 seconds.');
     }
 
     throw lastError;
+}
+
+// Helper to run async tasks in parallel with a concurrency limit
+async function runWithConcurrency(tasks, maxConcurrent = 3) {
+    const results = new Array(tasks.length);
+    let nextIdx = 0;
+
+    async function worker() {
+        while (nextIdx < tasks.length) {
+            const current = nextIdx++;
+            results[current] = await tasks[current]();
+        }
+    }
+
+    const workers = Array.from({ length: Math.min(maxConcurrent, tasks.length) }, () => worker());
+    await Promise.all(workers);
+    return results;
 }
 
 // ROUTE 0: Verify Stealth Invite Code
@@ -234,7 +299,7 @@ app.post('/api/country-dossier', checkPassword, async (req, res) => {
 
         const ai = getGeminiClient();
         const prompt = `Act as a sharp travel scout. Concise dossier for ${country} in ${currentMonth || 'this month'} for a traveler from ${homeCity || 'abroad'}. Live weather: ${liveWeather || 'N/A'}.
-Return ONLY valid strict JSON (double-quoted keys, no trailing commas):
+Return ONLY valid strict JSON:
 {
   "country": "${country}",
   "goNowVerdict": "GO NOW | GOOD WITH CAVEATS | BETTER TO WAIT",
@@ -260,7 +325,7 @@ app.post('/api/country-battle', checkPassword, async (req, res) => {
         const { countryA, countryB, homeCity, days, hotelBudget, dailySpendingBudget, currentMonth } = req.body;
         if (!countryA || !countryB) return res.status(400).json({ error: 'Pick two countries.' });
 
-        const prompt = `Compare ${countryA} vs ${countryB} for a ${days || 7}-day trip in ${currentMonth || 'this month'} from ${homeCity || 'abroad'} (Hotel: ${hotelBudget || 'Comfort'}, Spend: ${dailySpendingBudget || 'Moderate'}). Keep every field crisp (1 sentence).
+        const prompt = `Compare ${countryA} vs ${countryB} for a ${days || 7}-day trip in ${currentMonth || 'this month'} from ${homeCity || 'abroad'} (Hotel: ${hotelBudget || 'Comfort'}, Spend: ${dailySpendingBudget || 'Moderate'}). Keep every field crisp (1-2 sentences).
 Return ONLY valid strict JSON:
 {
   "headline": "String",
@@ -326,7 +391,7 @@ Return ONLY valid strict JSON with 4 scams and 3 strict laws:
   "emergencyNumbers": { "police": "String", "ambulance": "String", "touristPolice": "String" },
   "plugAndTipQuickNote": "1 short line",
   "crisisCard": { "nativeText": "Local script", "pronunciation": "Phonetic", "englishMeaning": "English", "langCode": "BCP-47 e.g. ja-JP" },
-  "scams": [{ "name": "String", "riskLevel": "High Risk | Medium Risk", "howItWorks": "1 sentence", "counterMove": "1 sentence" }],
+  "scams": [{ "name": "String", "riskLevel": "High Risk | Medium Risk", "howItWorks": "1-2 sentences", "counterMove": "1-2 sentences" }],
   "strictLaws": [{ "rule": "String", "penalty": "1 short sentence" }]
 }`;
         const data = await generateParsedJson(ai, prompt, 2400);
@@ -348,8 +413,8 @@ app.post('/api/swap-stop', checkPassword, async (req, res) => {
         const prompt = `Replace ONE stop in ${destinationCountry} (${dayTitle || ''}): "${currentStop.title}" (${currentStop.time || ''}).
 User wants: "${preference || 'Fresh hidden gem'}". Do NOT repeat: ${avoidList}.
 Return ONLY valid strict JSON:
-{ "time": "${currentStop.time || ''}", "category": "${currentStop.category || 'Activity'}", "title": "Real place", "location": "Area", "transport": "Transit + time", "costNote": "Est cost", "description": "1-2 crisp sentences" }`;
-        res.json({ stop: await generateParsedJson(ai, prompt, 1000) });
+{ "time": "${currentStop.time || ''}", "category": "${currentStop.category || 'Activity'}", "title": "Real place", "location": "Area", "transport": "Transit + time", "costNote": "Est cost", "description": "2 detailed sentences with what to do/eat and an insider tip" }`;
+        res.json({ stop: await generateParsedJson(ai, prompt, 1100) });
     } catch (error) {
         res.status(500).json({ error: "Failed to swap stop", details: error.message });
     }
@@ -438,12 +503,12 @@ app.post('/api/pilgrimage-route', checkPassword, async (req, res) => {
         if (hit) return res.json(hit);
 
         const ai = getGeminiClient();
-        const prompt = `Build a 6-stop real-world Pilgrimage Route for: "${theme}" with accurate decimal lat/lng coordinates. Keep every field punchy (1 sentence).
+        const prompt = `Build a 6-stop real-world Pilgrimage Route for: "${theme}" with accurate decimal lat/lng coordinates. Keep every field punchy (1-2 sentences).
 Return ONLY valid strict JSON:
 {
   "missionTitle": "String", "themeName": "${theme}", "country": "Primary country", "daysSuggested": 5, "heroQuote": "1 short line", "overview": "2 sentences",
   "stops": [
-    { "order": 1, "dayLabel": "Day 1", "realLocation": "Real place", "city": "City", "lat": 35.6852, "lng": 139.7235, "sceneConnection": "1 sentence", "photoTip": "1 sentence", "transitTip": "Short transit", "costNote": "Free or ticket" }
+    { "order": 1, "dayLabel": "Day 1", "realLocation": "Real place", "city": "City", "lat": 35.6852, "lng": 139.7235, "sceneConnection": "1-2 sentences", "photoTip": "1 sentence", "transitTip": "Short transit", "costNote": "Free or ticket" }
   ]
 }`;
         const data = await generateParsedJson(ai, prompt, 2800);
@@ -454,7 +519,10 @@ Return ONLY valid strict JSON:
     }
 });
 
-// ROUTE 11: Complete Master Trip Planner
+// =========================================================================
+// ROUTE 11: HYPER-DETAILED PARALLEL-CHUNKED MASTER TRIP PLANNER
+// (6 Rich Stops/Day Even on 14-Day Trips — Fast & 100% Free!)
+// =========================================================================
 app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {
         const ai = getGeminiClient();
@@ -466,43 +534,141 @@ app.post('/api/plan-trip', checkPassword, async (req, res) => {
 
         const targetCountry = destinationCountry || destination || 'Destination';
         const numDays = Math.min(Math.max(parseInt(days, 10) || 3, 1), 14);
-        const stopsPerDay = numDays >= 8 ? 3 : 4;
 
         const placesText = (selectedPlaces && selectedPlaces.length > 0)
-            ? `Cover: ${selectedPlaces.join(', ')}.`
-            : `Pick top cities in ${targetCountry}.`;
+            ? `Cover these requested places logically: ${selectedPlaces.join(', ')}.`
+            : `Select the best cities and scenic regions in ${targetCountry}.`;
 
         const exclRule = (isFirstTime === 'no' && visitedPlaces)
-            ? `EXCLUDE already visited: ${visitedPlaces}.`
-            : `First-time visitor.`;
+            ? `CRITICAL: Exclude already visited places: ${visitedPlaces}.`
+            : `First-time visitor to ${targetCountry}.`;
 
-        const prompt = `Build a fast, punchy ${numDays}-day travel itinerary JSON.
+        const budgetBlock = `Hotel=${hotelBudget || 'Comfort 3-4 Star'}, Daily Food & Sights=${dailySpendingBudget || 'Moderate'}, Transit=${transitStyle || 'Smart Mix'}. Note: ${customBudgetNote || 'None'}.`;
+
+        // CASE A: Short trips (1–4 days) -> 1 single rich call with 6 full stops/day
+        if (numDays <= 4) {
+            const singlePrompt = `Act as an elite, detail-obsessed local travel architect. Build a richly detailed ${numDays}-day itinerary.
 Route: ${homeCity} -> ${departureCity} -> ${targetCountry}. ${placesText} ${exclRule}
-Budget: Hotel=${hotelBudget || 'Comfort'}, Daily=${dailySpendingBudget || 'Moderate'}, Transit=${transitStyle || 'Smart Mix'}. Note: ${customBudgetNote || 'None'}.
-Keep every description to 1 crisp sentence. Exactly ${stopsPerDay} stops per day for all ${numDays} days.
+Budget: ${budgetBlock}
+
+QUALITY RULES:
+- Generate EXACTLY 6 chronological stops per day for EVERY day (Day 1 to Day ${numDays}):
+  1) Morning Breakfast / Local Cafe
+  2) Morning Iconic Landmark / Activity
+  3) Late-Morning / Midday Neighborhood, Market, or Hidden Gem
+  4) Specific Local Lunch Restaurant (name exact signature dishes to order)
+  5) Afternoon Major Experience / Sight / Excursion
+  6) Sunset Spot, Evening Walk & Dinner (with exact local vibe & tip)
+- Write 2 to 3 vivid, specific sentences per stop (exact dishes, ticket/crowd hacks, best photo angles—never generic one-liners).
 
 Return ONLY valid strict JSON (double-quoted keys, no trailing commas):
 {
   "summary": {
     "tripTitle": "String",
-    "budgetStrategySummary": "1 sentence",
-    "homeToDepartureTransit": "1 sentence",
-    "flightStrategy": "1 sentence",
-    "recommendedStay": { "name": "Hotel name", "area": "Neighborhood", "details": "1 sentence + nightly estimate" },
-    "localTransportGuide": "1 sentence"
+    "budgetStrategySummary": "2 sentences explaining how stays and daily spending are balanced",
+    "homeToDepartureTransit": "2 sentences on reaching ${departureCity} from ${homeCity}",
+    "flightStrategy": "2 sentences on best flight corridors and arrival logistics",
+    "recommendedStay": { "name": "Specific real hotel name", "area": "City & Neighborhood", "details": "2 sentences + realistic nightly estimate" },
+    "localTransportGuide": "2 sentences on exact transit cards, rail apps, and cab tips"
   },
   "days": [
     {
-      "dayNumber": 1, "dayTitle": "String", "wakeUpTime": "07:30 AM", "sleepTime": "10:30 PM",
+      "dayNumber": 1, "dayTitle": "City & Rich Theme", "wakeUpTime": "07:00 AM", "sleepTime": "10:30 PM",
       "schedule": [
-        { "time": "08:30 AM - 10:30 AM", "category": "Meal | Activity | Transit | Stay", "title": "Place name", "location": "Area", "transport": "Short transit", "costNote": "Est cost", "description": "1 crisp sentence" }
+        { "time": "08:00 AM - 09:00 AM", "category": "Meal | Activity | Transit | Stay", "title": "Specific real place", "location": "Neighborhood, City", "transport": "Exact transit + duration", "costNote": "Realistic cost estimate", "description": "2-3 vivid, specific sentences with insider tips and what to order/see." }
       ]
     }
   ]
 }`;
+            const result = await generateParsedJson(ai, singlePrompt, 8192, false, true);
+            return res.json(result);
+        }
 
-        const maxTokens = Math.min(3000 + numDays * 850, 8192);
-        res.json(await generateParsedJson(ai, prompt, maxTokens));
+        // CASE B: Longer trips (5–14 days) -> Step 1: Fast Master Outline + Summary
+        const outlinePrompt = `Act as an elite travel architect designing the master route for a ${numDays}-day expedition in ${targetCountry}.
+Origin: ${homeCity} -> Departure Airport: ${departureCity} -> Destination: ${targetCountry}.
+${placesText} ${exclRule}
+Budget: ${budgetBlock}
+
+Return ONLY valid strict JSON with the trip summary and a logical, geographically connected day-by-day outline for ALL ${numDays} days (Day 1 to Day ${numDays}):
+{
+  "summary": {
+    "tripTitle": "String",
+    "budgetStrategySummary": "2 crisp sentences",
+    "homeToDepartureTransit": "2 crisp sentences",
+    "flightStrategy": "2 crisp sentences",
+    "recommendedStay": { "name": "Specific real hotel(s) along the route", "area": "Main base cities", "details": "2 sentences + realistic nightly cost" },
+    "localTransportGuide": "2 crisp sentences on passes, trains & local apps"
+  },
+  "dayOutlines": [
+    { "dayNumber": 1, "city": "City/Region", "theme": "Distinct focus of this day", "mustHit": "3-4 key spots/districts for this day" }
+  ]
+}`;
+
+        const outlineData = await generateParsedJson(ai, outlinePrompt, 2600, false, false);
+        const summary = outlineData.summary || {};
+        const dayOutlines = Array.isArray(outlineData.dayOutlines) && outlineData.dayOutlines.length >= numDays
+            ? outlineData.dayOutlines.slice(0, numDays)
+            : Array.from({ length: numDays }, (_, i) => ({
+                dayNumber: i + 1,
+                city: targetCountry,
+                theme: `Day ${i + 1} Highlights in ${targetCountry}`,
+                mustHit: selectedPlaces?.join(', ') || targetCountry
+            }));
+
+        // Step 2: Split into 4-day chunks and generate 6 rich stops/day IN PARALLEL
+        const chunkSize = 4;
+        const chunks = [];
+        for (let start = 0; start < dayOutlines.length; start += chunkSize) {
+            chunks.push(dayOutlines.slice(start, start + chunkSize));
+        }
+
+        const chunkTasks = chunks.map((chunkSlice) => async () => {
+            const firstDay = chunkSlice[0].dayNumber;
+            const lastDay = chunkSlice[chunkSlice.length - 1].dayNumber;
+            const sliceText = chunkSlice
+                .map(d => `Day ${d.dayNumber} (${d.city}): ${d.theme} — Focus areas: ${d.mustHit}`)
+                .join('\n');
+
+            const chunkPrompt = `Act as an elite local insider in ${targetCountry}. Flesh out ONLY Days ${firstDay} to ${lastDay} of this ${numDays}-day trip into a deeply detailed, real-world schedule.
+Budget: ${budgetBlock} ${exclRule}
+
+Assigned Days for this block:
+${sliceText}
+
+STRICT QUALITY RULES:
+- Generate ALL days from Day ${firstDay} through Day ${lastDay}.
+- Include EXACTLY 6 chronological stops per day (covering Morning Breakfast/Cafe, Morning Major Sight, Midday Market/Alley/Hidden Gem, Local Lunch with exact dishes, Afternoon Landmark/Experience, and Sunset/Evening Activity & Dinner).
+- Every stop MUST use a real, specific place/restaurant name and have 2 to 3 detailed, useful sentences (exact dish to try, crowd-beating timing, photo tip, or local secret). Never write lazy 1-sentence filler.
+
+Return ONLY valid strict JSON:
+{
+  "days": [
+    {
+      "dayNumber": ${firstDay},
+      "dayTitle": "City & Theme",
+      "wakeUpTime": "07:00 AM",
+      "sleepTime": "10:30 PM",
+      "schedule": [
+        { "time": "08:00 AM - 09:00 AM", "category": "Meal | Activity | Transit | Stay", "title": "Real Venue Name", "location": "Neighborhood, City", "transport": "Exact transit + time", "costNote": "Est cost", "description": "2-3 vivid, actionable sentences." }
+      ]
+    }
+  ]
+}`;
+            const chunkJson = await generateParsedJson(ai, chunkPrompt, 8192, false, true);
+            return Array.isArray(chunkJson.days) ? chunkJson.days : [];
+        });
+
+        const chunkResults = await runWithConcurrency(chunkTasks, 3);
+        const allDays = chunkResults
+            .flat()
+            .sort((a, b) => (Number(a.dayNumber) || 0) - (Number(b.dayNumber) || 0));
+
+        if (!allDays.length) {
+            throw new Error('Failed to assemble itinerary days. Please try again.');
+        }
+
+        res.json({ summary, days: allDays });
     } catch (error) {
         console.error("AI Generation Error:", error);
         res.status(500).json({ error: "Failed to generate itinerary", details: error.message || "Unknown server error" });

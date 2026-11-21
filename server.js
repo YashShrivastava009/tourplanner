@@ -455,4 +455,23 @@ Return ONLY valid JSON:
   ]
 }`;
 
-        const maxTokens = Math.min(2
+        const maxTokens = Math.min(2000 + numDays * 700, 8192);
+        res.json(parseCleanJson(await generateJsonWithGemini(ai, prompt, maxTokens)));
+    } catch (error) {
+        console.error("AI Generation Error:", error);
+        res.status(500).json({ error: "Failed to generate itinerary", details: error.message || "Unknown server error" });
+    }
+});
+
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

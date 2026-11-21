@@ -178,6 +178,34 @@ body {
 .banknote-chip { transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease; }
 .banknote-chip:active { transform: scale(0.93); }
 
+/* --- SWIPEABLE CULTURAL TABOO & SLANG DECK --- */
+.deck-stage {
+    position: relative;
+    min-height: 390px;
+    perspective: 1200px;
+}
+
+.swipe-card {
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.28s ease;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+.swipe-card.dragging {
+    transition: none;
+    cursor: grabbing;
+}
+
+.swipe-card.fly-left {
+    transform: translateX(-140%) rotate(-18deg) !important;
+    opacity: 0 !important;
+}
+
+.swipe-card.fly-right {
+    transform: translateX(140%) rotate(18deg) !important;
+    opacity: 0 !important;
+}
+
 /* --- LIVE PORTAL & BLUEPRINT CARD EFFECTS --- */
 .portal-card, .blueprint-card {
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s;

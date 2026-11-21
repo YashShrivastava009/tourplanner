@@ -62,8 +62,45 @@ function withTimeout(promise, ms, label) {
     return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-// Fast Gemini caller: prioritizes ultra-fast Flash-Lite, minimizes thinking delay, fails over fast
-async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 4096) {
+// Self-healing JSON parser: strips fences, stray text, and trailing commas
+function safeParseGeminiJson(response, expectArray = false) {
+    let rawText = typeof response.text === 'function' ? response.text() : response.text;
+    if (!rawText) throw new Error('JSON_ERROR: Empty response from Gemini.');
+
+    let cleaned = String(rawText)
+        .replace(/^\uFEFF/, '')
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+
+    // Extract outermost JSON structure in case the model added extra commentary
+    const openChar = expectArray ? '[' : '{';
+    const closeChar = expectArray ? ']' : '}';
+    const firstIdx = cleaned.indexOf(openChar);
+    const lastIdx = cleaned.lastIndexOf(closeChar);
+    if (firstIdx !== -1 && lastIdx > firstIdx) {
+        cleaned = cleaned.slice(firstIdx, lastIdx + 1);
+    }
+
+    // Attempt 1: strict parse
+    try {
+        return JSON.parse(cleaned);
+    } catch (firstErr) {
+        // Attempt 2: repair trailing commas & stray control chars
+        const repaired = cleaned
+            .replace(/,\s*([}\]])/g, '$1')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+        try {
+            return JSON.parse(repaired);
+        } catch (secondErr) {
+            throw new Error(`JSON_ERROR: ${secondErr.message}`);
+        }
+    }
+}
+
+// Fast Gemini caller with JSON repair + automatic retry/fallback on malformed JSON or 503s
+async function generateParsedJson(ai, prompt, maxOutputTokens = 4096, expectArray = false) {
     const candidateModels = [
         'gemini-3.5-flash-lite',
         'gemini-3.1-flash-lite',
@@ -81,10 +118,10 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 4096) {
             try {
                 const config = {
                     responseMimeType: "application/json",
-                    maxOutputTokens
+                    maxOutputTokens,
+                    temperature: 0.35
                 };
 
-                // Minimize internal thinking latency on Gemini 3 models
                 if (attempt === 1 && modelName.includes('gemini-3')) {
                     config.thinkingConfig = {
                         thinkingLevel: isLite ? 'MINIMAL' : 'LOW'
@@ -96,10 +133,26 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 4096) {
                     35000,
                     modelName
                 );
-                return response;
+
+                // Parse inside the loop so broken JSON triggers an automatic fallback
+                return safeParseGeminiJson(response, expectArray);
             } catch (err) {
                 lastError = err;
                 const msg = err && err.message ? err.message : JSON.stringify(err);
+
+                const matches = msg.match(/models\/([a-zA-Z0-9._-]+)/g);
+                if (matches && matches.length > 1) {
+                    const suggestedModel = matches[1].replace('models/', '');
+                    if (!candidateModels.includes(suggestedModel)) {
+                        candidateModels.push(suggestedModel);
+                    }
+                }
+
+                // If model emitted broken/truncated JSON, immediately try next model
+                if (msg.startsWith('JSON_ERROR:')) {
+                    console.warn(`${modelName} returned malformed JSON (${msg}). Trying fallback...`);
+                    break;
+                }
 
                 // If a model rejects thinkingConfig, retry immediately without it
                 if (attempt === 1 && (msg.includes('thinking') || msg.includes('INVALID_ARGUMENT') || msg.includes('400'))) {
@@ -107,7 +160,7 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 4096) {
                 }
 
                 if (msg.includes('TIMEOUT')) {
-                    console.warn(`${modelName} timed out. Switching to next fast model...`);
+                    console.warn(`${modelName} timed out. Switching to next model...`);
                     break;
                 }
 
@@ -146,13 +199,6 @@ async function generateJsonWithGemini(ai, prompt, maxOutputTokens = 4096) {
     throw lastError;
 }
 
-function parseCleanJson(response) {
-    let rawText = typeof response.text === 'function' ? response.text() : response.text;
-    if (!rawText) throw new Error('Gemini returned an empty response. Please try again.');
-    rawText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-    return JSON.parse(rawText);
-}
-
 // ROUTE 0: Verify Stealth Invite Code
 app.post('/api/verify-access', (req, res) => {
     const code = (req.body?.password || '').trim();
@@ -169,8 +215,8 @@ app.post('/api/recommend-places', checkPassword, async (req, res) => {
         if (hit) return res.json({ places: hit });
 
         const ai = getGeminiClient();
-        const prompt = `List the top 10 best cities or iconic regions to visit in ${country}. Return ONLY a JSON array of strings.`;
-        const places = parseCleanJson(await generateJsonWithGemini(ai, prompt, 1024));
+        const prompt = `List the top 10 best cities or iconic regions to visit in ${country}. Return ONLY a strict JSON array of double-quoted strings with no trailing commas.`;
+        const places = await generateParsedJson(ai, prompt, 1024, true);
         setCached(cacheKey, places);
         res.json({ places });
     } catch (error) {
@@ -188,7 +234,7 @@ app.post('/api/country-dossier', checkPassword, async (req, res) => {
 
         const ai = getGeminiClient();
         const prompt = `Act as a sharp travel scout. Concise dossier for ${country} in ${currentMonth || 'this month'} for a traveler from ${homeCity || 'abroad'}. Live weather: ${liveWeather || 'N/A'}.
-Return ONLY JSON:
+Return ONLY valid strict JSON (double-quoted keys, no trailing commas):
 {
   "country": "${country}",
   "goNowVerdict": "GO NOW | GOOD WITH CAVEATS | BETTER TO WAIT",
@@ -199,7 +245,7 @@ Return ONLY JSON:
   "touristTrapToAvoid": "One overpriced trap to dodge",
   "topHighlights": ["Spot 1", "Spot 2", "Spot 3"]
 }`;
-        const data = parseCleanJson(await generateJsonWithGemini(ai, prompt, 1200));
+        const data = await generateParsedJson(ai, prompt, 1400);
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
@@ -215,7 +261,7 @@ app.post('/api/country-battle', checkPassword, async (req, res) => {
         if (!countryA || !countryB) return res.status(400).json({ error: 'Pick two countries.' });
 
         const prompt = `Compare ${countryA} vs ${countryB} for a ${days || 7}-day trip in ${currentMonth || 'this month'} from ${homeCity || 'abroad'} (Hotel: ${hotelBudget || 'Comfort'}, Spend: ${dailySpendingBudget || 'Moderate'}). Keep every field crisp (1 sentence).
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 {
   "headline": "String",
   "verdictWinner": "${countryA} or ${countryB}",
@@ -230,7 +276,7 @@ Return ONLY JSON:
     { "category": "Weather Right Now", "scoreA": 8, "scoreB": 7 }
   ]
 }`;
-        res.json(parseCleanJson(await generateJsonWithGemini(ai, prompt, 2400)));
+        res.json(await generateParsedJson(ai, prompt, 2800));
     } catch (error) {
         res.status(500).json({ error: "Failed to run Country Battle", details: error.message });
     }
@@ -245,7 +291,7 @@ app.post('/api/hotel-audit', checkPassword, async (req, res) => {
 
         const prompt = `Ruthless hotel/Airbnb inspector. Audit this listing (${city || 'N/A'}, ${price || 'N/A'}):
 """${listingText}"""
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 {
   "truthScore": 45,
   "verdict": "SOLID BOOKING | BOOK WITH CAUTION | WALK AWAY",
@@ -257,7 +303,7 @@ Return ONLY JSON:
   "greenFlags": ["String"],
   "hostQuestions": ["String"]
 }`;
-        res.json(parseCleanJson(await generateJsonWithGemini(ai, prompt, 1800)));
+        res.json(await generateParsedJson(ai, prompt, 2200));
     } catch (error) {
         res.status(500).json({ error: "Failed to audit hotel listing", details: error.message });
     }
@@ -275,7 +321,7 @@ app.post('/api/safety-vault', checkPassword, async (req, res) => {
 
         const ai = getGeminiClient();
         const prompt = `Street-smart safety briefing for ${country} + native Show-To-Local card for: "${need || 'Strict Vegetarian'}".
-Return ONLY JSON with 4 scams and 3 strict laws:
+Return ONLY valid strict JSON with 4 scams and 3 strict laws:
 {
   "emergencyNumbers": { "police": "String", "ambulance": "String", "touristPolice": "String" },
   "plugAndTipQuickNote": "1 short line",
@@ -283,7 +329,7 @@ Return ONLY JSON with 4 scams and 3 strict laws:
   "scams": [{ "name": "String", "riskLevel": "High Risk | Medium Risk", "howItWorks": "1 sentence", "counterMove": "1 sentence" }],
   "strictLaws": [{ "rule": "String", "penalty": "1 short sentence" }]
 }`;
-        const data = parseCleanJson(await generateJsonWithGemini(ai, prompt, 2000));
+        const data = await generateParsedJson(ai, prompt, 2400);
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
@@ -301,9 +347,9 @@ app.post('/api/swap-stop', checkPassword, async (req, res) => {
         const avoidList = Array.isArray(existingTitles) ? existingTitles.slice(0, 20).join(', ') : currentStop.title;
         const prompt = `Replace ONE stop in ${destinationCountry} (${dayTitle || ''}): "${currentStop.title}" (${currentStop.time || ''}).
 User wants: "${preference || 'Fresh hidden gem'}". Do NOT repeat: ${avoidList}.
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 { "time": "${currentStop.time || ''}", "category": "${currentStop.category || 'Activity'}", "title": "Real place", "location": "Area", "transport": "Transit + time", "costNote": "Est cost", "description": "1-2 crisp sentences" }`;
-        res.json({ stop: parseCleanJson(await generateJsonWithGemini(ai, prompt, 800)) });
+        res.json({ stop: await generateParsedJson(ai, prompt, 1000) });
     } catch (error) {
         res.status(500).json({ error: "Failed to swap stop", details: error.message });
     }
@@ -317,9 +363,9 @@ app.post('/api/vibe-roulette', checkPassword, async (req, res) => {
         const excl = Array.isArray(excludeCountries) && excludeCountries.length ? `Exclude: ${excludeCountries.join(', ')}.` : '';
 
         const prompt = `Pick ONE exciting country matching vibe "${vibe}" in ${currentMonth || 'this month'} for traveler from ${homeCity || 'India'}. ${excl} Include exact decimal lat/lng for hubCity.
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 { "country": "String", "hubCity": "String", "lat": 35.6762, "lng": 139.6503, "tagline": "String", "whyItFits": "2 sentences", "signatureMoment": "1 sentence", "budgetFeel": "1 short line", "bestSpots": ["S1","S2","S3"] }`;
-        res.json(parseCleanJson(await generateJsonWithGemini(ai, prompt, 900)));
+        res.json(await generateParsedJson(ai, prompt, 1100));
     } catch (error) {
         res.status(500).json({ error: "Vibe Roulette failed", details: error.message });
     }
@@ -339,7 +385,7 @@ app.post('/api/cultural-deck', checkPassword, async (req, res) => {
 
         const ai = getGeminiClient();
         const prompt = `Create a 10-card swipe deck for ${country}: 5 TABOO cards + 5 SLANG cards interleaved. Keep explanations 1-2 short sentences.
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 {
   "country": "${country}",
   "langCode": "BCP-47 e.g. ja-JP",
@@ -347,7 +393,7 @@ Return ONLY JSON:
     { "type": "TABOO | SLANG", "tag": "String", "title": "String", "nativeScript": "Native phrase or empty", "pronunciation": "Phonetic or empty", "explanation": "String", "proTip": "Short tip" }
   ]
 }`;
-        const data = parseCleanJson(await generateJsonWithGemini(ai, prompt, 2200));
+        const data = await generateParsedJson(ai, prompt, 2600);
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
@@ -367,13 +413,13 @@ app.post('/api/time-machine', checkPassword, async (req, res) => {
 
         const ai = getGeminiClient();
         const prompt = `Compare visiting ${country} in ${monthA} vs ${monthB} (traveler from ${homeCity || 'abroad'}). Be concise.
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 {
   "country": "${country}", "headline": "String", "winnerMonth": "${monthA} or ${monthB}", "winnerReason": "2 sentences",
   "monthA": { "name": "${monthA}", "vibeLabel": "String", "weather": "String", "daylight": "String", "crowdScore": 7, "priceSurgeScore": 8, "festivals": ["F1","F2"], "bestFor": "String", "biggestCatch": "String" },
   "monthB": { "name": "${monthB}", "vibeLabel": "String", "weather": "String", "daylight": "String", "crowdScore": 5, "priceSurgeScore": 6, "festivals": ["F1","F2"], "bestFor": "String", "biggestCatch": "String" }
 }`;
-        const data = parseCleanJson(await generateJsonWithGemini(ai, prompt, 1800));
+        const data = await generateParsedJson(ai, prompt, 2200);
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
@@ -393,14 +439,14 @@ app.post('/api/pilgrimage-route', checkPassword, async (req, res) => {
 
         const ai = getGeminiClient();
         const prompt = `Build a 6-stop real-world Pilgrimage Route for: "${theme}" with accurate decimal lat/lng coordinates. Keep every field punchy (1 sentence).
-Return ONLY JSON:
+Return ONLY valid strict JSON:
 {
   "missionTitle": "String", "themeName": "${theme}", "country": "Primary country", "daysSuggested": 5, "heroQuote": "1 short line", "overview": "2 sentences",
   "stops": [
     { "order": 1, "dayLabel": "Day 1", "realLocation": "Real place", "city": "City", "lat": 35.6852, "lng": 139.7235, "sceneConnection": "1 sentence", "photoTip": "1 sentence", "transitTip": "Short transit", "costNote": "Free or ticket" }
   ]
 }`;
-        const data = parseCleanJson(await generateJsonWithGemini(ai, prompt, 2400));
+        const data = await generateParsedJson(ai, prompt, 2800);
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
@@ -408,7 +454,7 @@ Return ONLY JSON:
     }
 });
 
-// ROUTE 11: Complete Master Trip Planner (Optimized for 5–12s generation)
+// ROUTE 11: Complete Master Trip Planner
 app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {
         const ai = getGeminiClient();
@@ -435,7 +481,7 @@ Route: ${homeCity} -> ${departureCity} -> ${targetCountry}. ${placesText} ${excl
 Budget: Hotel=${hotelBudget || 'Comfort'}, Daily=${dailySpendingBudget || 'Moderate'}, Transit=${transitStyle || 'Smart Mix'}. Note: ${customBudgetNote || 'None'}.
 Keep every description to 1 crisp sentence. Exactly ${stopsPerDay} stops per day for all ${numDays} days.
 
-Return ONLY valid JSON:
+Return ONLY valid strict JSON (double-quoted keys, no trailing commas):
 {
   "summary": {
     "tripTitle": "String",
@@ -455,8 +501,8 @@ Return ONLY valid JSON:
   ]
 }`;
 
-        const maxTokens = Math.min(2000 + numDays * 700, 8192);
-        res.json(parseCleanJson(await generateJsonWithGemini(ai, prompt, maxTokens)));
+        const maxTokens = Math.min(3000 + numDays * 850, 8192);
+        res.json(await generateParsedJson(ai, prompt, maxTokens));
     } catch (error) {
         console.error("AI Generation Error:", error);
         res.status(500).json({ error: "Failed to generate itinerary", details: error.message || "Unknown server error" });

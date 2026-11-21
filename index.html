@@ -52,7 +52,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- VIEW 1: HOME PAGE (LIVE TICKER, FLIGHT ARCS, PORTALS & BLUEPRINTS)    -->
+    <!-- VIEW 1: HOME PAGE (TICKER, FLIGHT ARCS, PORTALS, BLUEPRINTS & LAB)    -->
     <!-- ===================================================================== -->
     <div id="home-page" class="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-5 pb-32">
 
@@ -85,6 +85,9 @@
             <div class="flex items-center gap-2.5">
                 <button id="header-resume-btn" onclick="openItineraryPage()" class="hidden items-center gap-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/50 rounded-full px-4 py-2 text-xs font-semibold text-blue-200 transition-all">
                     <span>🗺️ Active Plan →</span>
+                </button>
+                <button onclick="document.getElementById('discovery-lab-section').scrollIntoView({behavior:'smooth'});" class="hidden xl:flex items-center gap-2 bg-purple-500/15 hover:bg-purple-500/30 border border-purple-400/40 rounded-full px-4 py-2 text-xs font-semibold text-purple-200 transition-all">
+                    <span>✨ Discovery Lab</span>
                 </button>
                 <button onclick="toggleBattleMode(true); document.getElementById('portals-section').scrollIntoView({behavior:'smooth'});" class="hidden md:flex items-center gap-2 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-400/40 rounded-full px-4 py-2 text-xs font-semibold text-amber-200 transition-all">
                     <span>⚔️ Country Battle</span>
@@ -185,7 +188,7 @@
                     <svg class="w-4 h-4 text-blue-400/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 3v18M8 7v10M16 7v10M4 11v2M20 11v2" stroke-linecap="round"/>
                     </svg>
-                    <span>Explore Instant Blueprints below, spin the 3D Earth, or architect a custom trip</span>
+                    <span>Explore Instant Blueprints, spin Vibe Roulette on 3D Earth, or launch Discovery Lab below</span>
                 </div>
             </div>
         </section>
@@ -318,7 +321,6 @@
         <!-- MAIN DESKTOP DASHBOARD: SAVED PLANS + LIVE PORTALS + BLUEPRINTS   -->
         <!-- ================================================================= -->
         <section id="portals-section" class="border-t border-white/10 pt-8">
-            <!-- SAVED PLANS LIST WITH DELETE BAR -->
             <div id="saved-plan-banner" class="hidden mb-8"></div>
 
             <!-- LIVE PORTALS HEADER -->
@@ -371,8 +373,8 @@
             <!-- 6-COLUMN LIVE WORLD PORTAL CARDS -->
             <div id="live-portals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-10"></div>
 
-            <!-- INSTANT PRE-PLANNED FLAGSHIP BLUEPRINTS (ZERO WAIT, ZERO API COST) -->
-            <div class="border-t border-white/10 pt-8">
+            <!-- INSTANT PRE-PLANNED FLAGSHIP BLUEPRINTS -->
+            <div class="border-t border-white/10 pt-8 mb-12">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <div>
                         <div class="flex items-center gap-2.5">
@@ -384,22 +386,179 @@
                 </div>
                 <div id="preplanned-blueprints-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"></div>
             </div>
+
+            <!-- =============================================================== -->
+            <!-- DISCOVERY LAB: TRIP TIME-MACHINE + MOVIE/ANIME/HERITAGE MODE    -->
+            <!-- =============================================================== -->
+            <div id="discovery-lab-section" class="border-t border-white/10 pt-8">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-[10px] font-bold uppercase tracking-widest">✨ Discovery Lab</span>
+                            <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">Time-Machine &amp; Pilgrimage Routes</h2>
+                        </div>
+                        <p class="text-xs text-white/50 mt-1">Compare two travel months head-to-head before booking, or generate a real-world film, anime, K-drama, or heritage pilgrimage.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-[#0d111b] border border-white/15 rounded-2xl p-1.5">
+                        <button id="disc-tab-timemachine" onclick="switchDiscoveryTab('timemachine')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg">
+                            ⏳ Trip Time-Machine
+                        </button>
+                        <button id="disc-tab-pilgrimage" onclick="switchDiscoveryTab('pilgrimage')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-white/60 hover:text-white">
+                            🎬 Movie, Anime &amp; Heritage
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DISCOVERY TAB 1: TRIP TIME-MACHINE (MONTH A VS MONTH B) -->
+                <div id="disc-panel-timemachine" class="space-y-5">
+                    <div class="bg-[#0d111b]/95 border border-cyan-500/30 rounded-3xl p-6 shadow-xl">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-[11px] uppercase tracking-wider text-white/60 mb-1.5">Destination Country</label>
+                                <select id="tm-country-select" class="w-full bg-[#151b2b] border border-cyan-400/35 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none cursor-pointer"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] uppercase tracking-wider text-blue-300 font-semibold mb-1.5">Month Option A</label>
+                                <select id="tm-month-a" class="w-full bg-[#151b2b] border border-blue-400/35 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none cursor-pointer"></select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] uppercase tracking-wider text-amber-300 font-semibold mb-1.5">Month Option B</label>
+                                <select id="tm-month-b" class="w-full bg-[#151b2b] border border-amber-400/35 rounded-xl px-4 py-3 text-sm font-semibold text-white focus:outline-none cursor-pointer"></select>
+                            </div>
+                            <div class="flex items-end">
+                                <button id="tm-run-btn" onclick="runTimeMachine()" class="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all">
+                                    ⏳ Compare Months →
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-white/10">
+                            <span class="text-[11px] text-white/45 mr-1">Popular Clashes:</span>
+                            <button onclick="quickTimeMachine('Japan', 'April', 'November')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs text-white/80 transition-all">🇯🇵 Japan: Apr vs Nov</button>
+                            <button onclick="quickTimeMachine('Switzerland', 'July', 'December')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs text-white/80 transition-all">🇨🇭 Swiss: Jul vs Dec</button>
+                            <button onclick="quickTimeMachine('South Korea', 'April', 'October')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs text-white/80 transition-all">🇰🇷 Korea: Apr vs Oct</button>
+                            <button onclick="quickTimeMachine('Norway', 'February', 'July')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs text-white/80 transition-all">🇳🇴 Norway: Feb vs Jul</button>
+                            <button onclick="quickTimeMachine('Greece', 'May', 'August')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs text-white/80 transition-all">🇬🇷 Greece: May vs Aug</button>
+                        </div>
+                    </div>
+                    <div id="tm-result"></div>
+                </div>
+
+                <!-- DISCOVERY TAB 2: MOVIE, ANIME & HERITAGE PILGRIMAGE MODE -->
+                <div id="disc-panel-pilgrimage" class="hidden space-y-5">
+                    <div class="bg-[#0d111b]/95 border border-purple-500/30 rounded-3xl p-6 shadow-xl">
+                        <div class="flex flex-col md:flex-row gap-3 mb-4">
+                            <input
+                                type="text"
+                                id="pilgrimage-theme-input"
+                                placeholder="Type any movie, anime, K-drama, or heritage trail (e.g. 'Your Name Tokyo', 'Lord Krishna Braj & Dwarka Trail', 'Crash Landing on You Switzerland')..."
+                                onkeydown="if(event.key === 'Enter') runPilgrimageRoute()"
+                                class="flex-1 bg-[#151b2b] border border-purple-400/35 focus:border-purple-400 rounded-xl px-4 py-3.5 text-sm text-white placeholder-white/35 focus:outline-none"
+                            >
+                            <button id="pilgrimage-run-btn" onclick="runPilgrimageRoute()" class="px-7 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all flex-shrink-0">
+                                🎬 Build Pilgrimage →
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                            <span class="text-[11px] text-white/45 mr-1">Instant Themes:</span>
+                            <button onclick="quickPilgrimage('Your Name (Kimi no Na wa) & Makoto Shinkai Anime Trail in Japan')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">☄️ Your Name (Japan)</button>
+                            <button onclick="quickPilgrimage('Lord Krishna Sacred Heritage Trail — Mathura, Vrindavan, Govardhan & Dwarka, India')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🦚 Krishna Heritage Trail</button>
+                            <button onclick="quickPilgrimage('Bollywood DDLJ & K-Drama Crash Landing on You Alpine Trail in Switzerland')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🏔️ DDLJ &amp; K-Drama Swiss</button>
+                            <button onclick="quickPilgrimage('Studio Ghibli Real-Life Inspiration Spots Across Japan')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🌿 Studio Ghibli Japan</button>
+                            <button onclick="quickPilgrimage('Iconic K-Drama Filming Locations in Seoul & Jeju, South Korea')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🎬 K-Drama Korea</button>
+                            <button onclick="quickPilgrimage('Harry Potter Magical Filming Trail across London & Scotland, UK')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">⚡ Harry Potter UK</button>
+                        </div>
+                    </div>
+                    <div id="pilgrimage-result"></div>
+                </div>
+            </div>
         </section>
     </div>
 
     <!-- ===================================================================== -->
-    <!-- VIEW 3: INTERACTIVE 3D ROTATABLE EARTH + COUNTRY COMMAND LAUNCHER     -->
+    <!-- VIEW 3: INTERACTIVE 3D EARTH + FLIGHT-ARC REPLAY + VIBE ROULETTE      -->
     <!-- ===================================================================== -->
     <div id="globe-page" class="hidden fixed inset-0 z-40 bg-[#02040a] overflow-hidden">
-        <div class="fixed top-6 left-6 right-6 z-50 flex items-center justify-between pointer-events-none">
-            <button onclick="closeGlobeView()" class="pointer-events-auto flex items-center gap-2 bg-[#0d121d]/85 hover:bg-blue-600 backdrop-blur-xl border border-white/15 hover:border-blue-400 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>Back to Home</span>
-            </button>
-            <div class="bg-[#0d121d]/80 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 text-xs text-white/70 hidden sm:flex items-center gap-2 shadow-xl">
-                <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                <span>Hover to inspect • Click any country to launch command bar</span>
+        <!-- TOP HUD BAR -->
+        <div class="fixed top-5 left-5 right-5 z-50 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
+            <div class="flex items-center gap-2.5 pointer-events-auto">
+                <button onclick="closeGlobeView()" class="flex items-center gap-2 bg-[#0d121d]/85 hover:bg-blue-600 backdrop-blur-xl border border-white/15 hover:border-blue-400 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-2xl transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    <span>Back</span>
+                </button>
+                <button id="btn-globe-arcs" onclick="toggleFlightArcPanel()" class="flex items-center gap-2 bg-[#0d121d]/85 hover:bg-cyan-600/80 backdrop-blur-xl border border-cyan-400/45 text-cyan-200 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl transition-all">
+                    <span>✈️</span><span>Flight-Arc Replay</span>
+                </button>
+                <button id="btn-globe-roulette" onclick="toggleVibeRoulettePanel()" class="flex items-center gap-2 bg-[#0d121d]/85 hover:bg-purple-600/85 backdrop-blur-xl border border-purple-400/50 text-purple-200 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl transition-all">
+                    <span>🎲</span><span>Vibe Roulette</span>
+                </button>
             </div>
+
+            <div class="bg-[#0d121d]/80 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 text-xs text-white/70 hidden lg:flex items-center gap-2 shadow-xl">
+                <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                <span>Hover any country • Click to launch • Spin Vibe Roulette or replay flight arcs</span>
+            </div>
+        </div>
+
+        <!-- 3D FLIGHT-ARC REPLAY HUD PANEL (TOP-LEFT) -->
+        <div id="globe-arcs-panel" class="hidden fixed top-20 left-5 z-50 w-[90vw] max-w-sm bg-[#0b101d]/95 backdrop-blur-2xl border border-cyan-400/45 rounded-3xl p-5 shadow-[0_20px_60px_rgba(0,0,0,0.95)] panel-animate">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <span class="text-[10px] uppercase tracking-widest text-cyan-300 font-bold">Orbital Flight Tracker</span>
+                    <h3 class="text-base font-extrabold text-white">3D Flight-Arc Replay</h3>
+                </div>
+                <button onclick="toggleFlightArcPanel(false)" class="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 text-xs text-white/60 hover:text-white">✕</button>
+            </div>
+
+            <label class="block text-[10px] uppercase tracking-wider text-white/55 mb-1.5">Select Expedition Route</label>
+            <select id="globe-route-select" onchange="previewSelectedGlobeRoute()" class="w-full bg-[#141c2e] border border-cyan-400/35 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-white focus:outline-none cursor-pointer mb-3.5"></select>
+
+            <div class="flex items-center gap-2 mb-3">
+                <button id="globe-play-btn" onclick="playGlobeFlightReplay()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg transition-all">
+                    ▶ Play Route
+                </button>
+                <button onclick="stopGlobeFlightReplay()" class="py-2.5 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 text-xs font-bold transition-all">⏹</button>
+                <button onclick="clearGlobeArcs()" title="Clear arcs" class="py-2.5 px-3.5 rounded-xl bg-rose-500/15 hover:bg-rose-600/60 border border-rose-400/35 text-rose-200 text-xs font-bold transition-all">Clear</button>
+            </div>
+
+            <div id="globe-replay-status" class="bg-black/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-cyan-200 font-mono">
+                Pick a route above and hit Play to fly stop-by-stop.
+            </div>
+        </div>
+
+        <!-- 3D VIBE ROULETTE HUD PANEL (TOP-RIGHT) -->
+        <div id="globe-roulette-panel" class="hidden fixed top-20 right-5 z-50 w-[90vw] max-w-md bg-[#0e0c1d]/95 backdrop-blur-2xl border border-purple-400/50 rounded-3xl p-5 shadow-[0_20px_60px_rgba(0,0,0,0.95)] panel-animate max-h-[75vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <span class="text-[10px] uppercase tracking-widest text-purple-300 font-bold">Spin-The-Globe AI Scout</span>
+                    <h3 class="text-base font-extrabold text-white">🎲 Vibe Roulette</h3>
+                </div>
+                <button onclick="toggleVibeRoulettePanel(false)" class="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 text-xs text-white/60 hover:text-white">✕</button>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 mb-3">
+                <button onclick="selectRouletteVibe('Cyberpunk neon alleys, midnight ramen & rainy futuristic cityscapes')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/30 border border-white/10 text-[11px] text-white/85 transition-all">🌃 Cyberpunk Neon</button>
+                <button onclick="selectRouletteVibe('Quiet scenic trains cutting through snow peaks and alpine lakes')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/30 border border-white/10 text-[11px] text-white/85 transition-all">🚂 Alpine Trains</button>
+                <button onclick="selectRouletteVibe('Incredible street food, night markets & 4-star stays under ₹60,000')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/30 border border-white/10 text-[11px] text-white/85 transition-all">🍜 Under ₹60k Eats</button>
+                <button onclick="selectRouletteVibe('Stunning underrated country nobody on Instagram knows yet')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/30 border border-white/10 text-[11px] text-white/85 transition-all">💎 Underrated Gem</button>
+                <button onclick="selectRouletteVibe('Ancient temples, dramatic mountains & spiritual sunrise silence')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/30 border border-white/10 text-[11px] text-white/85 transition-all">🏛️ Ancient &amp; Sacred</button>
+                <button onclick="selectRouletteVibe('Turquoise cliff beaches, island sunsets & slow coastal cafes')" class="px-2.5 py-1 rounded-full bg-white/5 hover:bg-purple-500/30 border border-white/10 text-[11px] text-white/85 transition-all">🏝️ Coastal Escape</button>
+            </div>
+
+            <div class="flex gap-2 mb-4">
+                <input
+                    type="text"
+                    id="roulette-vibe-input"
+                    placeholder="Or type any mood/vibe..."
+                    onkeydown="if(event.key === 'Enter') spinVibeRoulette()"
+                    class="flex-1 bg-[#080714] border border-purple-400/35 focus:border-purple-400 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none"
+                >
+                <button id="roulette-spin-btn" onclick="spinVibeRoulette()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-extrabold uppercase tracking-wider shadow-lg flex-shrink-0 transition-all">
+                    🎲 Spin!
+                </button>
+            </div>
+
+            <div id="roulette-result-card"></div>
         </div>
 
         <div id="globe-loader" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#02040a] pointer-events-none">
@@ -426,7 +585,7 @@
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <button id="globe-btn-plan" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg">✈️ Plan AI Trip</button>
                     <button id="globe-btn-blueprint" class="hidden py-2.5 px-3 rounded-xl bg-indigo-500/25 hover:bg-indigo-500/45 border border-indigo-400/50 text-indigo-200 text-xs font-bold transition-all">⚡ Open Blueprint</button>
-                    <button id="globe-btn-shield" class="py-2.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/45 text-rose-200 text-xs font-bold transition-all">🛡️ Scams & Laws</button>
+                    <button id="globe-btn-shield" class="py-2.5 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/35 border border-rose-400/45 text-rose-200 text-xs font-bold transition-all">🛡️ Scams &amp; Laws</button>
                     <button id="globe-btn-currency" class="py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-400/45 text-emerald-200 text-xs font-bold transition-all">💱 Currency Vault</button>
                 </div>
             </div>
@@ -449,7 +608,7 @@
                             <h1 class="text-xl md:text-2xl font-extrabold tracking-tight text-white">Quantum Currency Vault</h1>
                             <span id="fx-live-badge" class="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/35 text-emerald-300 font-bold">● Live FX</span>
                         </div>
-                        <p class="text-xs text-white/50">Real-time exchange rates, hidden forex fee detector & live travel buying power</p>
+                        <p class="text-xs text-white/50">Real-time exchange rates, hidden forex fee detector &amp; live travel buying power</p>
                     </div>
                 </div>
 
@@ -549,7 +708,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- VIEW 5: TRAVEL SHIELD — HOTEL BS DETECTOR & SCAM/LAW/CRISIS VAULT     -->
+    <!-- VIEW 5: TRAVEL SHIELD — HOTEL BS + SCAM VAULT + CULTURAL SWIPE DECK   -->
     <!-- ===================================================================== -->
     <div id="shield-page" class="hidden min-h-screen shield-vault-bg text-white panel-animate pb-32">
         <div class="max-w-6xl mx-auto px-6 lg:px-10 pt-7">
@@ -564,13 +723,15 @@
                             <h1 class="text-xl md:text-2xl font-extrabold tracking-tight text-white">Travel Shield Command</h1>
                             <span class="text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-bold">● Protection AI</span>
                         </div>
-                        <p class="text-xs text-white/50">Expose shady hotel listings before booking + neutralize street scams, strict laws & emergencies</p>
+                        <p class="text-xs text-white/50">Hotel BS Detector, Street Scams &amp; Crisis Cards, plus Swipeable Cultural Taboos &amp; Slang</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 bg-[#0d111b] border border-white/15 rounded-2xl p-1.5">
-                    <button id="shield-tab-hotel" onclick="switchShieldTab('hotel')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-lg">🔍 Hotel & Airbnb BS Detector</button>
-                    <button id="shield-tab-scam" onclick="switchShieldTab('scam')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all text-white/60 hover:text-white">🛡️ Scam, Law & Crisis Vault</button>
+                <!-- 3-TAB SERVICE SWITCHER -->
+                <div class="flex flex-wrap items-center gap-1.5 bg-[#0d111b] border border-white/15 rounded-2xl p-1.5">
+                    <button id="shield-tab-hotel" onclick="switchShieldTab('hotel')" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow-lg">🔍 Hotel BS</button>
+                    <button id="shield-tab-scam" onclick="switchShieldTab('scam')" class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all text-white/60 hover:text-white">🛡️ Scams &amp; Laws</button>
+                    <button id="shield-tab-culture" onclick="switchShieldTab('culture')" class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all text-white/60 hover:text-white">🃏 Taboos &amp; Slang Deck</button>
                 </div>
             </div>
 
@@ -613,7 +774,7 @@
                 <div class="bg-[#0d111b]/95 backdrop-blur-2xl border border-amber-500/30 rounded-3xl p-6 md:p-8 shadow-2xl">
                     <div class="mb-5">
                         <span class="text-[11px] uppercase tracking-widest text-amber-400 font-bold">On-The-Ground Tactical Briefing</span>
-                        <h2 class="text-xl font-bold text-white mt-0.5">Street Scams, Strict Local Laws & Spoken Crisis Card</h2>
+                        <h2 class="text-xl font-bold text-white mt-0.5">Street Scams, Strict Local Laws &amp; Spoken Crisis Card</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
@@ -625,11 +786,11 @@
                             <label class="block text-[11px] uppercase tracking-wider text-white/60 mb-1.5">Spoken Native Crisis / Dietary Card</label>
                             <select id="safety-need-select" class="w-full bg-[#151a27] border border-white/15 rounded-xl px-4 py-3 text-sm text-white focus:outline-none cursor-pointer">
                                 <option value="Strict Vegetarian (No meat, no fish, no seafood stock)">🥗 Strict Vegetarian</option>
-                                <option value="Hare Krishna Bhakt / Sattvic Vaishnava Diet (Strictly NO meat, NO fish/seafood broth, NO eggs, NO alcohol or cooking wine/mirin, and NO onion or garlic)">🦚 Hare Krishna Bhakt (No Meat, Eggs, Onion, Garlic & Alcohol)</option>
-                                <option value="Severe Nut & Peanut Allergy (Medical emergency risk)">🥜 Severe Nut / Peanut Allergy</option>
+                                <option value="Hare Krishna Bhakt / Sattvic Vaishnava Diet (Strictly NO meat, NO fish/seafood broth, NO eggs, NO alcohol or cooking wine/mirin, and NO onion or garlic)">🦚 Hare Krishna Bhakt (No Meat, Eggs, Onion, Garlic &amp; Alcohol)</option>
+                                <option value="Severe Nut &amp; Peanut Allergy (Medical emergency risk)">🥜 Severe Nut / Peanut Allergy</option>
                                 <option value="Halal Only (No pork, no alcohol in cooking)">🍽️ Halal Only (No Pork/Alcohol)</option>
                                 <option value="No Beef / No Pork">🚫 No Beef / No Pork</option>
-                                <option value="Medical Emergency — Need Hospital & English Help">🏥 Medical Emergency Card</option>
+                                <option value="Medical Emergency — Need Hospital &amp; English Help">🏥 Medical Emergency Card</option>
                                 <option value="Lost Passport — Need Embassy / Police Direction">🛂 Lost Passport / Police Help</option>
                             </select>
                         </div>
@@ -651,6 +812,38 @@
                 </div>
                 <div id="safety-vault-result"></div>
             </div>
+
+            <!-- TAB C: SWIPEABLE CULTURAL TABOO & SURVIVAL SLANG DECK -->
+            <div id="shield-panel-culture" class="hidden space-y-6">
+                <div class="bg-[#0d111b]/95 backdrop-blur-2xl border border-purple-500/35 rounded-3xl p-6 md:p-8 shadow-2xl">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                        <div>
+                            <span class="text-[11px] uppercase tracking-widest text-purple-300 font-bold">10-Card Interactive Swipe Deck</span>
+                            <h2 class="text-xl font-bold text-white mt-0.5">Unspoken Local Taboos &amp; Street Slang Audio</h2>
+                        </div>
+                        <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                            <select id="culture-country-select" class="flex-1 sm:w-52 bg-[#151a27] border border-purple-400/40 rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none cursor-pointer"></select>
+                            <button id="culture-load-btn" onclick="runCulturalDeck()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg transition-all flex-shrink-0">
+                                🃏 Deal 10 Cards
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-white/10">
+                        <span class="text-[11px] text-white/45 mr-1">Quick Deal:</span>
+                        <button onclick="quickLoadCulturalDeck('Japan')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇯🇵 Japan</button>
+                        <button onclick="quickLoadCulturalDeck('South Korea')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇰🇷 South Korea</button>
+                        <button onclick="quickLoadCulturalDeck('Thailand')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇹🇭 Thailand</button>
+                        <button onclick="quickLoadCulturalDeck('Italy')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇮🇹 Italy</button>
+                        <button onclick="quickLoadCulturalDeck('France')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇫🇷 France</button>
+                        <button onclick="quickLoadCulturalDeck('United Arab Emirates')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇦🇪 UAE</button>
+                        <button onclick="quickLoadCulturalDeck('Turkey')" class="px-3 py-1 rounded-full bg-white/5 hover:bg-purple-500/25 border border-white/10 text-xs text-white/80 transition-all">🇹🇷 Turkey</button>
+                    </div>
+                </div>
+
+                <!-- Interactive Swipe Stage -->
+                <div id="culture-deck-stage"></div>
+            </div>
         </div>
     </div>
 
@@ -662,13 +855,13 @@
             <button id="dock-btn-home" onclick="navigateDock('home')" title="Home" class="w-11 h-11 rounded-full bg-gradient-to-b from-white/20 to-white/5 border border-white/25 flex items-center justify-center text-white shadow-inner transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
             </button>
-            <button id="dock-btn-globe" onclick="navigateDock('globe')" title="3D Interactive Earth Launcher" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
+            <button id="dock-btn-globe" onclick="navigateDock('globe')" title="3D Earth • Flight Arcs & Vibe Roulette" class="w-11 h-11 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
             </button>
             <button id="dock-btn-currency" onclick="navigateDock('currency')" title="Quantum Currency Vault" class="w-11 h-11 rounded-full flex items-center justify-center text-emerald-300/85 hover:text-emerald-200 hover:bg-emerald-500/15 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </button>
-            <button id="dock-btn-shield" onclick="navigateDock('shield')" title="Travel Shield (Hotel BS Detector & Scam Vault)" class="w-11 h-11 rounded-full flex items-center justify-center text-rose-300/85 hover:text-rose-200 hover:bg-rose-500/15 transition-all">
+            <button id="dock-btn-shield" onclick="navigateDock('shield')" title="Travel Shield (Hotel BS, Scams & Cultural Deck)" class="w-11 h-11 rounded-full flex items-center justify-center text-rose-300/85 hover:text-rose-200 hover:bg-rose-500/15 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7.5 3v5.5c0 4.6-3.1 8.6-7.5 9.8-4.4-1.2-7.5-5.2-7.5-9.8V6L12 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12l1.8 1.8L15 10"/></svg>
             </button>
         </div>
@@ -690,12 +883,15 @@
                         <span id="nav-trip-route" class="truncate font-medium text-white/80">Your Expedition</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2.5 flex-shrink-0">
-                    <button id="btn-remix-blueprint" onclick="remixCurrentBlueprint()" class="hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 border border-blue-400/50 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all">
-                        ⚡ Remix for My City & Budget
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button onclick="replayCurrentItineraryIn3D()" class="bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/45 text-cyan-200 px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
+                        🌍 Fly in 3D
                     </button>
-                    <button id="btn-edit-trip" onclick="modifyCurrentTrip()" class="bg-white/5 hover:bg-white/15 border border-white/10 text-white/85 px-4 py-2 rounded-xl text-xs font-medium transition-all">✏️ Edit Trip</button>
-                    <button onclick="window.print()" class="bg-blue-600/25 hover:bg-blue-600/45 border border-blue-400/40 text-blue-200 px-4 py-2 rounded-xl text-xs font-semibold transition-all">🖨️ Save PDF</button>
+                    <button id="btn-remix-blueprint" onclick="remixCurrentBlueprint()" class="hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 border border-blue-400/50 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-all">
+                        ⚡ Remix for My City
+                    </button>
+                    <button id="btn-edit-trip" onclick="modifyCurrentTrip()" class="bg-white/5 hover:bg-white/15 border border-white/10 text-white/85 px-3.5 py-2 rounded-xl text-xs font-medium transition-all">✏️ Edit</button>
+                    <button onclick="window.print()" class="bg-blue-600/25 hover:bg-blue-600/45 border border-blue-400/40 text-blue-200 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all">🖨️ PDF</button>
                 </div>
             </div>
         </nav>
@@ -735,7 +931,6 @@
         <main class="max-w-7xl mx-auto px-6 lg:px-10 pt-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <aside class="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
-                    <!-- LIVE TRIP BUDGET METER (LINKED TO LIVE FX VAULT) -->
                     <div class="print-card bg-gradient-to-br from-[#0e1b24] via-[#0c1420] to-[#0a0f18] border border-emerald-500/35 rounded-3xl p-6 shadow-xl">
                         <div class="flex items-center justify-between gap-2 mb-3">
                             <span class="text-[11px] uppercase tracking-widest text-emerald-300 font-bold">💳 Live Trip Budget Meter</span>
@@ -746,25 +941,13 @@
                             <p class="text-[11px] text-white/50 mt-0.5">Est. on-ground total (excl. intl flights)</p>
                         </div>
                         <div class="space-y-2.5 text-xs border-t border-white/10 pt-3.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-white/70">🏨 Stays (<span id="budget-nights-label">5n</span>)</span>
-                                <span id="budget-meter-stay" class="font-mono font-bold text-blue-300">₹0</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-white/70">🍜 Food & Sights</span>
-                                <span id="budget-meter-food" class="font-mono font-bold text-emerald-300">₹0</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-white/70">🚆 Local Transit</span>
-                                <span id="budget-meter-transit" class="font-mono font-bold text-cyan-300">₹0</span>
-                            </div>
+                            <div class="flex items-center justify-between"><span class="text-white/70">🏨 Stays (<span id="budget-nights-label">5n</span>)</span><span id="budget-meter-stay" class="font-mono font-bold text-blue-300">₹0</span></div>
+                            <div class="flex items-center justify-between"><span class="text-white/70">🍜 Food &amp; Sights</span><span id="budget-meter-food" class="font-mono font-bold text-emerald-300">₹0</span></div>
+                            <div class="flex items-center justify-between"><span class="text-white/70">🚆 Local Transit</span><span id="budget-meter-transit" class="font-mono font-bold text-cyan-300">₹0</span></div>
                         </div>
-                        <button onclick="openTripBudgetInVault()" class="no-print mt-4 w-full py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-400/35 text-[11px] font-bold text-emerald-200 transition-all">
-                            💱 Open Exact Budget in Currency Vault →
-                        </button>
+                        <button onclick="openTripBudgetInVault()" class="no-print mt-4 w-full py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-400/35 text-[11px] font-bold text-emerald-200 transition-all">💱 Open Exact Budget in Currency Vault →</button>
                     </div>
 
-                    <!-- ASSIGNED STAY -->
                     <div class="print-card bg-gradient-to-br from-[#121a2d] via-[#0e1422] to-[#0a0e18] border border-blue-500/35 rounded-3xl p-6 shadow-xl">
                         <div class="flex items-center justify-between mb-3">
                             <span class="text-[11px] uppercase tracking-widest text-blue-300 font-bold">🏨 Assigned Stay</span>
@@ -775,24 +958,13 @@
                         <p id="sidebar-hotel-details" class="text-xs text-white/80 leading-relaxed"></p>
                     </div>
 
-                    <!-- LOGISTICS BLUEPRINT -->
                     <div class="print-card bg-[#0d111b] border border-white/10 rounded-3xl p-6 space-y-5 shadow-xl">
                         <h3 class="text-xs uppercase tracking-widest text-white/50 font-bold border-b border-white/10 pb-3">Travel Logistics Blueprint</h3>
-                        <div>
-                            <div class="flex items-center gap-2 text-xs font-semibold text-cyan-300 mb-1"><span>🏠</span><span>Home to Departure Airport</span></div>
-                            <p id="sidebar-home-transit" class="text-xs text-white/75 leading-relaxed"></p>
-                        </div>
-                        <div class="border-t border-white/5 pt-4">
-                            <div class="flex items-center gap-2 text-xs font-semibold text-indigo-300 mb-1"><span>✈️</span><span>Flight & Arrival Strategy</span></div>
-                            <p id="sidebar-flight-strategy" class="text-xs text-white/75 leading-relaxed"></p>
-                        </div>
-                        <div class="border-t border-white/5 pt-4">
-                            <div class="flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-1"><span>🚆</span><span>Local Transit Guide</span></div>
-                            <p id="sidebar-local-transit" class="text-xs text-white/75 leading-relaxed"></p>
-                        </div>
+                        <div><div class="flex items-center gap-2 text-xs font-semibold text-cyan-300 mb-1"><span>🏠</span><span>Home to Departure Airport</span></div><p id="sidebar-home-transit" class="text-xs text-white/75 leading-relaxed"></p></div>
+                        <div class="border-t border-white/5 pt-4"><div class="flex items-center gap-2 text-xs font-semibold text-indigo-300 mb-1"><span>✈️</span><span>Flight &amp; Arrival Strategy</span></div><p id="sidebar-flight-strategy" class="text-xs text-white/75 leading-relaxed"></p></div>
+                        <div class="border-t border-white/5 pt-4"><div class="flex items-center gap-2 text-xs font-semibold text-emerald-300 mb-1"><span>🚆</span><span>Local Transit Guide</span></div><p id="sidebar-local-transit" class="text-xs text-white/75 leading-relaxed"></p></div>
                     </div>
 
-                    <!-- QUICK STATS -->
                     <div class="no-print bg-[#0d111b] border border-white/10 rounded-3xl p-5 grid grid-cols-3 gap-3 text-center">
                         <div class="bg-white/5 rounded-2xl p-3"><div id="stat-activities" class="text-xl font-bold text-blue-400">0</div><div class="text-[10px] uppercase tracking-wider text-white/50 mt-0.5">Sights</div></div>
                         <div class="bg-white/5 rounded-2xl p-3"><div id="stat-meals" class="text-xl font-bold text-emerald-400">0</div><div class="text-[10px] uppercase tracking-wider text-white/50 mt-0.5">Dining</div></div>
@@ -849,7 +1021,7 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- MODAL 2: COUNTRY BATTLE ARENA (HEAD-TO-HEAD SHOWDOWN)                 -->
+    <!-- MODAL 2: COUNTRY BATTLE ARENA                                         -->
     <!-- ===================================================================== -->
     <div id="battle-arena-modal" class="hidden fixed inset-0 z-[115] bg-[#030508]/95 backdrop-blur-2xl overflow-y-auto">
         <div class="max-w-6xl mx-auto px-6 py-8">
@@ -881,20 +1053,14 @@
             <div>
                 <span class="block text-[11px] uppercase tracking-wider text-white/60 font-semibold mb-2.5">What kind of replacement do you want?</span>
                 <div class="flex flex-wrap gap-2 mb-3.5">
-                    <button type="button" onclick="selectSwapChip('Make it cheaper / budget-friendly')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/50 text-xs text-white/85 transition-all">💸 Cheaper</button>
-                    <button type="button" onclick="selectSwapChip('Strictly vegetarian-friendly restaurant or spot')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-400/50 text-xs text-white/85 transition-all">🥗 Vegetarian</button>
-                    <button type="button" onclick="selectSwapChip('Indoor rainy-day backup nearby')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 hover:border-blue-400/50 text-xs text-white/85 transition-all">☔ Indoor Backup</button>
-                    <button type="button" onclick="selectSwapChip('Less crowded hidden gem loved by locals')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-400/50 text-xs text-white/85 transition-all">💎 Hidden Gem</button>
-                    <button type="button" onclick="selectSwapChip('More adventurous and iconic photo spot')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-400/50 text-xs text-white/85 transition-all">⚡ Adventurous</button>
-                    <button type="button" onclick="selectSwapChip('Relaxed pace with minimal walking')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-pink-500/20 border border-white/10 hover:border-pink-400/50 text-xs text-white/85 transition-all">☕ Relaxed Pace</button>
+                    <button type="button" onclick="selectSwapChip('Make it cheaper / budget-friendly')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-cyan-500/20 border border-white/10 text-xs text-white/85 transition-all">💸 Cheaper</button>
+                    <button type="button" onclick="selectSwapChip('Strictly vegetarian / sattvic restaurant (no meat, eggs, alcohol, onion/garlic)')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 border border-white/10 text-xs text-white/85 transition-all">🦚 Sattvic / Veg</button>
+                    <button type="button" onclick="selectSwapChip('Indoor rainy-day backup nearby')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-blue-500/20 border border-white/10 text-xs text-white/85 transition-all">☔ Indoor Backup</button>
+                    <button type="button" onclick="selectSwapChip('Less crowded hidden gem loved by locals')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-purple-500/20 border border-white/10 text-xs text-white/85 transition-all">💎 Hidden Gem</button>
+                    <button type="button" onclick="selectSwapChip('More adventurous and iconic photo spot')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 border border-white/10 text-xs text-white/85 transition-all">⚡ Adventurous</button>
+                    <button type="button" onclick="selectSwapChip('Relaxed pace with minimal walking')" class="swap-chip px-3 py-1.5 rounded-xl bg-white/5 hover:bg-pink-500/20 border border-white/10 text-xs text-white/85 transition-all">☕ Relaxed Pace</button>
                 </div>
-                <input
-                    type="text"
-                    id="swap-custom-input"
-                    placeholder="Or type your exact wish (e.g. 'rooftop cafe with skyline view')..."
-                    onkeydown="if(event.key === 'Enter') confirmSwapStop()"
-                    class="w-full bg-[#070a12] border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-3 text-xs text-white placeholder-white/35 focus:outline-none"
-                >
+                <input type="text" id="swap-custom-input" placeholder="Or type your exact wish (e.g. 'rooftop cafe with skyline view')..." onkeydown="if(event.key === 'Enter') confirmSwapStop()" class="w-full bg-[#070a12] border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-3 text-xs text-white placeholder-white/35 focus:outline-none">
             </div>
 
             <div id="swap-error-msg" class="hidden text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 rounded-xl px-3.5 py-2"></div>
@@ -915,7 +1081,7 @@
             <div class="absolute inset-0 flex items-center justify-center text-2xl">🌍</div>
         </div>
         <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Architecting Your Expedition</h2>
-        <p id="loading-status-text" class="text-sm text-blue-300/80 mt-2 max-w-md">Connecting flight corridors, matching your split hotel & daily spending budget, and plotting your daily timeline...</p>
+        <p id="loading-status-text" class="text-sm text-blue-300/80 mt-2 max-w-md">Connecting flight corridors, matching your split hotel &amp; daily spending budget, and plotting your daily timeline...</p>
         <div class="w-64 h-1.5 bg-white/10 rounded-full overflow-hidden mt-6">
             <div class="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 w-2/3 animate-pulse rounded-full"></div>
         </div>
@@ -924,5 +1090,6 @@
     <!-- MODULAR SCRIPTS -->
     <script src="data.js"></script>
     <script src="app.js"></script>
+    <script src="extras.js"></script>
 </body>
 </html>

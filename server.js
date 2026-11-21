@@ -197,13 +197,11 @@ Traveler context:
 - Timing: ${currentMonth || 'Current Month'}
 - Split Budget Style: Hotel = ${hotelBudget || '3-to-4 Star Comfort Hotels'}, Daily Food & Sights = ${dailySpendingBudget || 'Moderate'}
 
-Compare both countries specifically for THIS traveler's split budget and THIS exact month.
-
 Return ONLY valid JSON matching this exact structure:
 {
-  "headline": "String (Punchy showdown title)",
+  "headline": "String",
   "verdictWinner": "String (Must be either ${countryA} or ${countryB})",
-  "verdictReason": "String (2-3 sharp sentences explaining why the winner beats the other right now)",
+  "verdictReason": "String",
   "countryA": {
     "name": "${countryA}",
     "vibeTagline": "String",
@@ -369,11 +367,11 @@ Return ONLY valid JSON matching this exact structure:
 {
   "time": "${currentStop.time || ''}",
   "category": "${currentStop.category || 'Activity'}",
-  "title": "String (Specific real venue, restaurant, or attraction name)",
-  "location": "String (City & Neighborhood)",
-  "transport": "String (Exact transit to get here + duration)",
-  "costNote": "String (Estimated cost level)",
-  "description": "String (1-2 sharp sentences explaining what to do/eat and why this swap fits '${preference || 'the request'}')"
+  "title": "String",
+  "location": "String",
+  "transport": "String",
+  "costNote": "String",
+  "description": "String"
 }`;
 
         const response = await generateJsonWithGemini(ai, prompt, 1536);
@@ -385,7 +383,191 @@ Return ONLY valid JSON matching this exact structure:
 });
 
 // =========================================================================
-// ROUTE 7: Complete Master Trip Planner
+// ROUTE 7: 3D Earth "Vibe Roulette" Spin-the-Globe Destination Scout
+// =========================================================================
+app.post('/api/vibe-roulette', checkPassword, async (req, res) => {
+    try {
+        const ai = getGeminiClient();
+        const { vibe, homeCity, currentMonth, excludeCountries } = req.body;
+
+        const excludeText = Array.isArray(excludeCountries) && excludeCountries.length
+            ? `Do NOT pick any of these already-spun countries: ${excludeCountries.join(', ')}.`
+            : '';
+
+        const prompt = `Act as an elite cinematic travel scout spinning a 3D globe to find the single most unforgettable destination on Earth for this exact mood/vibe:
+- Vibe Request: "${vibe || 'Unexpected scenic adventure'}"
+- Traveler Origin: ${homeCity || 'India / International'}
+- Current Month: ${currentMonth || 'This month'}
+${excludeText}
+
+Pick ONE real country with accurate decimal latitude and longitude for its main highlight city/region. Be imaginative—surprise the traveler with a spot that genuinely nails the mood!
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "country": "String (Standard English country name, e.g. Japan, Georgia, Portugal, Norway, Vietnam)",
+  "hubCity": "String (Specific city or region to zoom the 3D globe onto)",
+  "lat": 35.6762,
+  "lng": 139.6503,
+  "tagline": "String (Punchy 4-7 word cinematic tagline)",
+  "whyItFits": "String (2-3 vivid sentences explaining why this exact destination nails the vibe in ${currentMonth || 'this month'})",
+  "signatureMoment": "String (One unforgettable sensory moment the traveler will live there)",
+  "budgetFeel": "String (Honest budget/visa feel from ${homeCity || 'abroad'})",
+  "bestSpots": ["Spot 1", "Spot 2", "Spot 3"]
+}`;
+
+        const response = await generateJsonWithGemini(ai, prompt, 2048);
+        res.json(parseCleanJson(response));
+    } catch (error) {
+        console.error("Vibe Roulette Error:", error);
+        res.status(500).json({ error: "Vibe Roulette failed", details: error.message });
+    }
+});
+
+// =========================================================================
+// ROUTE 8: Travel Shield — Swipeable Cultural Taboo & Survival Slang Deck
+// =========================================================================
+app.post('/api/cultural-deck', checkPassword, async (req, res) => {
+    try {
+        const ai = getGeminiClient();
+        const { country } = req.body;
+
+        if (!country) {
+            return res.status(400).json({ error: 'Please select a country.' });
+        }
+
+        const prompt = `Act as a sharp local insider in ${country}. Build an engaging 10-card swipeable Cultural Survival Deck:
+- 5 cards of type "TABOO" (unspoken rules, etiquette mistakes, gestures, or dining habits that accidentally offend locals or trigger awkward situations).
+- 5 cards of type "SLANG" (essential everyday spoken phrases or street slang locals actually love hearing from travelers, with native script and easy phonetic pronunciation).
+Interleave them (TABOO, SLANG, TABOO, SLANG...).
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "country": "${country}",
+  "langCode": "String (BCP-47 voice code like ja-JP, ko-KR, th-TH, it-IT, fr-FR, es-ES, de-DE, tr-TR, id-ID, ar-SA, en-US)",
+  "cards": [
+    {
+      "type": "TABOO | SLANG",
+      "tag": "String (e.g. 'BIG TABOO', 'DINING RULE', 'STREET SLANG', 'ESSENTIAL PHRASE')",
+      "title": "String (Punchy 3-6 word headline)",
+      "nativeScript": "String (Phrase in native script for SLANG cards, or empty string for TABOO)",
+      "pronunciation": "String (Phonetic pronunciation for SLANG cards, or empty string for TABOO)",
+      "explanation": "String (2 crisp sentences explaining the rule or exact meaning/context)",
+      "proTip": "String (1 short street-smart tip)"
+    }
+  ]
+}`;
+
+        const response = await generateJsonWithGemini(ai, prompt, 3072);
+        res.json(parseCleanJson(response));
+    } catch (error) {
+        console.error("Cultural Deck Error:", error);
+        res.status(500).json({ error: "Failed to build cultural deck", details: error.message });
+    }
+});
+
+// =========================================================================
+// ROUTE 9: Discovery Lab — Trip Time-Machine (Month A vs Month B)
+// =========================================================================
+app.post('/api/time-machine', checkPassword, async (req, res) => {
+    try {
+        const ai = getGeminiClient();
+        const { country, monthA, monthB, homeCity } = req.body;
+
+        if (!country || !monthA || !monthB) {
+            return res.status(400).json({ error: 'Please select a country and two months to compare.' });
+        }
+
+        const prompt = `Act as a brutally honest seasonal travel forecaster. Compare visiting ${country} in ${monthA} vs. ${monthB} for a traveler coming from ${homeCity || 'abroad'}.
+Give real seasonal differences: temperature/rain/snow, daylight hours, tourist crowd crush (1-10), hotel/flight price surge (1-10), actual festivals/events, and crown the better month.
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "country": "${country}",
+  "headline": "String (Punchy comparison title)",
+  "winnerMonth": "String (Must be either ${monthA} or ${monthB})",
+  "winnerReason": "String (2-3 sharp sentences explaining why the winning month beats the other)",
+  "monthA": {
+    "name": "${monthA}",
+    "vibeLabel": "String (2-4 words e.g. 'Sakura Peak Rush')",
+    "weather": "String (Avg temp range + rain/snow/humidity reality)",
+    "daylight": "String (e.g. '13 hrs • Sunset ~6:15 PM')",
+    "crowdScore": 8,
+    "priceSurgeScore": 9,
+    "festivals": ["Event or seasonal highlight 1", "Event or highlight 2"],
+    "bestFor": "String (Who loves this month)",
+    "biggestCatch": "String (Honest downside)"
+  },
+  "monthB": {
+    "name": "${monthB}",
+    "vibeLabel": "String",
+    "weather": "String",
+    "daylight": "String",
+    "crowdScore": 5,
+    "priceSurgeScore": 6,
+    "festivals": ["Event or seasonal highlight 1", "Event or highlight 2"],
+    "bestFor": "String",
+    "biggestCatch": "String"
+  }
+}`;
+
+        const response = await generateJsonWithGemini(ai, prompt, 3072);
+        res.json(parseCleanJson(response));
+    } catch (error) {
+        console.error("Time Machine Error:", error);
+        res.status(500).json({ error: "Failed to run Trip Time-Machine", details: error.message });
+    }
+});
+
+// =========================================================================
+// ROUTE 10: Discovery Lab — Movie, Anime & Heritage Pilgrimage Mode
+// =========================================================================
+app.post('/api/pilgrimage-route', checkPassword, async (req, res) => {
+    try {
+        const ai = getGeminiClient();
+        const { theme } = req.body;
+
+        if (!theme || theme.trim().length < 2) {
+            return res.status(400).json({ error: 'Please enter a movie, anime, K-drama, or heritage theme.' });
+        }
+
+        const prompt = `Act as a film location scout, anime pilgrimage specialist, and cultural historian.
+Create a real-world Pilgrimage Route inspired by: "${theme}".
+Include 6 specific, real, visitable locations with accurate decimal latitude and longitude coordinates so we can fly to them on a 3D Earth globe.
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "missionTitle": "String (Epic expedition title)",
+  "themeName": "${theme}",
+  "country": "String (Primary country name, e.g. Japan, Switzerland, South Korea, India, Italy)",
+  "daysSuggested": 5,
+  "heroQuote": "String (One evocative 1-sentence line capturing the atmosphere of this pilgrimage)",
+  "overview": "String (2 concise sentences summarizing the route flow)",
+  "stops": [
+    {
+      "order": 1,
+      "dayLabel": "Day 1",
+      "realLocation": "String (Exact real-world landmark/street/temple name)",
+      "city": "String (City & Region)",
+      "lat": 35.6852,
+      "lng": 139.7235,
+      "sceneConnection": "String (Exact scene, episode, film moment, or historical/mythological story tied to this real location)",
+      "photoTip": "String (Best time of day, angle, or framing trick to capture the iconic shot)",
+      "transitTip": "String (Exact station/train/walk instructions)",
+      "costNote": "String (Free or ticket estimate)"
+    }
+  ]
+}`;
+
+        const response = await generateJsonWithGemini(ai, prompt, 4096);
+        res.json(parseCleanJson(response));
+    } catch (error) {
+        console.error("Pilgrimage Route Error:", error);
+        res.status(500).json({ error: "Failed to generate pilgrimage route", details: error.message });
+    }
+});
+
+// =========================================================================
+// ROUTE 11: Complete Master Trip Planner
 // =========================================================================
 app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {

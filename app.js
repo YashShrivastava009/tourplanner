@@ -1,4 +1,4 @@
- // =========================================================================
+// =========================================================================
 // 1. GLOBAL APPLICATION STATE
 // =========================================================================
 let activeAccessCode = "";
@@ -24,6 +24,12 @@ let lastSpokenCardText = "", lastSpokenCardLang = "en-US", lastHostQuestionsText
 
 let swapTarget = null; // { dayIdx, itemIdx }
 let lastBudgetTotalBase = 50000;
+
+// "Deepen This Day" state
+let deepenBackups = {};      // { [dayIdx]: originalDayObject }
+let deepeningDays = new Set();
+let openDeepenPickerIdx = null;
+let deepenErrors = {};
 
 // =========================================================================
 // 2. INITIALIZATION & STEALTH ACCESS LOCK SCREEN
@@ -203,7 +209,11 @@ function openPreplannedBlueprint(blueprintId) {
     isViewingBlueprint = true;
     activeBlueprintId = bp.id;
     activePlanId = null;
-    // Deep copy so user can swap stops, check items, or add notes cleanly
+    deepenBackups = {};
+    deepeningDays = new Set();
+    openDeepenPickerIdx = null;
+    deepenErrors = {};
+
     currentTripData = JSON.parse(JSON.stringify(bp.data));
     currentTripMeta = {
         homeCity: "Your City",
@@ -213,6 +223,7 @@ function openPreplannedBlueprint(blueprintId) {
         places: [...bp.places],
         hotelBudget: bp.hotelBudget,
         dailySpendingBudget: bp.dailySpendingBudget,
+        transitStyle: "Smart Mix (Metro/Trains by day + Cabs when needed)",
         budgetEstimateUsd: bp.budgetEstimateUsd
     };
     checkedStops = new Set();
@@ -249,7 +260,7 @@ function remixCurrentBlueprint() {
 }
 
 // =========================================================================
-// 4. SINGLE-STOP LIVE SWAP ENGINE
+// 4. SINGLE-STOP LIVE SWAP & "DEEPEN THIS DAY" WALKING-GUIDE ENGINE
 // =========================================================================
 function openSwapModal(dayIdx, itemIdx) {
     const day = currentTripData?.days?.[dayIdx];
@@ -323,6 +334,105 @@ async function confirmSwapStop() {
         btn.disabled = false;
         btn.innerText = orig;
     }
+}
+
+function toggleDeepenPicker(dayIdx) {
+    if (deepeningDays.has(dayIdx)) return;
+    openDeepenPickerIdx = openDeepenPickerIdx === dayIdx ? null : dayIdx;
+    delete deepenErrors[dayIdx];
+    renderTimelineStage();
+    if (openDeepenPickerIdx === dayIdx) {
+        setTimeout(() => document.getElementById(`deepen-custom-${dayIdx}`)?.focus(), 60);
+    }
+}
+
+async function runDeepenDay(dayIdx, presetFocus = null) {
+    const day = currentTripData?.days?.[dayIdx];
+    if (!day || deepeningDays.has(dayIdx)) return;
+
+    const customInput = document.getElementById(`deepen-custom-${dayIdx}`);
+    const focus = (presetFocus || customInput?.value || '').trim() ||
+        'Full Street-Level Walking Guide (Best sights, hidden alleys, local snacks & sunset)';
+
+    deepeningDays.add(dayIdx);
+    delete deepenErrors[dayIdx];
+    openDeepenPickerIdx = null;
+    renderTimelineStage();
+
+    const otherDayTitles = (currentTripData.days || [])
+        .filter((_, idx) => idx !== dayIdx)
+        .map(d => `Day ${d.dayNumber}: ${d.dayTitle || ''}`);
+
+    try {
+        const data = await authorizedPost('/api/deepen-day', {
+            destinationCountry: currentTripMeta?.destinationCountry || 'Destination',
+            day,
+            focus,
+            hotelBudget: currentTripMeta?.hotelBudget,
+            dailySpendingBudget: currentTripMeta?.dailySpendingBudget,
+            transitStyle: currentTripMeta?.transitStyle,
+            otherDayTitles
+        });
+
+        if (!data?.day || !Array.isArray(data.day.schedule) || !data.day.schedule.length) {
+            throw new Error("Could not expand this day. Please try again.");
+        }
+
+        // Save snapshot for 1-click Undo
+        deepenBackups[dayIdx] = JSON.parse(JSON.stringify(day));
+
+        const upgraded = {
+            ...data.day,
+            dayNumber: day.dayNumber || dayIdx + 1,
+            _deepened: true,
+            _deepenLabel: focus.split('(')[0].trim()
+        };
+        currentTripData.days[dayIdx] = upgraded;
+
+        // Clear stale stop checkboxes for this specific day since stops changed
+        Array.from(checkedStops).forEach(k => { if (k.startsWith(`${dayIdx}-`)) checkedStops.delete(k); });
+        Array.from(favoriteStops).forEach(k => { if (k.startsWith(`${dayIdx}-`)) favoriteStops.delete(k); });
+
+        if (!isViewingBlueprint && activePlanId) {
+            const idx = savedPlans.findIndex(p => p.id === activePlanId);
+            if (idx !== -1) {
+                savedPlans[idx].data = currentTripData;
+                savedPlans[idx].checked = Array.from(checkedStops);
+                savedPlans[idx].favorites = Array.from(favoriteStops);
+                persistPlansToStorage();
+            }
+        }
+    } catch (err) {
+        deepenErrors[dayIdx] = err.message || "Failed to deepen this day.";
+        openDeepenPickerIdx = dayIdx;
+    } finally {
+        deepeningDays.delete(dayIdx);
+        renderDedicatedItineraryPage();
+    }
+}
+
+function undoDeepenDay(dayIdx) {
+    const backup = deepenBackups[dayIdx];
+    if (!backup || !currentTripData?.days?.[dayIdx]) return;
+
+    currentTripData.days[dayIdx] = backup;
+    delete deepenBackups[dayIdx];
+    delete deepenErrors[dayIdx];
+
+    Array.from(checkedStops).forEach(k => { if (k.startsWith(`${dayIdx}-`)) checkedStops.delete(k); });
+    Array.from(favoriteStops).forEach(k => { if (k.startsWith(`${dayIdx}-`)) favoriteStops.delete(k); });
+
+    if (!isViewingBlueprint && activePlanId) {
+        const idx = savedPlans.findIndex(p => p.id === activePlanId);
+        if (idx !== -1) {
+            savedPlans[idx].data = currentTripData;
+            savedPlans[idx].checked = Array.from(checkedStops);
+            savedPlans[idx].favorites = Array.from(favoriteStops);
+            persistPlansToStorage();
+        }
+    }
+
+    renderDedicatedItineraryPage();
 }
 
 // =========================================================================
@@ -1222,6 +1332,11 @@ function loadSavedPlansFromStorage() {
 function persistPlansToStorage() { try { localStorage.setItem('ai_travel_saved_plans', JSON.stringify(savedPlans)); } catch (e) {} }
 
 function setActivePlanById(planId) {
+    deepenBackups = {};
+    deepeningDays = new Set();
+    openDeepenPickerIdx = null;
+    deepenErrors = {};
+
     const found = savedPlans.find(p => p.id === planId);
     if (!found) { activePlanId = null; currentTripData = null; currentTripMeta = null; checkedStops = new Set(); favoriteStops = new Set(); stopNotes = {}; return; }
     isViewingBlueprint = false; activeBlueprintId = null;
@@ -1438,7 +1553,7 @@ async function planTrip() {
 
     const loader = document.getElementById('loading-overlay'), statusText = document.getElementById('loading-status-text');
     loader.classList.remove('hidden');
-    const steps = [`Mapping transit from ${homeCity} to ${departureCity}...`, `Selecting stays in ${destinationCountry}...`, `Balancing ${days} days of food & sights...`, `Finalizing wake-up & transit timings...`];
+    const steps = [`Mapping transit from ${homeCity} to ${departureCity}...`, `Selecting stays in ${destinationCountry}...`, `Generating 6 rich stops per day across ${days} days in parallel...`, `Adding exact local dishes, transit timings & insider tips...`];
     let idx = 0; statusText.innerText = steps[0];
     const timer = setInterval(() => { idx = (idx + 1) % steps.length; statusText.innerText = steps[idx]; }, 2500);
 
@@ -1446,7 +1561,7 @@ async function planTrip() {
         const data = await authorizedPost('/api/plan-trip', { homeCity, departureCity, destinationCountry, selectedPlaces, days, hotelBudget, dailySpendingBudget, transitStyle, customBudgetNote, isFirstTime, visitedPlaces });
         clearInterval(timer); loader.classList.add('hidden');
 
-        const newPlan = { id: 'plan_' + Date.now(), data, meta: { homeCity, departureCity, destinationCountry, days, places: selectedPlaces, hotelBudget, dailySpendingBudget }, checked: [], favorites: [], notes: {}, createdAt: Date.now() };
+        const newPlan = { id: 'plan_' + Date.now(), data, meta: { homeCity, departureCity, destinationCountry, days, places: selectedPlaces, hotelBudget, dailySpendingBudget, transitStyle }, checked: [], favorites: [], notes: {}, createdAt: Date.now() };
         savedPlans.unshift(newPlan);
         if (savedPlans.length > 8) savedPlans = savedPlans.slice(0, 8);
         persistPlansToStorage(); closeWizard(); openItineraryPage(newPlan.id);
@@ -1458,7 +1573,7 @@ async function planTrip() {
 }
 
 // =========================================================================
-// 11. DEDICATED ITINERARY PAGE RENDERER
+// 11. DEDICATED ITINERARY PAGE RENDERER (WITH "✨ DEEPEN THIS DAY")
 // =========================================================================
 function renderDedicatedItineraryPage() {
     const summary = currentTripData.summary || {}, stay = summary.recommendedStay || {}, daysList = currentTripData.days || [];
@@ -1500,12 +1615,12 @@ function renderDedicatedItineraryPage() {
 
 function renderDayTabs() {
     const daysList = currentTripData.days || [];
-    let html = daysList.map((day, idx) => `<button onclick="selectDayTab(${idx})" class="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${activeDayView === idx ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}"><span>Day ${day.dayNumber || idx + 1}</span><span class="text-[10px] opacity-75 hidden sm:inline">• ${(day.schedule || []).length} stops</span></button>`).join('');
+    let html = daysList.map((day, idx) => `<button onclick="selectDayTab(${idx})" class="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 border ${activeDayView === idx ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}"><span>${day._deepened ? '✨ ' : ''}Day ${day.dayNumber || idx + 1}</span><span class="text-[10px] opacity-75 hidden sm:inline">• ${(day.schedule || []).length} stops</span></button>`).join('');
     html += `<button onclick="selectDayTab('ALL')" class="flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-semibold border ml-auto ${activeDayView === 'ALL' ? 'bg-emerald-600/30 border-emerald-400 text-emerald-200' : 'bg-white/5 border-white/10 text-white/60 hover:text-white'}">View All Days</button>`;
     document.getElementById('day-tabs-bar').innerHTML = html;
 }
 
-function selectDayTab(t) { activeDayView = t; renderDayTabs(); renderTimelineStage(); }
+function selectDayTab(t) { activeDayView = t; openDeepenPickerIdx = null; renderDayTabs(); renderTimelineStage(); }
 function setCategoryFilter(f) { activeCategoryFilter = f; updateFilterButtonsUI(); renderTimelineStage(); }
 
 function updateFilterButtonsUI() {
@@ -1522,6 +1637,11 @@ function renderTimelineStage() {
 
     let html = '';
     daysToRender.forEach(({ day, dayIdx }) => {
+        const isDeepening = deepeningDays.has(dayIdx);
+        const hasBackup = Boolean(deepenBackups[dayIdx]);
+        const isPickerOpen = openDeepenPickerIdx === dayIdx;
+        const errMsg = deepenErrors[dayIdx] || '';
+
         const filtered = (day.schedule || []).map((item, itemIdx) => ({ item, itemIdx, key: `${dayIdx}-${itemIdx}` })).filter(({ item, key }) => {
             if (activeCategoryFilter === 'ALL') return true;
             if (activeCategoryFilter === 'FAVORITES') return favoriteStops.has(key);
@@ -1564,7 +1684,55 @@ function renderTimelineStage() {
                     </div>`;
             }).join('') + `</div>`;
 
-        html += `<div class="space-y-5"><div class="print-card bg-gradient-to-r from-[#111726] to-[#0c101a] border border-white/10 rounded-3xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xl"><div><span class="text-xs uppercase tracking-widest text-blue-400 font-bold">Day ${day.dayNumber || dayIdx + 1}</span><h2 class="text-2xl font-extrabold text-white mt-0.5">${escapeHtml(day.dayTitle || '')}</h2></div><div class="flex items-center gap-3 text-xs"><div class="bg-amber-500/10 border border-amber-400/30 text-amber-200 px-4 py-2 rounded-xl">☀️ Wake: <strong>${escapeHtml(day.wakeUpTime || '07:00 AM')}</strong></div><div class="bg-indigo-500/10 border border-indigo-400/30 text-indigo-200 px-4 py-2 rounded-xl">🌙 Sleep: <strong>${escapeHtml(day.sleepTime || '10:30 PM')}</strong></div></div></div>${itemsHtml}</div>`;
+        const deepenPanelHtml = isDeepening
+            ? `<div class="no-print mt-4 pt-4 border-t border-white/10 flex items-center gap-3 text-xs text-purple-200">
+                    <div class="w-4 h-4 rounded-full border-2 border-purple-400/30 border-t-purple-300 animate-spin flex-shrink-0"></div>
+                    <span><strong>✨ Deepening Day ${day.dayNumber || dayIdx + 1}...</strong> Building an 8–9 stop street-level walking guide with exact dishes, metro exits &amp; photo angles.</span>
+               </div>`
+            : isPickerOpen
+                ? `<div class="no-print mt-4 pt-4 border-t border-purple-500/30 space-y-3 panel-animate">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-[11px] uppercase tracking-wider text-purple-300 font-bold">Choose a Deep-Dive Focus (Expands Day ${day.dayNumber || dayIdx + 1} to 8–9 Stops)</span>
+                            <button onclick="toggleDeepenPicker(${dayIdx})" class="text-[11px] text-white/45 hover:text-white">Close ✕</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="runDeepenDay(${dayIdx}, 'Full Street-Level Walking Guide (Best sights, hidden alleys, local snacks & sunset)')" class="px-3.5 py-2 rounded-xl bg-purple-600/25 hover:bg-purple-600 border border-purple-400/45 text-xs font-semibold text-purple-100 hover:text-white transition-all">🚶 Full Walking Guide</button>
+                            <button onclick="runDeepenDay(${dayIdx}, 'Ultimate Foodie & Street-Food Crawl (Iconic local dishes, markets, bakeries & cafes)')" class="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-400/40 text-xs font-semibold text-emerald-200 hover:text-white transition-all">🍜 Foodie Crawl</button>
+                            <button onclick="runDeepenDay(${dayIdx}, 'Off-the-Beaten-Path Hidden Gems (Quiet local neighborhoods, artisan alleys & zero tourist traps)')" class="px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600 border border-cyan-400/40 text-xs font-semibold text-cyan-200 hover:text-white transition-all">💎 Hidden Gems</button>
+                            <button onclick="runDeepenDay(${dayIdx}, 'Cinematic Photo & Golden-Hour Route (Best viewpoints, framing angles, sunrise/sunset spots)')" class="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600 border border-amber-400/40 text-xs font-semibold text-amber-200 hover:text-white transition-all">📸 Photo &amp; Sunset</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="deepen-custom-${dayIdx}" placeholder="Or type a custom focus (e.g. 'pure vegetarian cafes + temples + night market')..." onkeydown="if(event.key === 'Enter') runDeepenDay(${dayIdx})" class="flex-1 bg-[#080c15] border border-white/15 focus:border-purple-400 rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/35 focus:outline-none">
+                            <button onclick="runDeepenDay(${dayIdx})" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex-shrink-0">Go →</button>
+                        </div>
+                        ${errMsg ? `<div class="text-xs text-rose-300 bg-rose-950/60 border border-rose-500/40 rounded-xl px-3.5 py-2">${escapeHtml(errMsg)}</div>` : ''}
+                   </div>`
+                : '';
+
+        html += `
+            <div class="space-y-5">
+                <div class="print-card bg-gradient-to-r from-[#111726] to-[#0c101a] border ${day._deepened ? 'border-purple-500/45' : 'border-white/10'} rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs uppercase tracking-widest text-blue-400 font-bold">Day ${day.dayNumber || dayIdx + 1}</span>
+                                ${day._deepened ? `<span class="px-2.5 py-0.5 rounded-full bg-purple-500/25 border border-purple-400/50 text-purple-200 text-[10px] font-bold uppercase tracking-wider">✨ Deepened • ${(day.schedule || []).length} Stops</span>` : ''}
+                            </div>
+                            <h2 class="text-2xl font-extrabold text-white mt-0.5">${escapeHtml(day.dayTitle || '')}</h2>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <div class="bg-amber-500/10 border border-amber-400/30 text-amber-200 px-3.5 py-2 rounded-xl">☀️ Wake: <strong>${escapeHtml(day.wakeUpTime || '07:00 AM')}</strong></div>
+                            <div class="bg-indigo-500/10 border border-indigo-400/30 text-indigo-200 px-3.5 py-2 rounded-xl">🌙 Sleep: <strong>${escapeHtml(day.sleepTime || '10:30 PM')}</strong></div>
+                            <button onclick="toggleDeepenPicker(${dayIdx})" ${isDeepening ? 'disabled' : ''} class="no-print px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600/30 to-indigo-600/30 hover:from-purple-600 hover:to-indigo-600 border border-purple-400/50 text-purple-100 hover:text-white font-bold transition-all shadow-md">
+                                ${isDeepening ? '✨ Deepening...' : '✨ Deepen This Day'}
+                            </button>
+                            ${hasBackup ? `<button onclick="undoDeepenDay(${dayIdx})" title="Restore previous version of Day ${day.dayNumber || dayIdx + 1}" class="no-print px-3 py-2 rounded-xl bg-white/5 hover:bg-rose-600/40 border border-white/15 hover:border-rose-400/50 text-white/75 hover:text-white font-semibold transition-all">↩ Undo</button>` : ''}
+                        </div>
+                    </div>
+                    ${deepenPanelHtml}
+                </div>
+                ${itemsHtml}
+            </div>`;
     });
 
     if (activeDayView !== 'ALL' && daysList.length > 1) {

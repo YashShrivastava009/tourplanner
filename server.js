@@ -232,7 +232,6 @@ async function generateParsedJson(ai, prompt, maxOutputTokens = 6144, expectArra
         }
     }
 
-    // Try free Groq fallback if configured in Render Environment Variables
     const groqResult = await callGroqFallback(prompt, maxOutputTokens, expectArray);
     if (groqResult) return groqResult;
 
@@ -247,7 +246,6 @@ async function generateParsedJson(ai, prompt, maxOutputTokens = 6144, expectArra
     throw lastError;
 }
 
-// Helper to run async tasks in parallel with a concurrency limit
 async function runWithConcurrency(tasks, maxConcurrent = 3) {
     const results = new Array(tasks.length);
     let nextIdx = 0;
@@ -521,7 +519,6 @@ Return ONLY valid strict JSON:
 
 // =========================================================================
 // ROUTE 11: HYPER-DETAILED PARALLEL-CHUNKED MASTER TRIP PLANNER
-// (6 Rich Stops/Day Even on 14-Day Trips — Fast & 100% Free!)
 // =========================================================================
 app.post('/api/plan-trip', checkPassword, async (req, res) => {
     try {
@@ -545,7 +542,6 @@ app.post('/api/plan-trip', checkPassword, async (req, res) => {
 
         const budgetBlock = `Hotel=${hotelBudget || 'Comfort 3-4 Star'}, Daily Food & Sights=${dailySpendingBudget || 'Moderate'}, Transit=${transitStyle || 'Smart Mix'}. Note: ${customBudgetNote || 'None'}.`;
 
-        // CASE A: Short trips (1–4 days) -> 1 single rich call with 6 full stops/day
         if (numDays <= 4) {
             const singlePrompt = `Act as an elite, detail-obsessed local travel architect. Build a richly detailed ${numDays}-day itinerary.
 Route: ${homeCity} -> ${departureCity} -> ${targetCountry}. ${placesText} ${exclRule}
@@ -584,7 +580,6 @@ Return ONLY valid strict JSON (double-quoted keys, no trailing commas):
             return res.json(result);
         }
 
-        // CASE B: Longer trips (5–14 days) -> Step 1: Fast Master Outline + Summary
         const outlinePrompt = `Act as an elite travel architect designing the master route for a ${numDays}-day expedition in ${targetCountry}.
 Origin: ${homeCity} -> Departure Airport: ${departureCity} -> Destination: ${targetCountry}.
 ${placesText} ${exclRule}
@@ -616,7 +611,6 @@ Return ONLY valid strict JSON with the trip summary and a logical, geographicall
                 mustHit: selectedPlaces?.join(', ') || targetCountry
             }));
 
-        // Step 2: Split into 4-day chunks and generate 6 rich stops/day IN PARALLEL
         const chunkSize = 4;
         const chunks = [];
         for (let start = 0; start < dayOutlines.length; start += chunkSize) {
@@ -672,6 +666,87 @@ Return ONLY valid strict JSON:
     } catch (error) {
         console.error("AI Generation Error:", error);
         res.status(500).json({ error: "Failed to generate itinerary", details: error.message || "Unknown server error" });
+    }
+});
+
+// =========================================================================
+// ROUTE 12: "DEEPEN THIS DAY" — HYPER-DETAILED HOUR-BY-HOUR WALKING GUIDE
+// =========================================================================
+app.post('/api/deepen-day', checkPassword, async (req, res) => {
+    try {
+        const ai = getGeminiClient();
+        const {
+            destinationCountry,
+            day,
+            focus,
+            hotelBudget,
+            dailySpendingBudget,
+            transitStyle,
+            otherDayTitles
+        } = req.body;
+
+        if (!day || !destinationCountry) {
+            return res.status(400).json({ error: 'Missing day details to deepen.' });
+        }
+
+        const existingScheduleText = (day.schedule || [])
+            .map(s => `- ${s.time}: ${s.title} (${s.location || ''})`)
+            .join('\n');
+
+        const avoidOtherDays = Array.isArray(otherDayTitles) && otherDayTitles.length
+            ? `Other days in this trip already cover: ${otherDayTitles.slice(0, 12).join(', ')}. Keep this day anchored in its own area.`
+            : '';
+
+        const prompt = `Act as a veteran local walking-tour guide in ${destinationCountry}.
+Transform Day ${day.dayNumber || 1} ("${day.dayTitle || destinationCountry}") into an ultra-detailed, seamless **8 to 9 stop hour-by-hour street-level walking guide**.
+
+Current Draft of Day ${day.dayNumber || 1}:
+${existingScheduleText || day.dayTitle}
+
+Traveler Deep-Dive Focus: "${focus || 'Full Street-Level Walking Guide (Best sights, hidden alleys, local snacks & sunset)'}"
+Budget Style: Stay=${hotelBudget || 'Comfort'}, Daily Spend=${dailySpendingBudget || 'Moderate'}, Transit=${transitStyle || 'Smart Mix'}.
+${avoidOtherDays}
+
+STRICT QUALITY RULES:
+- Produce **8 or 9 chronological stops** spanning early morning (${day.wakeUpTime || '07:00 AM'}) to night (${day.sleepTime || '10:30 PM'}) with zero awkward time gaps.
+- Chain stops geographically so the traveler walks naturally from one neighborhood spot to the next (include morning bakery/coffee, beat-the-crowd landmark, secret alley/market, authentic lunch with exact dish names, afternoon cultural highlight, late-afternoon tea/snack break, golden-hour viewpoint, dinner, and an optional evening walk/dessert).
+- For EVERY stop, write **3 vivid, high-utility sentences** covering:
+  1) Exact things to see, do, or specific local dishes/drinks to order.
+  2) Exact crowd-beating timing, secret entrance, or camera/photo framing trick.
+  3) Street-level tip (payment cash vs card, seat to grab, or exact next-walk landmark).
+- In "transport", give exact metro line/exit number, ferry pier, or walking minutes from the previous stop.
+
+Return ONLY valid strict JSON (double-quoted keys, no trailing commas):
+{
+  "day": {
+    "dayNumber": ${Number(day.dayNumber) || 1},
+    "dayTitle": "String (Keep the core city/theme, upgraded)",
+    "wakeUpTime": "String (e.g. 07:00 AM)",
+    "sleepTime": "String (e.g. 10:30 PM)",
+    "schedule": [
+      {
+        "time": "07:30 AM - 08:30 AM",
+        "category": "Meal | Activity | Transit | Stay",
+        "title": "Exact Real Place / Cafe / Landmark Name",
+        "location": "Exact Street / Neighborhood, City",
+        "transport": "Exact metro exit / walk mins from previous stop",
+        "costNote": "Realistic cost estimate",
+        "description": "3 vivid, super-specific insider sentences."
+      }
+    ]
+  }
+}`;
+
+        const data = await generateParsedJson(ai, prompt, 6144, false, true);
+        const deepenedDay = data?.day || (Array.isArray(data?.schedule) ? data : null);
+        if (!deepenedDay || !Array.isArray(deepenedDay.schedule) || !deepenedDay.schedule.length) {
+            throw new Error('Could not build deepened walking guide. Please try again.');
+        }
+
+        res.json({ day: deepenedDay });
+    } catch (error) {
+        console.error("Deepen Day Error:", error);
+        res.status(500).json({ error: "Failed to deepen day", details: error.message });
     }
 });
 
